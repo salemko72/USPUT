@@ -109,6 +109,7 @@ const rideView = (r) => ({
   departure: r.departure,
   car: r.car,
   note: r.note,
+  costSharing: r.cost_sharing === 1,
   status: r.status,
   driver: { id: r.driver_id, name: r.driver_name },
   createdAt: r.created_at,
@@ -467,6 +468,11 @@ export async function handleApi(request, env) {
       return json({ user: selfUser({ ...user, name }) });
     }
     if (path === "/rides" && method === "POST") {
+      if (
+        body.costSharing !== undefined &&
+        typeof body.costSharing !== "boolean"
+      )
+        fail(400, "Označi da ili ne za dijeljenje troškova.");
       let savedVehicle = null;
       if (body.vehicleId !== undefined) {
         if (typeof body.vehicleId !== "string")
@@ -504,7 +510,7 @@ export async function handleApi(request, env) {
       const id = crypto.randomUUID();
       await db
         .prepare(
-          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           id,
@@ -516,6 +522,7 @@ export async function handleApi(request, env) {
           departure,
           car,
           note,
+          body.costSharing === true ? 1 : 0,
           Date.now(),
         )
         .run();

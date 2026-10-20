@@ -113,3 +113,9 @@ Bistrik, Alifakovac (pretraga prihvata i Alfakovac), Baščaršija, Logavina, Ka
 Na zahtjev vlasnika dodan je `Kerim (demo)`, izmišljeni profil bez lozinke i mogućnosti prijave, s crvenim Volkswagen Golfom 5. U objavljenoj beta bazi ima 365 ponuda Baščaršija → Ilidža, svaki dan uključujući vikende, od 21.10.2026. do 20.10.2027. u 07:30 po vremenu Sarajeva. Svaka ponuda jasno je označena DEMO / TEST. Nema automatskog prihvatanja zahtjeva.
 
 Reproduktivni SQL generator: `node scripts/seed-kerim.mjs /tmp/kerim.sql`. Generiše narednih godinu dana od sutra, koristi DST-aware `departureMs` i stabilne ID-eve; ponovno pokretanje ne duplira ponude niti resetuje postojeće dogovore. Generator nije javni API i ne mijenja ograničenje obične objave na 90 dana. SQL primjenjivati samo na izričito odabranu testnu beta bazu.
+
+## Dijeljenje troškova
+
+Pri objavi vozač može uključiti „Očekujem dijeljenje troškova”. Checkbox je podrazumijevano isključen; postojeće ponude, uključujući Kerimove testne vožnje, imaju `false`. API prihvata samo boolean i čuva flag uz ponudu (`rides.cost_sharing`, migracija `0005_cost_sharing.sql`). Putnik vidi Da/Ne na kartici i detaljima u BHS/ENG. Dogovor o iznosu i načinu podjele je izvan aplikacije; USPUT ovim dodatkom ne obračunava i ne provodi plaćanje. Globalne tvrdnje da su sve vožnje besplatne uklonjene su iz interfejsa.
+
+Provjera: API testovi pokrivaju izostavljen/false/true i neispravne tipove; `tests/cost-sharing-browser.py` pokriva checkbox, objavu, trajnost nakon reloada i ENG prikaz.

@@ -122,6 +122,7 @@ export function Home({
         car: vehicleDescription(vehicle),
         vehicleId: vehicle.id,
         note: String(f.get("note")),
+        costSharing: f.get("costSharing") === "on",
       });
     } catch (e) {
       setError((e as Error).message);
@@ -221,9 +222,20 @@ export function Home({
                     rows={2}
                   />
                 </label>
+                <label className="cost-sharing-choice">
+                  <input type="checkbox" name="costSharing" />
+                  <span>
+                    <strong>{t("Očekujem dijeljenje troškova")}</strong>
+                    <small>
+                      {t(
+                        "Iznos i način podjele dogovorite prije potvrde vožnje. Plaćanje nije dio aplikacije.",
+                      )}
+                    </small>
+                  </span>
+                </label>
                 <div className="soft-note">
                   <Leaf size={17} />
-                  {t(" Jedno mjesto. Bez naplate. Bez obaveze skretanja. ")}
+                  {t(" Jedno mjesto. Jasan dogovor. Bez obaveze skretanja. ")}
                 </div>
               </div>
             )}
@@ -235,7 +247,7 @@ export function Home({
           <p className="search-footnote">
             <Leaf size={13} />{" "}
             {role === "passenger"
-              ? t("Besplatno. Zajedno do posla.")
+              ? t("Zajedno do posla. Troškovi su označeni na ponudi.")
               : t("Putnik prvo šalje zahtjev. Ti potvrđuješ dogovor.")}
           </p>
         </section>

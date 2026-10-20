@@ -912,3 +912,29 @@ test("routing failure falls back to exact locations and refuses an unconfirmed i
   assert.equal(rejected.status, 409);
   assert.equal(requests, 1, "outage is negatively cached");
 });
+
+test("cost-sharing flag defaults to false, persists true and rejects non-booleans", async () => {
+  const driver = await signup("Driver", "cost-driver@example.test"),
+    passenger = await signup();
+  for (const value of [undefined, false, true]) {
+    const offer = {
+      ...ride(),
+      ...(value === undefined ? {} : { costSharing: value }),
+    };
+    const result = await call("/rides", offer, driver.cookie);
+    assert.equal(result.status, 201);
+    assert.equal(result.data.ride.costSharing, value === true);
+    const detail = await call(
+      "/rides/" + result.data.ride.id,
+      null,
+      passenger.cookie,
+    );
+    assert.equal(detail.data.ride.costSharing, value === true);
+  }
+  for (const invalid of ["true", "false", 1, null])
+    assert.equal(
+      (await call("/rides", { ...ride(), costSharing: invalid }, driver.cookie))
+        .status,
+      400,
+    );
+});

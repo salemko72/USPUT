@@ -504,5 +504,17 @@
   "Područje Logavine · orijentaciona tačka, potvrdi tačno mjesto susreta": "Neighbourhood area · approximate point; confirm the exact meeting place",
   "Područje Kovačića · orijentaciona tačka, potvrdi tačno mjesto susreta": "Neighbourhood area · approximate point; confirm the exact meeting place",
   "Područje Širokače · orijentaciona tačka, potvrdi tačno mjesto susreta": "Neighbourhood area · approximate point; confirm the exact meeting place",
-  "Orijentir u pješačkoj zoni · nije potvrđeno mjesto zaustavljanja vozila": "Landmark in a pedestrian zone · not a confirmed vehicle stopping point"
+  "Orijentir u pješačkoj zoni · nije potvrđeno mjesto zaustavljanja vozila": "Landmark in a pedestrian zone · not a confirmed vehicle stopping point",
+  "Dogovor na tvom putu.": "An agreement along your way.",
+  "Dijelimo put": "Share the journey",
+  "Beta verzija. Bez plaćanja u aplikaciji i bez automatskog praćenja.": "Beta version. No in-app payments or automatic tracking.",
+  "Jedno mjesto. Jasan dogovor. Bez obaveze skretanja.": "One seat. A clear agreement. No obligation to take a detour.",
+  "Zajedno do posla. Troškovi su označeni na ponudi.": "To work, together. Cost sharing is shown on each ride.",
+  "Provjeri dijeljenje troškova na ponudi. Povratak se dogovara posebno.": "Check cost sharing on the ride. Arrange the return journey separately.",
+  "Očekujem dijeljenje troškova": "I expect to share costs",
+  "Iznos i način podjele dogovorite prije potvrde vožnje. Plaćanje nije dio aplikacije.": "Agree the amount and how to share it before confirming the ride. Payments are handled outside the app.",
+  "Dijeljenje troškova": "Cost sharing",
+  "Da": "Yes",
+  "Ne": "No",
+  "Označi da ili ne za dijeljenje troškova.": "Select yes or no for cost sharing."
 }

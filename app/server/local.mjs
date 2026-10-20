@@ -11,6 +11,15 @@ mkdirSync(data, { recursive: true });
 const sqlite = new DatabaseSync(resolve(data, "usput.sqlite"));
 sqlite.exec("PRAGMA journal_mode=WAL;");
 sqlite.exec(readFileSync(resolve(root, "server/schema.sql"), "utf8"));
+if (
+  !sqlite
+    .prepare("PRAGMA table_info(rides)")
+    .all()
+    .some((c) => c.name === "cost_sharing")
+)
+  sqlite.exec(
+    "ALTER TABLE rides ADD COLUMN cost_sharing INTEGER NOT NULL DEFAULT 0 CHECK(cost_sharing IN (0,1))",
+  );
 const env = {
   DB: adaptSqlite(sqlite),
   PHOTOS: localPhotoStorage(resolve(data, "photos")),

@@ -75,7 +75,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
         <div className="landing-perks">
           <span>
             <Leaf size={16} />
-            {t(" Besplatne vožnje ")}
+            {t(" Dijelimo put ")}
           </span>
           <span>
             <Sparkles size={16} />
@@ -354,7 +354,9 @@ export function Auth({
             </p>
           )}
           <p className="fine-print">
-            {t(" Beta verzija. Bez naplate i bez automatskog praćenja. ")}
+            {t(
+              " Beta verzija. Bez plaćanja u aplikaciji i bez automatskog praćenja. ",
+            )}
           </p>
         </div>
       </main>

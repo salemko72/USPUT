@@ -4162,3 +4162,41 @@ textarea::placeholder {
   padding: 10px;
   line-height: 1.5;
 }
+
+.cost-sharing-choice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 15px;
+  background: #f0f3e8;
+  border: 1px solid #e2e7d7;
+  border-radius: 16px;
+  margin: 14px 0;
+  cursor: pointer;
+}
+.cost-sharing-choice input {
+  width: 19px;
+  height: 19px;
+  accent-color: #577310;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.cost-sharing-choice span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  line-height: 1.5;
+}
+.cost-sharing-choice strong {
+  font-size: 13px;
+}
+.cost-sharing-choice small {
+  font-size: 11px;
+  color: #67705e;
+}
+.cost-sharing-summary {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0;
+  color: #505a45;
+}

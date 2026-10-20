@@ -113,6 +113,10 @@ export function RideCard({
         {ride.to.name}
       </div>
       {ride.match && <MatchSummary match={ride.match} />}
+      <p className="cost-sharing-summary">
+        {t("Dijeljenje troškova")}:{" "}
+        <strong>{t(ride.costSharing ? "Da" : "Ne")}</strong>
+      </p>
       <div className="ride-card-bottom">
         <div className="chips">
           <span>
@@ -201,7 +205,11 @@ export function Results({
             <Leaf size={19} />
             <div>
               <strong>{t("Malo bliže. Malo zajedno.")}</strong>
-              <p>{t("Vožnje su besplatne. Povratak se dogovara posebno.")}</p>
+              <p>
+                {t(
+                  "Provjeri dijeljenje troškova na ponudi. Povratak se dogovara posebno.",
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -412,7 +420,7 @@ export function RideDetails({
               </span>
               <span>
                 <Leaf size={16} />
-                {t(" Besplatno ")}
+                {t("Dijeljenje troškova")}: {t(ride.costSharing ? "Da" : "Ne")}
               </span>
             </div>
             {ride.note && <p className="driver-note">“{ride.note}”</p>}

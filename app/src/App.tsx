@@ -196,7 +196,7 @@ export default function App() {
           </h3>
           <span>
             <Leaf size={14} />
-            {t(" Besplatno, svaki put. ")}
+            {t(" Dogovor na tvom putu. ")}
           </span>
         </div>
         <div className="sidebar-bottom">

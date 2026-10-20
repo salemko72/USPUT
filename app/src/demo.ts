@@ -187,6 +187,7 @@ export const demoService: Service = {
       departure: Date.parse(q.date + "T" + q.time + ":00+02:00"),
       car: q.car,
       note: q.note,
+      costSharing: q.costSharing === true,
       status: "open",
       driver: state.user,
       createdAt: Date.now(),

@@ -42,6 +42,7 @@ export type Ride = {
   departure: number;
   car: string;
   note: string;
+  costSharing?: boolean;
   status: "open" | "matched" | "cancelled" | "completed";
   driver: User;
   createdAt: number;
@@ -55,7 +56,12 @@ export type Booking = {
   ride: Ride;
 };
 export type Search = { from: string; to: string; date: string; time: string };
-export type Offer = Search & { car: string; note: string; vehicleId?: string };
+export type Offer = Search & {
+  car: string;
+  note: string;
+  vehicleId?: string;
+  costSharing?: boolean;
+};
 export type MyRides = { rides: Ride[]; bookings: Booking[] };
 export type Service = {
   vehicle: () => Promise<Vehicle | null>;

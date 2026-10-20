@@ -1,0 +1,1 @@
+ALTER TABLE rides ADD COLUMN cost_sharing INTEGER NOT NULL DEFAULT 0 CHECK(cost_sharing IN (0,1));
