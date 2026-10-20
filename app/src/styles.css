@@ -4447,3 +4447,81 @@ b {
 .ride-card.selected .cost-sharing-summary {
   color: #f6f5f0;
 }
+
+/* Pending request stays visible by the driver, above the fold. */
+.driver-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.request-sent-indicator {
+  margin-left: auto;
+  flex: 0 0 52px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+.request-sent-symbol {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  background: #151815;
+  color: #d7f56a;
+}
+.request-sent-symbol::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid #151815;
+  border-radius: 18px;
+  pointer-events: none;
+  animation: request-signal 2.4s ease-out infinite;
+}
+.request-sent-symbol svg {
+  animation: request-envelope 2.4s ease-in-out infinite;
+}
+.request-sent-caption {
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #151815;
+}
+@keyframes request-envelope {
+  0%,
+  20%,
+  80%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  40% {
+    transform: translateY(-3px) rotate(-7deg);
+  }
+  60% {
+    transform: translateY(-3px) rotate(7deg);
+  }
+}
+@keyframes request-signal {
+  0%,
+  15% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.3;
+  }
+  85%,
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .request-sent-symbol::before,
+  .request-sent-symbol svg {
+    animation: none;
+  }
+}

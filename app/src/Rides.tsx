@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Clock3,
+  Mail,
   Car,
   UserRound,
   MapPin,
@@ -439,6 +440,23 @@ export function RideDetails({
                 <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
                 <p>{displayVehicleLabel(ride.car)}</p>
               </div>
+              {!own &&
+                booking?.status === "pending" &&
+                !inactive &&
+                !finished && (
+                  <span
+                    className="request-sent-indicator"
+                    role="status"
+                    aria-label={t("Zahtjev poslan — čeka se odgovor vozača.")}
+                  >
+                    <span className="request-sent-symbol" aria-hidden="true">
+                      <Mail size={22} strokeWidth={2} />
+                    </span>
+                    <span className="request-sent-caption" aria-hidden="true">
+                      {t("Poslano")}
+                    </span>
+                  </span>
+                )}
               {(confirmed || finished) && (
                 <span className="confirmed-icon">
                   <Check size={24} />
