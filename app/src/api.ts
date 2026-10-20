@@ -42,18 +42,21 @@ export const realService: Service = {
         "/rides?" + new URLSearchParams(q),
       )
     ).rides,
-  ride: async (id) =>
-    (await api<{ ride: Awaited<ReturnType<Service["ride"]>> }>("/rides/" + id))
-      .ride,
+  ride: async (id, query) =>
+    (
+      await api<{ ride: Awaited<ReturnType<Service["ride"]>> }>(
+        "/rides/" + id + (query ? "?" + new URLSearchParams(query) : ""),
+      )
+    ).ride,
   mine: () => api("/my-rides"),
   publish: async (q) =>
     (await api<{ ride: Awaited<ReturnType<Service["publish"]>> }>("/rides", q))
       .ride,
-  request: async (id) =>
+  request: async (id, query) =>
     (
       await api<{ booking: Awaited<ReturnType<Service["request"]>> }>(
         "/rides/" + id + "/request",
-        {},
+        query ? { search: query } : {},
       )
     ).booking,
   booking: async (id, action) => {

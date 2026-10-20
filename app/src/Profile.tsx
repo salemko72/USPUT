@@ -1,3 +1,5 @@
+import { OwnPhoto } from "./Photos";
+import { vehicleDescription } from "./VehicleManager";
 import { VehicleManager } from "./VehicleManager";
 import { useState } from "react";
 import {
@@ -9,7 +11,7 @@ import {
   RotateCcw,
   UserRound,
 } from "lucide-react";
-import type { Service, User } from "./types";
+import type { Service, User, Vehicle } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
 export function Profile({
   user,
@@ -31,7 +33,8 @@ export function Profile({
   const [name, setName] = useState(user.name),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [modal, setModal] = useState("");
+    [modal, setModal] = useState(""),
+    [vehicle, setVehicle] = useState<Vehicle | null>(null);
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -112,7 +115,14 @@ export function Profile({
               Sačuvaj promjene
             </Button>
           </form>
-          <VehicleManager service={service} />
+          <OwnPhoto kind="avatar" demo={demo} />
+          <VehicleManager service={service} onChange={setVehicle} />
+          <OwnPhoto
+            kind="vehicle"
+            demo={demo}
+            vehicleReady={!!vehicle}
+            vehicleLabel={vehicle ? vehicleDescription(vehicle) : ""}
+          />
           <button className="logout-button" onClick={logout} disabled={busy}>
             <LogOut size={18} />
             Odjavi se
@@ -184,6 +194,18 @@ export function Profile({
                 i dogovore. Email nije javno prikazan; ime i podaci o ponudi
                 jesu dostupni prijavljenim korisnicima. Dogovore vide samo
                 učesnici.
+              </p>
+              <p>
+                Ako dodaš fotografije, čuvamo samo male kompresovane kopije u
+                privatnom skladištu u EU. Saputnik ih može učitati tek nakon
+                potvrđenog dogovora; otkazivanje ili završetak ukida pristup.
+                Sliku možeš ukloniti u profilu. Već preuzetu kopiju nije moguće
+                povući.
+              </p>
+              <p>
+                Za procjenu kompatibilnih ruta OSRM servisu šaljemo koordinate
+                javnih probnih mjesta, bez tvog imena ili emaila. Vrijeme vožnje
+                je procjena bez podataka o gužvi.
               </p>
               <p>
                 Nema automatskog praćenja, naplate niti provjere identiteta.

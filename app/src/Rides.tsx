@@ -1,3 +1,4 @@
+import { ConnectionPhotos } from "./Photos";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -14,7 +15,15 @@ import {
   Leaf,
   X,
 } from "lucide-react";
-import type { Ride, Booking, Service, User, Search, MyRides } from "./types";
+import type {
+  Ride,
+  Booking,
+  Service,
+  User,
+  Search,
+  MyRides,
+  RouteMatch,
+} from "./types";
 import { dateLabel } from "./types";
 import {
   Avatar,
@@ -37,6 +46,29 @@ export const statusText: Record<string, string> = {
   open: "Slobodno mjesto",
   matched: "Dogovoreno",
 };
+const pickupTime = (value: number) =>
+  new Intl.DateTimeFormat("bs-BA", {
+    timeZone: "Europe/Sarajevo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(value);
+function MatchSummary({ match }: { match: RouteMatch }) {
+  return (
+    <div className="route-match-summary">
+      <strong>
+        Susret: {match.pickup.name} · oko {pickupTime(match.pickupAt)}
+      </strong>
+      <span>Izlazak: {match.dropoff.name}</span>
+      <span>
+        Vozaču +{match.extraMinutes} min · zajedno oko {match.rideMinutes} min
+      </span>
+      <small>
+        Cestovna procjena bez podataka o gužvi. Potvrdite gdje se može stati.
+      </small>
+    </div>
+  );
+}
 export function RideCard({
   ride,
   selected = false,
@@ -53,7 +85,9 @@ export function RideCard({
         <Avatar name={ride.driver.name} />
         <div className="ride-person">
           <strong>{ride.driver.name}</strong>
-          <span className="ride-time">{ride.time}</span>
+          <span className="ride-time">
+            {ride.match ? pickupTime(ride.match.pickupAt) : ride.time}
+          </span>
         </div>
         <span className="car-illustration">
           <Car strokeWidth={1.35} size={64} />
@@ -65,6 +99,7 @@ export function RideCard({
         <ArrowRight size={13} />
         {ride.to.name}
       </div>
+      {ride.match && <MatchSummary match={ride.match} />}
       <div className="ride-card-bottom">
         <div className="chips">
           <span>
@@ -188,8 +223,9 @@ export function Results({
             </Empty>
           )}
           <p className="fine-print">
-            Ponude se podudaraju po mjestu susreta i izlaska. Ovo još nije
-            spajanje po cestovnoj ruti.
+            {rides?.some((r) => r.match)
+              ? "Poredak uzima u obzir cestovnu rutu, dodatno vrijeme vozača i dolazak po tebe. Procjene ne uključuju gužvu. Izračun: OSRM / FOSSGIS, podaci © OpenStreetMap contributors."
+              : "Prikazana su podudaranja istih mjesta. Cestovni proračun trenutno nije dostupan ili je ovo demo."}
           </p>
         </section>
       </div>
@@ -198,6 +234,7 @@ export function Results({
 }
 export function RideDetails({
   id,
+  query,
   service,
   user,
   demo,
@@ -206,6 +243,7 @@ export function RideDetails({
   onToast,
 }: {
   id: string;
+  query?: Search;
   service: Service;
   user: User;
   demo: boolean;
@@ -220,13 +258,13 @@ export function RideDetails({
     [busy, setBusy] = useState(false),
     [cancel, setCancel] = useState(false);
   const load = useCallback(async () => {
-    const [r, m] = await Promise.all([service.ride(id), service.mine()]);
+    const [r, m] = await Promise.all([service.ride(id, query), service.mine()]);
     setRide(r);
     setBooking(
       m.bookings.find((b) => b.ride.id === id && b.passenger.id === user.id),
     );
     setRequests(m.bookings.filter((b) => b.ride.id === id));
-  }, [id, service, user.id]);
+  }, [id, service, user.id, query?.from, query?.to, query?.date, query?.time]);
   useEffect(() => {
     let alive = true;
     load().catch((e) => {
@@ -266,6 +304,15 @@ export function RideDetails({
       ride.status === "cancelled" ||
       booking?.status === "cancelled" ||
       booking?.status === "declined";
+  const agreed =
+    booking?.match ||
+    (own
+      ? requests.find((b) =>
+          ["accepted", "ready", "completed"].includes(b.status),
+        )?.match
+      : ride.match);
+  const pickup = agreed?.pickup || ride.from,
+    dropoff = agreed?.dropoff || ride.to;
   const title = finished
     ? "Lijep put. Hvala!"
     : inactive
@@ -291,24 +338,25 @@ export function RideDetails({
           </span>
           <h1>{title}</h1>
           <p>
-            {dateLabel(ride.date)} · {ride.time}
+            {dateLabel(ride.date)} ·{" "}
+            {agreed ? "Susret oko " + pickupTime(agreed.pickupAt) : ride.time}
           </p>
         </div>
       </header>
       <div className="details-layout">
         <section className="detail-map">
-          <RouteMap from={ride.from} to={ride.to} large />
+          <RouteMap from={pickup} to={dropoff} large />
           <div className="meeting-label">
             <MapPin size={19} />
             <div>
               <span>MJESTO SUSRETA</span>
-              <strong>{ride.from.name}</strong>
-              <p>{ride.from.detail}</p>
+              <strong>{pickup.name}</strong>
+              <p>{pickup.detail}</p>
             </div>
           </div>
           <p className="fine-print">
-            Mjesta su probni prijedlozi. Prije stvarne vožnje provjeri gdje je
-            sigurno stati.
+            Prikaz je skica, nije navigacija. Mjesta su probni prijedlozi. Prije
+            stvarne vožnje provjeri gdje je sigurno stati.
           </p>
         </section>
         <div className="details-info">
@@ -326,9 +374,11 @@ export function RideDetails({
               )}
             </div>
             <RouteLine from={ride.from.name} to={ride.to.name} />
+            {agreed && <MatchSummary match={agreed} />}
             <div className="ride-facts">
               <span>
                 <Clock3 size={16} />
+                {agreed ? "Polazak vozača " : ""}
                 {ride.time}
               </span>
               <span>
@@ -341,6 +391,19 @@ export function RideDetails({
             </div>
             {ride.note && <p className="driver-note">“{ride.note}”</p>}
           </section>
+          {(confirmed ||
+            (own &&
+              requests.some((b) =>
+                ["accepted", "ready"].includes(b.status),
+              ))) && (
+            <ConnectionPhotos
+              rideId={ride.id}
+              demo={demo}
+              ownDriver={own}
+              vehicleLabel={ride.car}
+              phase={booking?.status || requests.map((b) => b.status).join(",")}
+            />
+          )}
           <ErrorBox error={error} />
           {own ? (
             <section className="action-card driver-actions">
@@ -367,6 +430,7 @@ export function RideDetails({
                       <small>{statusText[b.status]}</small>
                     </span>
                   </div>
+                  {b.match && <MatchSummary match={b.match} />}
                   {b.status === "pending" && (
                     <div className="request-actions">
                       <button
@@ -541,7 +605,7 @@ export function RideDetails({
                 disabled={ride.status !== "open"}
                 onClick={() =>
                   action(async () => {
-                    await service.request(ride.id);
+                    await service.request(ride.id, query);
                   }, "Zahtjev je poslan vozaču.")
                 }
                 arrow

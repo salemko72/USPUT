@@ -83,3 +83,18 @@ Katalog je build-time snapshot `@meterapp/vehicle-db@2.19.1`, putnička vozila i
 D1 migracija `0002_vehicles.sql` je aditivna i primjenjuje se prije objave novog Workera. Lokalni Node runner kreira tabelu pri sljedećem startu. Novi browser testovi: `python tests/vehicle-browser.py` i `python tests/catalog-fallback-browser.py`. Backend suite sada ima 21 test.
 
 Google Client ID je usklađen u wrangler vars; `keep_vars: true` čuva dashboard varijable pri objavama. Client secret ostaje isključivo šifrovani Worker binding, nikad u ovom repozitoriju. Metapodaci potvrđuju konfiguraciju; stvarnu Google prijavu još mora potvrditi testni korisnik kroz preglednik.
+
+
+### Privatne fotografije i cestovno spajanje
+
+Profilna fotografija: WebP do 320×320 i 50 KiB. Fotografija auta: do 960 px i 150 KiB. Slika se ponovo kodira u pregledniku; izvorna fotografija, EXIF, GPS, XMP i profil boje se ne šalju. Animacija i dodatni metapodaci odbijaju se na serveru. Fotografije su opcionalne u beta verziji; nisu verifikacija identiteta.
+
+`PHOTOS` je privatni R2 bucket `usput-photos` u EU jurisdikciji, bez javnih URL-ova. D1 čuva samo metapodatke. Vlasnik može vidjeti svoju sliku; saputnik tek nakon prihvaćenog dogovora, dok je dogovor aktivan, najduže do 24 sata nakon polaska. Otkazivanje/završetak ukida API pristup. Zamjena/brisanje uklanja staru sliku; dnevni cron u 03:00 UTC čisti prekinute uploade. Odgovori koriste `private, no-store`. Već preuzetu kopiju/screenshot nije moguće povući. Demo slike ostaju u lokalnom pregledniku.
+
+`OSRM_URL` uključuje cestovnu matricu za deset probnih mjesta u Sarajevu. Lokalno je opcionalan; bez njega radi pretraga istih mjesta. Matrica se čuva 24 sata u D1; neuspjeh se pamti minutu. Atomska D1 rezervacija sprječava paralelne upstream pozive pri praznom kešu. Procjene su bez saobraćaja uživo. Spajanje poredi vozačev put sa putem preko ulaska/izlaska putnika, odbija suprotan smjer, nedostupne tačke, cestovne snapove dalje od 200 m, dodatak preko 10 minuta ili preko max(3 min, 50% izvornog trajanja), te vrijeme susreta izvan ±60 min. Izabrana mjesta i procjene ostaju uz zahtjev u `booking_routes`.
+
+Beta koristi javni OSRM/FOSSGIS demo za razumno nekomercijalno testiranje. Nema SLA i nije obećanje trajno besplatne infrastrukture. Prije komercijalnog ili većeg javnog lansiranja zamijeniti endpoint vlastitim OSRM servisom ili pružaocem s odgovarajućim uslovima. [Uslovi demo servisa](https://github.com/Project-OSRM/osrm-backend/wiki/Demo-server). Šalju se isključivo koordinate javnih probnih mjesta, bez korisničkog identiteta. Karta je označena skica; linija nije cestovna navigacija niti potvrda da je sigurno stati.
+
+Provjere: `npm test`, `npm run build`, `USPUT_TEST_URL=http://127.0.0.1:8788 python tests/photo-browser.py` i `tests/real-browser.py`. Testovi rutiranja koriste kontrolisanu matricu; nisu dokaz dostupnosti javnog OSRM servisa.
+
+Za test spajanja u pregledniku pokreni `node tests/routing-fixture.mjs`, zatim u drugom terminalu `PORT=8789 USPUT_DATA_DIR=/tmp/usput-road-e2e OSRM_URL=http://127.0.0.1:8790/ node server/local.mjs`, pa `python tests/routing-browser.py`. Fixture je isključivo sintetički testni servis i nikad se ne koristi na Cloudflareu.

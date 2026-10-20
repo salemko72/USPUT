@@ -4,9 +4,18 @@
   "workers_dev": true,
   "keep_vars": true,
   "vars": {
+    "OSRM_URL": "https://router.project-osrm.org/",
     "GOOGLE_CLIENT_ID": "673712683395-pfegs6i0rk1chqqqol98hup5gekokkh4.apps.googleusercontent.com",
   },
   "preview_urls": false,
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "usput-photos",
+      "jurisdiction": "eu",
+    },
+  ],
+  "triggers": { "crons": ["0 3 * * *"] },
   "main": "server/worker.mjs",
   "compatibility_date": "2026-10-20",
   "assets": {

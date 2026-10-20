@@ -1,3 +1,4 @@
+import { localPhotoStorage } from "./photo-storage.mjs";
 import { createServer } from "node:http";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync, existsSync, mkdirSync, statSync } from "node:fs";
@@ -12,6 +13,8 @@ sqlite.exec("PRAGMA journal_mode=WAL;");
 sqlite.exec(readFileSync(resolve(root, "server/schema.sql"), "utf8"));
 const env = {
   DB: adaptSqlite(sqlite),
+  PHOTOS: localPhotoStorage(resolve(data, "photos")),
+  OSRM_URL: process.env.OSRM_URL,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 };
@@ -32,7 +35,7 @@ export const securityHeaders = {
   "X-Frame-Options": "DENY",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 };
 const port = Number(process.env.PORT || 8787),
   host = process.env.HOST || "127.0.0.1";
@@ -48,7 +51,10 @@ const server = createServer(async (req, res) => {
       let length = 0;
       for await (const chunk of req) {
         length += chunk.length;
-        if (length > 16384) {
+        if (
+          length >
+          (url.pathname.startsWith("/api/photos/") ? 150 * 1024 : 16384)
+        ) {
           res.writeHead(413, { "Content-Type": "application/json" });
           res.end('{"error":"Prevelik zahtjev."}');
           return;

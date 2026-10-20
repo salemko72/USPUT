@@ -1,3 +1,5 @@
+import { readRoadMatrix, matchRoute } from "./routing.mjs";
+import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
 import { places, getPlace, departureMs } from "./places.mjs";
 const encoder = new TextEncoder();
@@ -132,6 +134,12 @@ export async function handleApi(request, env) {
     path = url.pathname.replace(/^\/api/, "");
   const db = env.DB;
   try {
+    if (path.startsWith("/photos/")) {
+      const user = await session(request, env);
+      if (!user) fail(401, "Prijavi se da nastaviš.");
+      if (request.method !== "GET") await rateLimit(db, "photo:" + user.id, 20);
+      return handlePhotoApi(request, env, user, path);
+    }
     if (!["GET", "HEAD"].includes(request.method)) {
       if (request.headers.get("Origin") !== url.origin)
         fail(403, "Zahtjev nije dozvoljen s ove stranice.");
@@ -515,6 +523,35 @@ export async function handleApi(request, env) {
     }
     if (path === "/rides" && method === "GET") {
       const q = url.searchParams;
+      const wanted = departureMs(q.get("date"), q.get("time"));
+      if (
+        env.OSRM_URL &&
+        getPlace(q.get("from")) &&
+        getPlace(q.get("to")) &&
+        Number.isFinite(wanted)
+      ) {
+        const matrix = await readRoadMatrix(env);
+        if (matrix) {
+          const candidates = (
+            await db
+              .prepare(
+                rideSelect +
+                  " WHERE r.status='open' AND r.departure>? AND r.driver_id<>? AND r.date=? AND r.departure<=? ORDER BY r.departure",
+              )
+              .bind(Date.now(), user.id, q.get("date"), wanted + 3600000)
+              .all()
+          ).results;
+          const rides = candidates
+            .map((r) => ({
+              ...rideView(r),
+              match: matchRoute(r, q.get("from"), q.get("to"), wanted, matrix),
+            }))
+            .filter((r) => r.match)
+            .sort((a, b) => a.match.score - b.match.score)
+            .slice(0, 60);
+          return json({ rides });
+        }
+      }
       let sql =
           rideSelect +
           " WHERE r.status='open' AND r.departure>? AND r.driver_id<>?",
@@ -555,7 +592,7 @@ export async function handleApi(request, env) {
       const rows = (
         await db
           .prepare(
-            "SELECT b.*,u.name AS passenger_name FROM bookings b JOIN users u ON u.id=b.passenger_id JOIN rides r ON r.id=b.ride_id WHERE b.passenger_id=? OR r.driver_id=? ORDER BY b.created_at DESC LIMIT 200",
+            "SELECT b.*,br.match_json,u.name AS passenger_name FROM bookings b JOIN users u ON u.id=b.passenger_id JOIN rides r ON r.id=b.ride_id LEFT JOIN booking_routes br ON br.booking_id=b.id WHERE b.passenger_id=? OR r.driver_id=? ORDER BY b.created_at DESC LIMIT 200",
           )
           .bind(user.id, user.id)
           .all()
@@ -567,6 +604,7 @@ export async function handleApi(request, env) {
           id: b.id,
           status: b.status,
           passenger: { id: b.passenger_id, name: b.passenger_name },
+          match: b.match_json ? JSON.parse(b.match_json) : undefined,
           ride: rideView(r),
         });
       }
@@ -577,7 +615,22 @@ export async function handleApi(request, env) {
       const r = await readRide(db, rideMatch[1]);
       if (!r) fail(404, "Vožnja nije pronađena.");
       const action = rideMatch[2];
-      if (!action && method === "GET") return json({ ride: rideView(r) });
+      if (!action && method === "GET") {
+        const q = url.searchParams,
+          wanted = departureMs(q.get("date"), q.get("time"));
+        let match;
+        if (
+          r.driver_id !== user.id &&
+          getPlace(q.get("from")) &&
+          getPlace(q.get("to")) &&
+          Number.isFinite(wanted)
+        ) {
+          const matrix = await readRoadMatrix(env);
+          if (matrix)
+            match = matchRoute(r, q.get("from"), q.get("to"), wanted, matrix);
+        }
+        return json({ ride: { ...rideView(r), match } });
+      }
       if (action === "cancel" && method === "POST") {
         if (r.driver_id !== user.id)
           fail(403, "Samo vozač može otkazati ponudu.");
@@ -604,18 +657,49 @@ export async function handleApi(request, env) {
           fail(400, "Ne možeš tražiti vlastitu vožnju.");
         if (r.status !== "open" || r.departure <= Date.now())
           fail(409, "Ova vožnja više nije dostupna.");
+        let routeMatch = null;
+        if (body.search) {
+          const q = body.search,
+            wanted = departureMs(q.date, q.time);
+          if (
+            !getPlace(q.from) ||
+            !getPlace(q.to) ||
+            !Number.isFinite(wanted) ||
+            q.date !== r.date
+          )
+            fail(400, "Pretraga rute nije ispravna.");
+          const matrix = await readRoadMatrix(env);
+          if (matrix) routeMatch = matchRoute(r, q.from, q.to, wanted, matrix);
+          if (!routeMatch && (q.from !== r.from_id || q.to !== r.to_id))
+            fail(409, "Ovu rutu sada ne možemo potvrditi. Ponovi pretragu.");
+          if (matrix && !routeMatch)
+            fail(
+              409,
+              "Vrijeme ili ruta više se ne podudaraju. Ponovi pretragu.",
+            );
+        }
         const existing = await db
           .prepare("SELECT id FROM bookings WHERE ride_id=? AND passenger_id=?")
           .bind(r.id, user.id)
           .first();
         if (existing) fail(409, "Za ovu vožnju već postoji tvoj zahtjev.");
         const id = crypto.randomUUID();
-        await db
-          .prepare(
-            "INSERT INTO bookings(id,ride_id,passenger_id,status,created_at) SELECT ?,?,?,'pending',? WHERE EXISTS(SELECT 1 FROM rides WHERE id=? AND status='open' AND departure>?)",
-          )
-          .bind(id, r.id, user.id, Date.now(), r.id, Date.now())
-          .run();
+        const inserts = [
+          db
+            .prepare(
+              "INSERT INTO bookings(id,ride_id,passenger_id,status,created_at) SELECT ?,?,?,'pending',? WHERE EXISTS(SELECT 1 FROM rides WHERE id=? AND status='open' AND departure>?)",
+            )
+            .bind(id, r.id, user.id, Date.now(), r.id, Date.now()),
+        ];
+        if (routeMatch)
+          inserts.push(
+            db
+              .prepare(
+                "INSERT INTO booking_routes(booking_id,match_json) SELECT ?,? WHERE EXISTS(SELECT 1 FROM bookings WHERE id=?)",
+              )
+              .bind(id, JSON.stringify(routeMatch), id),
+          );
+        await db.batch(inserts);
         const b = await readBooking(db, id);
         if (!b) fail(409, "Vožnja više nije dostupna.");
         return json(
@@ -625,6 +709,7 @@ export async function handleApi(request, env) {
               status: "pending",
               ride: rideView(r),
               passenger: publicUser(user),
+              match: routeMatch,
             },
           },
           201,

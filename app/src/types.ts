@@ -19,7 +19,17 @@ export type Place = {
   lat: number;
   lng: number;
 };
+export type RouteMatch = {
+  pickup: Place;
+  dropoff: Place;
+  pickupAt: number;
+  extraMinutes: number;
+  rideMinutes: number;
+  source: "osrm";
+  score: number;
+};
 export type Ride = {
+  match?: RouteMatch | null;
   id: string;
   from: Place;
   to: Place;
@@ -33,6 +43,7 @@ export type Ride = {
   createdAt: number;
 };
 export type Booking = {
+  match?: RouteMatch;
   id: string;
   status:
     "pending" | "accepted" | "declined" | "ready" | "cancelled" | "completed";
@@ -47,10 +58,10 @@ export type Service = {
   saveVehicle: (v: VehicleInput) => Promise<Vehicle>;
   places: () => Promise<Place[]>;
   search: (q: Search) => Promise<Ride[]>;
-  ride: (id: string) => Promise<Ride>;
+  ride: (id: string, query?: Search) => Promise<Ride>;
   mine: () => Promise<MyRides>;
   publish: (q: Offer) => Promise<Ride>;
-  request: (id: string) => Promise<Booking>;
+  request: (id: string, query?: Search) => Promise<Booking>;
   booking: (id: string, action: string) => Promise<void>;
   cancelRide: (id: string) => Promise<void>;
   profile: (name: string) => Promise<User>;

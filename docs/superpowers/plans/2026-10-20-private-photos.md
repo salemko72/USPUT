@@ -1,0 +1,10 @@
+# Private optimized photos
+
+User approved small modern-compressed pictures delivered after ride acceptance. Implement owner-managed avatar and vehicle photos, privately stored outside SQL. R2 permission was added and read access now succeeds. No reuse of the OAuth secret exposed in chat; never copy any secret into code.
+
+- Browser creates a new WebP: avatar square up to320px/50KiB, vehicle fit within960px/150KiB. Show the exact compressed preview before saving. Originals and EXIF/GPS never uploaded. Avoid external image services and peer-to-peer complexity.
+- Server checks actual RIFF/WebP structure, dimensions, size, no EXIF/XMP/animation, authenticated owner and same origin; bounded streaming reads. Private R2 EU bucket PHOTOS, local filesystem adapter. SQL contains metadata only.
+- Only active accepted/ready matches can access counterpart images; completed/cancelled/declined/pending/anonymous/other users cannot. Own images always accessible. Vehicle photo must match ride's saved vehicle label; replacing vehicle details cannot expose a mismatched picture. No public bucket URLs. Private no-store image responses, never persist counterpart images in app storage.
+- Owner can replace/remove photos; metadata revocation immediate, old R2 objects deleted after replacement/removal, daily cleanup retries retired uploads and pending >1h. Temporary display previews revoke blob URLs. Upload limits20/15min per owner.
+- Add avatar/car controls to profile and recognition panel to confirmed ride. Demo photos remain separate in browser, with explicit local-storage errors. Existing accounts and rides continue without mandatory photos in this beta; originals, IDs, face verification, plate collection and production approval are out of scope.
+- Tests first for WebP policy, ownership, acceptance-only access, cancellation revocation, deletion, replacement, storage failure. Browser verifies re-encode from metadata-bearing JPEG, privacy statuses, preview and local photo controls. Full regression/build and fresh review before deploying only USPUT Worker and bucket.

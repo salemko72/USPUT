@@ -256,6 +256,7 @@ export const demoService: Service = {
   },
 };
 export function resetDemo() {
+  localStorage.removeItem("usput-demo-photos-v1");
   state = initial();
   persist();
 }

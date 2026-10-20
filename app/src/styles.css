@@ -3639,3 +3639,287 @@ textarea::placeholder {
     height: 47px;
   }
 }
+/* Small private recognition photos; originals never leave the device. */
+.own-photo {
+  margin-top: 25px;
+  padding-top: 23px;
+  border-top: 1px solid var(--line);
+}
+.own-photo > header,
+.connection-photos > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #7b846d;
+  margin-bottom: 18px;
+}
+.own-photo .eyebrow,
+.connection-photos .eyebrow {
+  font-size: 8px;
+  letter-spacing: 1.2px;
+}
+.own-photo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.own-photo-row > img,
+.photo-placeholder {
+  width: 76px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+.own-photo-row > img.round,
+.photo-placeholder.round {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+}
+.photo-placeholder {
+  display: grid;
+  place-items: center;
+  background: #eef1e5;
+  color: #91a174;
+}
+.own-photo-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.own-photo-row strong {
+  font-size: 12px;
+  line-height: 1.5;
+  display: block;
+}
+.own-photo-row p {
+  font-size: 9px;
+  color: #8b937f;
+  line-height: 1.7;
+  margin: 6px 0 10px;
+}
+.photo-file-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 750;
+  position: relative;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+.photo-file-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.photo-file-button.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.photo-file-button:focus-within {
+  outline: 3px solid #90a74e;
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+.photo-remove {
+  background: transparent;
+  color: #929b85;
+  padding: 6px;
+  flex-shrink: 0;
+  border-radius: 9px;
+}
+.photo-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 8px;
+  color: #929a86;
+  line-height: 1.7;
+  margin-top: 16px;
+}
+.photo-loading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: #7c8969;
+  margin-top: 15px;
+}
+.photo-preflight {
+  display: block;
+  max-height: 290px;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 0 auto 18px;
+  border-radius: 20px;
+  background: #e9eddf;
+}
+.photo-preflight.round {
+  border-radius: 50%;
+  width: 190px;
+  height: 190px;
+  object-fit: cover;
+}
+.photo-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0 22px;
+}
+.photo-stats span {
+  font-size: 10px;
+  background: #eaf1d8;
+  color: #687950;
+  border-radius: 20px;
+  padding: 6px 10px;
+}
+.photo-zoom {
+  display: block;
+  max-height: 65svh;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 18px;
+}
+.connection-photos {
+  margin: 0 0 20px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+.recognition-person {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.recognition-person button {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 50%;
+  height: 62px;
+  width: 62px;
+  flex-shrink: 0;
+}
+.recognition-person img {
+  height: 62px;
+  width: 62px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #eaf3d3;
+}
+.recognition-person strong {
+  font-size: 12px;
+  display: block;
+}
+.recognition-person p {
+  font-size: 9px;
+  color: #8a947c;
+  line-height: 1.7;
+  margin-top: 6px;
+}
+.recognition-car {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: #e9eddf;
+  border-radius: 18px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+.recognition-car > img {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  display: block;
+}
+.recognition-car > span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffffe8;
+  padding: 8px 11px;
+  font-size: 9px;
+  font-weight: 750;
+  border-radius: 30px;
+}
+.recognition-no-car {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  background: #f3f5ec;
+  border-radius: 14px;
+  color: #8c987d;
+}
+.recognition-no-car p {
+  font-size: 10px;
+  line-height: 1.7;
+}
+.connection-photos > .fine-print {
+  font-size: 8px;
+  margin: 16px 0 0;
+  line-height: 1.7;
+}
+@media (max-width: 700px) {
+  .own-photo-row {
+    gap: 12px;
+  }
+  .own-photo-row strong {
+    font-size: 11px;
+  }
+  .own-photo-row > img,
+  .photo-placeholder {
+    width: 64px;
+    height: 58px;
+  }
+  .own-photo-row > img.round,
+  .photo-placeholder.round {
+    width: 58px;
+    height: 58px;
+  }
+  .photo-remove {
+    padding: 3px;
+  }
+  .photo-privacy {
+    font-size: 8px;
+  }
+  .connection-photos {
+    padding: 20px;
+    border-radius: 24px;
+  }
+  .recognition-car > img {
+    height: 170px;
+  }
+}
+
+.route-match-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  background: var(--lime, #d6fa59);
+  color: #20251d;
+  border-radius: 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.route-match-summary small {
+  opacity: 0.75;
+  font-size: 11px;
+}

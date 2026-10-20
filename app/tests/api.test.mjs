@@ -622,3 +622,293 @@ test("saved vehicle is owner-authorized when publishing and ride retains its sna
   const r = await call("/rides/" + published.data.ride.id, null, other.cookie);
   assert.equal(r.data.ride.car, published.data.ride.car);
 });
+// Structurally valid WebP header fixture for storage/access tests; browser tests use real encoded images.
+function webpFixture(width = 320, height = 320) {
+  const data = new Uint8Array(30);
+  const view = new DataView(data.buffer);
+  data.set(new TextEncoder().encode("RIFF"), 0);
+  view.setUint32(4, 22, true);
+  data.set(new TextEncoder().encode("WEBPVP8L"), 8);
+  view.setUint32(16, 10, true);
+  data[20] = 0x2f;
+  view.setUint32(21, ((height - 1) << 14) | (width - 1), true);
+  return data;
+}
+function photoStore() {
+  const files = new Map();
+  return {
+    files,
+    async put(key, bytes) {
+      files.set(key, new Uint8Array(bytes));
+    },
+    async get(key) {
+      const bytes = files.get(key);
+      return bytes ? { body: bytes } : null;
+    },
+    async delete(keys) {
+      for (const key of Array.isArray(keys) ? keys : [keys]) files.delete(key);
+    },
+  };
+}
+async function upload(
+  kind,
+  cookie,
+  bytes = webpFixture(),
+  origin = "http://localhost:8787",
+) {
+  const r = await handleApi(
+    new Request("http://localhost:8787/api/photos/" + kind, {
+      method: "POST",
+      headers: { Cookie: cookie, Origin: origin, "Content-Type": "image/webp" },
+      body: bytes,
+    }),
+    env,
+  );
+  return { status: r.status, data: await r.json() };
+}
+async function imageGet(id, cookie = "") {
+  return handleApi(
+    new Request("http://localhost:8787/api/photos/" + id, {
+      headers: { Cookie: cookie },
+    }),
+    env,
+  );
+}
+test("private photo uploads require login and valid WebP; metadata only stored in SQL", async () => {
+  env.PHOTOS = photoStore();
+  const u = await signup();
+  assert.equal((await upload("avatar", "")).status, 401);
+  assert.equal(
+    (await upload("avatar", u.cookie, new Uint8Array([1, 2, 3]))).status,
+    400,
+  );
+  assert.equal(
+    (await upload("avatar", u.cookie, webpFixture(), "https://evil.test"))
+      .status,
+    403,
+  );
+  const r = await upload("avatar", u.cookie);
+  assert.equal(r.status, 201);
+  assert.equal(r.data.photo.bytes, 30);
+  const img = await imageGet(r.data.photo.id, u.cookie);
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get("Content-Type"), "image/webp");
+  assert.match(img.headers.get("Cache-Control"), /no-store/);
+  assert.equal(env.PHOTOS.files.size, 1);
+  assert.equal((await imageGet(r.data.photo.id)).status, 401);
+});
+test("photo access starts only after driver acceptance and is revoked on cancellation", async () => {
+  env.PHOTOS = photoStore();
+  const driver = await signup("Amar", "amar@example.test"),
+    passenger = await signup(),
+    other = await signup("Other", "other@example.test");
+  const photo = await upload("avatar", driver.cookie);
+  const r = await call("/rides", ride(), driver.cookie);
+  const b = await call(
+    `/rides/${r.data.ride.id}/request`,
+    {},
+    passenger.cookie,
+  );
+  assert.equal(
+    (await imageGet(photo.data.photo.id, passenger.cookie)).status,
+    404,
+  );
+  await call(`/bookings/${b.data.booking.id}/accept`, {}, driver.cookie);
+  assert.equal(
+    (await imageGet(photo.data.photo.id, passenger.cookie)).status,
+    200,
+  );
+  assert.equal((await imageGet(photo.data.photo.id, other.cookie)).status, 404);
+  await call(`/bookings/${b.data.booking.id}/cancel`, {}, passenger.cookie);
+  assert.equal(
+    (await imageGet(photo.data.photo.id, passenger.cookie)).status,
+    404,
+  );
+});
+test("photo replacement and deletion revoke old IDs and clean object storage", async () => {
+  env.PHOTOS = photoStore();
+  const u = await signup();
+  const a = await upload("avatar", u.cookie),
+    b = await upload("avatar", u.cookie);
+  assert.equal((await imageGet(a.data.photo.id, u.cookie)).status, 404);
+  assert.equal(env.PHOTOS.files.size, 1);
+  assert.equal(
+    (await call("/photos/me", null, u.cookie)).data.avatar.id,
+    b.data.photo.id,
+  );
+  assert.equal((await call("/photos/avatar/remove", {}, u.cookie)).status, 200);
+  assert.equal((await imageGet(b.data.photo.id, u.cookie)).status, 404);
+  assert.equal(env.PHOTOS.files.size, 0);
+});
+test("failed storage upload preserves existing active photo", async () => {
+  env.PHOTOS = photoStore();
+  const u = await signup();
+  const a = await upload("avatar", u.cookie);
+  env.PHOTOS.put = async () => {
+    throw Error("storage unavailable");
+  };
+  assert.equal((await upload("avatar", u.cookie)).status, 503);
+  assert.equal((await imageGet(a.data.photo.id, u.cookie)).status, 200);
+});
+test("vehicle photo is not shared for a different saved vehicle description", async () => {
+  env.PHOTOS = photoStore();
+  const driver = await signup("Amar", "amar@example.test"),
+    passenger = await signup();
+  assert.equal((await upload("vehicle", driver.cookie)).status, 400);
+  const v = await call(
+    "/vehicle",
+    { makeId: "volkswagen", model: "Golf", color: "siva" },
+    driver.cookie,
+  );
+  const p = await upload("vehicle", driver.cookie, webpFixture(800, 600));
+  assert.equal(p.status, 201);
+  const r = await call(
+    "/rides",
+    { ...ride(), vehicleId: v.data.vehicle.id },
+    driver.cookie,
+  );
+  const b = await call(
+    `/rides/${r.data.ride.id}/request`,
+    {},
+    passenger.cookie,
+  );
+  await call(`/bookings/${b.data.booking.id}/accept`, {}, driver.cookie);
+  assert.equal((await imageGet(p.data.photo.id, passenger.cookie)).status, 200);
+  await call(
+    "/vehicle",
+    { makeId: "volkswagen", model: "Golf", color: "crna" },
+    driver.cookie,
+  );
+  const next = await upload("vehicle", driver.cookie, webpFixture(800, 600));
+  assert.equal(
+    (await imageGet(next.data.photo.id, passenger.cookie)).status,
+    404,
+  );
+});
+test("removing while upload is in flight prevents later republishing or orphan object", async () => {
+  env.PHOTOS = photoStore();
+  const u = await signup();
+  let release, arrive;
+  const gate = new Promise((r) => (release = r)),
+    reached = new Promise((r) => (arrive = r));
+  const original = env.PHOTOS.put;
+  env.PHOTOS.put = async (...args) => {
+    arrive();
+    await gate;
+    return original(...args);
+  };
+  const pending = upload("avatar", u.cookie);
+  await reached;
+  assert.equal((await call("/photos/avatar/remove", {}, u.cookie)).status, 200);
+  release();
+  assert.equal((await pending).status, 409);
+  assert.equal((await call("/photos/me", null, u.cookie)).data.avatar, null);
+  assert.equal(env.PHOTOS.files.size, 0);
+});
+test("cleanup claims stale pending upload before deleting so it cannot become active", async () => {
+  const { cleanupPhotos } = await import("../server/photos.mjs");
+  env.PHOTOS = photoStore();
+  const u = await signup();
+  let release, arrive;
+  const gate = new Promise((r) => (release = r)),
+    reached = new Promise((r) => (arrive = r));
+  const original = env.PHOTOS.put;
+  env.PHOTOS.put = async (...args) => {
+    arrive();
+    await gate;
+    return original(...args);
+  };
+  const pending = upload("avatar", u.cookie);
+  await reached;
+  sqlite.prepare("UPDATE photos SET created_at=?").run(Date.now() - 7200000);
+  await cleanupPhotos(env);
+  release();
+  assert.equal((await pending).status, 409);
+  assert.equal((await call("/photos/me", null, u.cookie)).data.avatar, null);
+  assert.equal(env.PHOTOS.files.size, 0);
+});
+
+test("road search finds an intermediate pickup and saves the same agreement for both users", async () => {
+  const { places } = await import("../server/places.mjs");
+  let requests = 0;
+  env.OSRM_URL = "https://routing.example.test/";
+  env.ROUTING_FETCH = async () => {
+    requests++;
+    return new Response(
+      JSON.stringify({
+        code: "Ok",
+        sources: places.map(() => ({ distance: 1 })),
+        destinations: places.map(() => ({ distance: 1 })),
+        durations: places.map((_, i) =>
+          places.map((_, j) => Math.abs(i - j) * 120),
+        ),
+      }),
+    );
+  };
+  const driver = await signup("Driver", "road-driver@example.test"),
+    passenger = await signup();
+  const offer = { ...ride(), from: "ilidza", to: "centar" };
+  const published = await call("/rides", offer, driver.cookie);
+  assert.equal(published.status, 201);
+  // Earlier unrelated offers must not truncate away the compatible route.
+  for (let i = 0; i < 205; i++)
+    sqlite
+      .prepare(
+        "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,created_at) SELECT ?,driver_id,'centar','ilidza',date,'05:00',departure-7200000,car,note,created_at FROM rides WHERE id=?",
+      )
+      .run("unrelated-" + i, published.data.ride.id);
+  const search = {
+    from: "otoka",
+    to: "marijin",
+    date: offer.date,
+    time: offer.time,
+  };
+  const results = await call(
+    "/rides?" + new URLSearchParams(search),
+    null,
+    passenger.cookie,
+  );
+  assert.equal(results.data.rides.length, 1);
+  const match = results.data.rides[0].match;
+  assert.equal(match.pickup.id, "otoka");
+  assert.equal(match.dropoff.id, "marijin");
+  assert.equal(match.extraMinutes, 0);
+  const booking = await call(
+    "/rides/" + published.data.ride.id + "/request",
+    { search },
+    passenger.cookie,
+  );
+  assert.equal(booking.status, 201);
+  for (const cookie of [driver.cookie, passenger.cookie]) {
+    const mine = await call("/my-rides", null, cookie);
+    assert.deepEqual(mine.data.bookings[0].match, match);
+  }
+  assert.equal(requests, 1, "search and booking reuse the cached road matrix");
+});
+
+test("routing failure falls back to exact locations and refuses an unconfirmed intermediate pickup", async () => {
+  env.OSRM_URL = "https://routing.example.test/";
+  let requests = 0;
+  env.ROUTING_FETCH = async () => {
+    requests++;
+    throw Error("offline");
+  };
+  const driver = await signup("Driver", "offline-driver@example.test"),
+    passenger = await signup();
+  const offer = ride(),
+    published = await call("/rides", offer, driver.cookie);
+  const results = await call(
+    "/rides?" + new URLSearchParams(offer),
+    null,
+    passenger.cookie,
+  );
+  assert.equal(results.data.rides.length, 1);
+  assert.equal(results.data.rides[0].match, undefined);
+  const rejected = await call(
+    "/rides/" + published.data.ride.id + "/request",
+    { search: { ...offer, from: "otoka" } },
+    passenger.cookie,
+  );
+  assert.equal(rejected.status, 409);
+  assert.equal(requests, 1, "outage is negatively cached");
+});

@@ -276,12 +276,21 @@ export default function App() {
               service={service}
               query={query}
               onBack={() => go("home")}
-              onRide={(id) => go("ride/" + id)}
+              onRide={(id) =>
+                go("ride/" + id + "?" + new URLSearchParams(query))
+              }
             />
           ) : path.startsWith("ride/") ? (
             <RideDetails
               key={path}
-              id={path.slice(5)}
+              id={path.slice(5).split("?")[0]}
+              query={
+                path.includes("?")
+                  ? (Object.fromEntries(
+                      new URLSearchParams(path.split("?")[1]),
+                    ) as Search)
+                  : undefined
+              }
               service={service}
               user={user}
               demo={demo}

@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS routing_cache(id TEXT PRIMARY KEY,payload TEXT NOT NULL,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS booking_routes(booking_id TEXT PRIMARY KEY REFERENCES bookings(id),match_json TEXT NOT NULL);
