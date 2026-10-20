@@ -1,3 +1,4 @@
+import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
 import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "./types";
@@ -33,14 +34,7 @@ export function RouteMap({
           zoomControl: false,
           scrollWheelZoom: false,
         });
-        const tiles = L.tileLayer(
-          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {
-            attribution:
-              '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
-            maxZoom: 18,
-          },
-        );
+        const tiles = L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS);
         let errors = 0;
         tiles.on("tileerror", () => {
           if (++errors > 3) setFailed(true);

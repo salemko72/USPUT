@@ -1,3 +1,4 @@
+import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Search, Move } from "lucide-react";
 import type { Place } from "./types";
@@ -39,10 +40,7 @@ export function PinMap({
               iconAnchor: [14, 28],
             }),
           }).addTo(map);
-        const tiles = L.tileLayer(
-          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          { attribution: "© OpenStreetMap contributors", maxZoom: 19 },
-        ).addTo(map);
+        const tiles = L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS).addTo(map);
         tiles.on("tileload", () => onReady?.(true));
         tiles.on("tileerror", () => {
           setFailed(true);
