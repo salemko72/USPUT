@@ -107,3 +107,9 @@ BHS i ENG prekidač je dostupan prije i nakon prijave. Izbor se pamti u pregledn
 Datum je uvijek `dd.MM.yyyy`, sedmica počinje ponedjeljkom, vrijeme je 00–23. Vlastiti pristupačni date/time popoveri zamjenjuju nepouzdani prozirni native picker. API i baza zadržavaju ISO datum i `HH:mm`. Dodano: `tests/calendar-browser.py`, `tests/language-auth-browser.py`, `tests/place-browser.py`.
 
 Bistrik, Alifakovac (pretraga prihvata i Alfakovac), Baščaršija, Logavina, Katedrala, Kovačići i Širokača su nova područja/orijentiri. Njihove koordinate su približne orijentacione tačke, nisu potvrđeni pinovi za ukrcavanje. Katedrala je označena kao pješačka zona. Grad i zemlja su metapodaci, a Sarajevo ostaje ograničenje testne pokrivenosti. Za regiju, GPS/ručni pin, stvarni pješački put i izbor 5/10/15 minuta vidi `../docs/superpowers/specs/2026-10-20-location-meeting-design.md`; taj dio je razrađen prijedlog, ne aktivan pješački filter.
+
+## Kerim za probu pretrage
+
+Na zahtjev vlasnika dodan je `Kerim (demo)`, izmišljeni profil bez lozinke i mogućnosti prijave, s crvenim Volkswagen Golfom 5. U objavljenoj beta bazi ima 365 ponuda Baščaršija → Ilidža, svaki dan uključujući vikende, od 21.10.2026. do 20.10.2027. u 07:30 po vremenu Sarajeva. Svaka ponuda jasno je označena DEMO / TEST. Nema automatskog prihvatanja zahtjeva.
+
+Reproduktivni SQL generator: `node scripts/seed-kerim.mjs /tmp/kerim.sql`. Generiše narednih godinu dana od sutra, koristi DST-aware `departureMs` i stabilne ID-eve; ponovno pokretanje ne duplira ponude niti resetuje postojeće dogovore. Generator nije javni API i ne mijenja ograničenje obične objave na 90 dana. SQL primjenjivati samo na izričito odabranu testnu beta bazu.
