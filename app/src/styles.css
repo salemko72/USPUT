@@ -4411,3 +4411,16 @@ textarea::placeholder {
 .location-scope > small {
   display: block;
 }
+
+/* Consistent title and field-label weight across every screen and breakpoint. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.field-label,
+.street-label,
+.walking-budget {
+  font-weight: 700;
+}
