@@ -1,7 +1,7 @@
 import { t } from "./i18n";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource-variable/manrope";
+import "@fontsource-variable/montserrat";
 import App from "./App";
 import "./styles.css";
 class ErrorBoundary extends React.Component<

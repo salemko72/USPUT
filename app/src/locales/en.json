@@ -563,5 +563,6 @@
   "Pin uz trasu; zajedno potvrdite pješački prilaz i gdje se može stati.": "A pin along the route; agree the walking access and where stopping is possible.",
   "Za pretragu adresa šaljemo unesenu ulicu i grad geokoderu. Za putanje šaljemo koordinate servisu za cestovno i pješačko rutiranje, bez tvog imena ili emaila. Objavljena ponuda prikazuje približne lokacije koje potvrdiš.": "Address search sends the street and city to a geocoder. Road and walking directions send coordinates to a routing service, without your name or email. Published offers show the approximate locations you confirm.",
   "Potvrdi polazište i odredište.": "Confirm the departure and destination.",
-  "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.": "Road or walking directions are currently unavailable. Search again."
+  "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.": "Road or walking directions are currently unavailable. Search again.",
+  "Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.": "More flexibility, more chances to find a ride. Being open to a slightly different time or a nearby meeting point can help you find someone to travel with."
 }

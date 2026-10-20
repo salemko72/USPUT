@@ -1,9 +1,9 @@
 :root {
-  font-family: "Manrope Variable", Manrope, Arial, sans-serif;
+  font-family: "Montserrat Variable", Montserrat, Arial, sans-serif;
   color: #151815;
   background: #f6f5f0;
   font-synthesis: none;
-  font-weight: 450;
+  font-weight: 400;
   font-size: 14px;
   --lime: #d7f56a;
   --ink: #151815;
@@ -76,7 +76,7 @@ p {
 h1,
 h2,
 h3 {
-  letter-spacing: -0.06em;
+  letter-spacing: -0.04em;
   font-weight: 800;
   line-height: 1.09;
 }
@@ -634,7 +634,7 @@ input[type="checkbox"] {
 input::placeholder,
 textarea::placeholder {
   color: #9b9d93;
-  font-weight: 450;
+  font-weight: 400;
 }
 .input-wrap button {
   padding: 9px 0 9px 8px;
@@ -4372,3 +4372,14 @@ textarea::placeholder {
   overflow-wrap: anywhere;
 }
 .route-provider-credit{position:absolute;top:12px;left:12px;max-width:65%;padding:5px 8px;background:#fffffff0;border-radius:8px;font-size:9px;z-index:500;}
+
+.search-flexibility-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: #f0f3e8;
+  border-radius: 16px;
+  color: #414938;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.65;
+}

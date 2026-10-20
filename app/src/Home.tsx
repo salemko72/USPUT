@@ -327,6 +327,11 @@ export function Home({
                 : t("Tvoja ruta. Tvoje vrijeme. Jedan saputnik.")}
             </p>
           </div>
+          {role === "passenger" && (
+            <p className="search-flexibility-note">
+              {t("Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.")}
+            </p>
+          )}
           <form onSubmit={submit}>
             <SearchFields value={query} onChange={setQuery} places={places} />
             {role === "passenger" && (
