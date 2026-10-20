@@ -29,7 +29,14 @@ export type RouteMatch = {
   pickupAt: number;
   extraMinutes: number;
   rideMinutes: number;
-  source: "osrm";
+  source: "osrm" | "osrm-corridor";
+  geometry?: number[][];
+  walkToGeometry?: number[][];
+  walkFromGeometry?: number[][];
+  walkToMinutes?: number;
+  walkFromMinutes?: number;
+  walkingLimit?: number;
+  provider?: string;
   score: number;
 };
 export type Ride = {
@@ -43,6 +50,8 @@ export type Ride = {
   car: string;
   note: string;
   costSharing?: boolean;
+  geometry?: number[][];
+  routeProvider?: string;
   status: "open" | "matched" | "cancelled" | "completed";
   driver: User;
   createdAt: number;
@@ -55,19 +64,29 @@ export type Booking = {
   passenger: User;
   ride: Ride;
 };
-export type Search = { from: string; to: string; date: string; time: string };
+export type Search = {
+  from: string;
+  to: string;
+  date: string;
+  time: string;
+  fromLocation?: string;
+  toLocation?: string;
+  walkMinutes?: string;
+};
 export type Offer = Search & {
   car: string;
   note: string;
   vehicleId?: string;
+  routeConfirmed?: boolean;
   costSharing?: boolean;
 };
 export type MyRides = { rides: Ride[]; bookings: Booking[] };
+export type RideSearchResults = Ride[] & { routingUnavailable?: boolean };
 export type Service = {
   vehicle: () => Promise<Vehicle | null>;
   saveVehicle: (v: VehicleInput) => Promise<Vehicle>;
   places: () => Promise<Place[]>;
-  search: (q: Search) => Promise<Ride[]>;
+  search: (q: Search) => Promise<RideSearchResults>;
   ride: (id: string, query?: Search) => Promise<Ride>;
   mine: () => Promise<MyRides>;
   publish: (q: Offer) => Promise<Ride>;
@@ -97,3 +116,24 @@ export const dateLabel = (date: string) =>
     : date === tomorrow()
       ? t("Sutra")
       : date.split("-").reverse().join(".");
+
+export function searchPlace(
+  search: Search,
+  which: "from" | "to",
+  places: Place[],
+): Place | undefined {
+  const raw = which === "from" ? search.fromLocation : search.toLocation;
+  if (raw) {
+    try {
+      const point = JSON.parse(raw);
+      if (
+        point &&
+        typeof point.lat === "number" &&
+        typeof point.lng === "number" &&
+        typeof point.name === "string"
+      )
+        return point;
+    } catch {}
+  }
+  return places.find((p) => p.id === search[which]);
+}

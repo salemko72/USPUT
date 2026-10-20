@@ -40,12 +40,13 @@ export const realService: Service = {
   places: async () =>
     (await api<{ places: Awaited<ReturnType<Service["places"]>> }>("/places"))
       .places,
-  search: async (q) =>
-    (
-      await api<{ rides: Awaited<ReturnType<Service["search"]>> }>(
-        "/rides?" + new URLSearchParams(q),
-      )
-    ).rides,
+  search: async (q) => {
+    const r = await api<{
+      rides: Awaited<ReturnType<Service["search"]>>;
+      routingUnavailable?: boolean;
+    }>("/rides/search", q);
+    return Object.assign(r.rides, { routingUnavailable: r.routingUnavailable });
+  },
   ride: async (id, query) =>
     (
       await api<{ ride: Awaited<ReturnType<Service["ride"]>> }>(

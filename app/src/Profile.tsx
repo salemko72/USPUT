@@ -215,6 +215,11 @@ export function Profile({
               </p>
               <p>
                 {t(
+                  "Za pretragu adresa šaljemo unesenu ulicu i grad geokoderu. Za putanje šaljemo koordinate servisu za cestovno i pješačko rutiranje, bez tvog imena ili emaila. Objavljena ponuda prikazuje približne lokacije koje potvrdiš.",
+                )}
+              </p>
+              <p>
+                {t(
                   " Nema automatskog praćenja, naplate niti provjere identiteta. Demo ostaje u ovom pregledniku. Za brisanje probnog računa kontaktiraj administratora projekta. ",
                 )}
               </p>

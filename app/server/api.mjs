@@ -1,3 +1,6 @@
+import { normalizeLocation, readRoute } from "./route-provider.mjs";
+import { corridorMatch } from "./corridor.mjs";
+import { geocode } from "./geocoding.mjs";
 import { readRoadMatrix, matchRoute } from "./routing.mjs";
 import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
@@ -102,14 +105,16 @@ async function newSession(user, request, env) {
 }
 const rideView = (r) => ({
   id: r.id,
-  from: getPlace(r.from_id),
-  to: getPlace(r.to_id),
+  from: r.from_json ? JSON.parse(r.from_json) : getPlace(r.from_id),
+  to: r.to_json ? JSON.parse(r.to_json) : getPlace(r.to_id),
   date: r.date,
   time: r.time,
   departure: r.departure,
   car: r.car,
   note: r.note,
   costSharing: r.cost_sharing === 1,
+  geometry: r.route_json ? JSON.parse(r.route_json).coordinates : undefined,
+  routeProvider: r.route_json ? JSON.parse(r.route_json).provider : undefined,
   status: r.status,
   driver: { id: r.driver_id, name: r.driver_name },
   createdAt: r.created_at,
@@ -467,6 +472,38 @@ export async function handleApi(request, env) {
         .run();
       return json({ user: selfUser({ ...user, name }) });
     }
+    if (path === "/routes/preview" && method === "POST") {
+      const from = normalizeLocation(body.fromLocation) || getPlace(body.from),
+        to = normalizeLocation(body.toLocation) || getPlace(body.to);
+      if (!from || !to) fail(400, "Potvrdi polazište i odredište.");
+      await rateLimit(db, "route-preview:" + user.id, 20);
+      const route = await readRoute(env, [from, to]);
+      if (!route || route.unreachable)
+        fail(
+          503,
+          "Cestovni proračun trenutno nije dostupan. Rutu još nije moguće potvrditi.",
+        );
+      return json({ route, from, to });
+    }
+    if (path === "/locations/search" && method === "POST") {
+      await rateLimit(db, "geocode:" + user.id, 20);
+      let locations;
+      try {
+        locations = await geocode(env, body.query);
+      } catch (e) {
+        if (e instanceof TypeError) fail(400, e.message);
+        throw e;
+      }
+      if (locations === null)
+        fail(
+          503,
+          "Pretraga adresa trenutno nije dostupna. Pokušaj ponovo kasnije.",
+        );
+      return json({
+        locations,
+        attribution: "© OpenStreetMap contributors · Nominatim",
+      });
+    }
     if (path === "/rides" && method === "POST") {
       if (
         body.costSharing !== undefined &&
@@ -484,8 +521,15 @@ export async function handleApi(request, env) {
         if (!savedVehicle)
           fail(403, "Odabrano vozilo ne pripada tvom profilu.");
       }
-      const from = safeText(body.from, 30),
-        to = safeText(body.to, 30),
+      const fromLocation = normalizeLocation(body.fromLocation),
+        toLocation = normalizeLocation(body.toLocation);
+      if (
+        (body.fromLocation && !fromLocation) ||
+        (body.toLocation && !toLocation)
+      )
+        fail(400, "Potvrdi ispravne lokacije na karti.");
+      const from = fromLocation?.id || safeText(body.from, 30),
+        to = toLocation?.id || safeText(body.to, 30),
         date = safeText(body.date, 10),
         time = safeText(body.time, 5),
         car = savedVehicle
@@ -494,8 +538,8 @@ export async function handleApi(request, env) {
         note = safeText(body.note, 280),
         departure = departureMs(date, time);
       if (
-        !getPlace(from) ||
-        !getPlace(to) ||
+        !(fromLocation || getPlace(from)) ||
+        !(toLocation || getPlace(to)) ||
         from === to ||
         !Number.isFinite(departure) ||
         departure <= Date.now() ||
@@ -506,11 +550,22 @@ export async function handleApi(request, env) {
           400,
           "Odaberi različita mjesta, budući polazak u narednih 90 dana i podatke o vozilu.",
         );
+      let confirmedRoute = null;
+      if (fromLocation || toLocation) {
+        if (body.routeConfirmed !== true)
+          fail(400, "Prvo pregledaj i potvrdi cestovnu trasu.");
+        confirmedRoute = await readRoute(env, [
+          fromLocation || getPlace(from),
+          toLocation || getPlace(to),
+        ]);
+        if (!confirmedRoute || confirmedRoute.unreachable)
+          fail(503, "Cestovni proračun trenutno nije dostupan. Ponovi objavu.");
+      }
       await rateLimit(db, "publish:" + user.id, 20);
       const id = crypto.randomUUID();
       await db
         .prepare(
-          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,from_json,to_json,route_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           id,
@@ -523,14 +578,90 @@ export async function handleApi(request, env) {
           car,
           note,
           body.costSharing === true ? 1 : 0,
+          fromLocation ? JSON.stringify(fromLocation) : null,
+          toLocation ? JSON.stringify(toLocation) : null,
+          confirmedRoute ? JSON.stringify(confirmedRoute) : null,
           Date.now(),
         )
         .run();
       return json({ ride: rideView(await readRide(db, id)) }, 201);
     }
-    if (path === "/rides" && method === "GET") {
-      const q = url.searchParams;
+    if (
+      (path === "/rides" && method === "GET") ||
+      (path === "/rides/search" && method === "POST")
+    ) {
+      const q =
+        method === "POST"
+          ? new URLSearchParams(
+              Object.fromEntries(
+                Object.entries(body).filter(([, v]) => typeof v === "string"),
+              ),
+            )
+          : url.searchParams;
       const wanted = departureMs(q.get("date"), q.get("time"));
+      if (
+        q.has("walkMinutes") ||
+        q.has("fromLocation") ||
+        q.has("toLocation")
+      ) {
+        const start =
+            normalizeLocation(q.get("fromLocation")) || getPlace(q.get("from")),
+          end = normalizeLocation(q.get("toLocation")) || getPlace(q.get("to")),
+          minutes = Number(q.get("walkMinutes"));
+        if (
+          !start ||
+          !end ||
+          ![5, 10, 15].includes(minutes) ||
+          !Number.isFinite(wanted)
+        )
+          fail(400, "Potvrdi lokacije i odaberi 5, 10 ili 15 minuta hodanja.");
+        const candidates = (
+          await db
+            .prepare(
+              rideSelect +
+                " WHERE r.status='open' AND r.departure>? AND r.driver_id<>? AND r.date=? AND r.departure<=? ORDER BY r.departure",
+            )
+            .bind(Date.now(), user.id, q.get("date"), wanted + 3600000)
+            .all()
+        ).results;
+        await rateLimit(db, "corridor-search:" + user.id, 20);
+        const routingEnv = { ...env, ROUTING_DEADLINE: Date.now() + 18000 };
+        let unavailable = false;
+        const found = [];
+        for (const row of candidates) {
+          const ride = {
+              ...rideView(row),
+              route: row.route_json ? JSON.parse(row.route_json) : null,
+            },
+            match = await corridorMatch(
+              routingEnv,
+              ride,
+              start,
+              end,
+              wanted,
+              minutes,
+            );
+          if (match?.unavailable) {
+            unavailable = true;
+            if (
+              start.id === ride.from.id &&
+              end.id === ride.to.id &&
+              Math.abs(ride.departure - wanted) <= 3600000
+            )
+              found.push(rideView(row));
+            continue;
+          }
+          if (match) found.push({ ...rideView(row), match });
+        }
+        return json({
+          rides: found
+            .sort(
+              (a, b) => (a.match?.score ?? 10000) - (b.match?.score ?? 10000),
+            )
+            .slice(0, 60),
+          routingUnavailable: unavailable,
+        });
+      }
       if (
         env.OSRM_URL &&
         getPlace(q.get("from")) &&
@@ -626,6 +757,28 @@ export async function handleApi(request, env) {
         const q = url.searchParams,
           wanted = departureMs(q.get("date"), q.get("time"));
         let match;
+        if (q.has("walkMinutes")) {
+          const start =
+              normalizeLocation(q.get("fromLocation")) ||
+              getPlace(q.get("from")),
+            end =
+              normalizeLocation(q.get("toLocation")) || getPlace(q.get("to"));
+          if (start && end && Number.isFinite(wanted)) {
+            const result = await corridorMatch(
+              env,
+              {
+                ...rideView(r),
+                route: r.route_json ? JSON.parse(r.route_json) : null,
+              },
+              start,
+              end,
+              wanted,
+              Number(q.get("walkMinutes")),
+            );
+            match = result?.unavailable ? null : result;
+          }
+          return json({ ride: { ...rideView(r), match } });
+        }
         if (
           r.driver_id !== user.id &&
           getPlace(q.get("from")) &&
@@ -669,14 +822,41 @@ export async function handleApi(request, env) {
           const q = body.search,
             wanted = departureMs(q.date, q.time);
           if (
-            !getPlace(q.from) ||
-            !getPlace(q.to) ||
+            !(normalizeLocation(q.fromLocation) || getPlace(q.from)) ||
+            !(normalizeLocation(q.toLocation) || getPlace(q.to)) ||
             !Number.isFinite(wanted) ||
             q.date !== r.date
           )
             fail(400, "Pretraga rute nije ispravna.");
-          const matrix = await readRoadMatrix(env);
-          if (matrix) routeMatch = matchRoute(r, q.from, q.to, wanted, matrix);
+          let matrix;
+          if (q.walkMinutes) {
+            const result = await corridorMatch(
+              env,
+              {
+                ...rideView(r),
+                route: r.route_json ? JSON.parse(r.route_json) : null,
+              },
+              normalizeLocation(q.fromLocation) || getPlace(q.from),
+              normalizeLocation(q.toLocation) || getPlace(q.to),
+              wanted,
+              Number(q.walkMinutes),
+            );
+            if (result?.unavailable)
+              fail(
+                503,
+                "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.",
+              );
+            routeMatch = result;
+            if (!routeMatch)
+              fail(
+                409,
+                "Ruta ili dozvoljeno hodanje se ne podudaraju. Ponovi pretragu.",
+              );
+          } else {
+            matrix = await readRoadMatrix(env);
+            if (matrix)
+              routeMatch = matchRoute(r, q.from, q.to, wanted, matrix);
+          }
           if (!routeMatch && (q.from !== r.from_id || q.to !== r.to_id))
             fail(409, "Ovu rutu sada ne možemo potvrditi. Ponovi pretragu.");
           if (matrix && !routeMatch)

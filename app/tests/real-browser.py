@@ -21,7 +21,7 @@ with sync_playwright() as p:
  expect(a.get_by_role('heading',name='Tvoja vožnja.')).to_be_visible()
  a.screenshot(path='test-results/mobile-offer.png',full_page=True)
  register(b,'Lejla Test','lejla-'+stamp+'@example.test')
- b.get_by_role('button',name='Pronađi vožnju').click();b.get_by_role('button',name='Pogledaj vožnju').first.click();b.get_by_role('button',name='Pošalji zahtjev').click()
+ b.get_by_label('Najviše minuta hodanja',exact=True).select_option('5');b.get_by_role('button',name='Pronađi vožnju').click();b.get_by_role('button',name='Pogledaj vožnju').first.click();b.get_by_role('button',name='Pošalji zahtjev').click()
  expect(b.get_by_role('heading',name='Zahtjev je poslan.')).to_be_visible()
  a.reload();a.get_by_role('button',name='Prihvati',exact=True).click()
  expect(a.get_by_role('heading',name='Društvo je dogovoreno.')).to_be_visible()

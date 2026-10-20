@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { api, realService } from "./api";
 import type { User, Place, Search, Offer } from "./types";
-import { defaultSearch } from "./types";
+import { defaultSearch, searchPlace } from "./types";
 import { Brand, Dock, Loading, Toast, ErrorBox } from "./ui";
 import { Landing, Auth } from "./Auth";
 import { Home } from "./Home";
@@ -216,9 +216,8 @@ export default function App() {
           </button>
           <div className="header-context">
             <span className="live-dot" />
-            {places
-              .find((p) => p.id === query.from)
-              ?.city?.toLocaleUpperCase() || "BETA"}{" "}
+            {searchPlace(query, "from", places)?.city?.toLocaleUpperCase() ||
+              "BETA"}{" "}
             <span>/</span>
             {t(" TVOJ SVAKODNEVNI SMJER ")}
           </div>

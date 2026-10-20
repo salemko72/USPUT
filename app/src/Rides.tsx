@@ -1,3 +1,4 @@
+import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
@@ -25,6 +26,7 @@ import type {
   Search,
   MyRides,
   RouteMatch,
+  RideSearchResults,
 } from "./types";
 import { dateLabel } from "./types";
 import {
@@ -60,13 +62,13 @@ function MatchSummary({ match }: { match: RouteMatch }) {
     <div className="route-match-summary">
       <strong>
         {t(" Susret: ")}
-        {match.pickup.name}
+        {t(match.pickup.name)}
         {t(" · oko ")}
         {pickupTime(match.pickupAt)}
       </strong>
       <span>
         {t("Izlazak: ")}
-        {match.dropoff.name}
+        {t(match.dropoff.name)}
       </span>
       <span>
         {t(" Vozaču +")}
@@ -74,6 +76,17 @@ function MatchSummary({ match }: { match: RouteMatch }) {
         {t(" min · zajedno oko ")}
         {match.rideMinutes} min
       </span>
+      {match.walkToMinutes !== undefined && (
+        <span>
+          {t("Hodanje do susreta")}: {match.walkToMinutes} min ·{" "}
+          {t("od izlaska do cilja")}: {match.walkFromMinutes} min
+        </span>
+      )}
+      <small>
+        {match.provider === "openrouteservice"
+          ? "© openrouteservice.org by HeiGIT · Map data © OpenStreetMap contributors"
+          : "OSRM / FOSSGIS · © OpenStreetMap contributors"}
+      </small>
       <small>
         {t(
           " Cestovna procjena bez podataka o gužvi. Potvrdite gdje se može stati. ",
@@ -114,8 +127,7 @@ export function RideCard({
       </div>
       {ride.match && <MatchSummary match={ride.match} />}
       <p className="cost-sharing-summary">
-        {t("Dijeljenje troškova")}:{" "}
-        <strong>{t(ride.costSharing ? "Da" : "Ne")}</strong>
+        <CostSharingBadge shared={ride.costSharing} />
       </p>
       <div className="ride-card-bottom">
         <div className="chips">
@@ -150,7 +162,7 @@ export function Results({
   onBack: () => void;
   onRide: (id: string) => void;
 }) {
-  const [rides, setRides] = useState<Ride[] | null>(null),
+  const [rides, setRides] = useState<RideSearchResults | null>(null),
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -189,7 +201,13 @@ export function Results({
       <div className="results-layout">
         <div className="results-map-panel">
           {rides?.length ? (
-            <RouteMap from={rides[0].from} to={rides[0].to} large />
+            <RouteMap
+              from={rides[0].from}
+              to={rides[0].to}
+              geometry={rides[0].match?.geometry}
+              provider={rides[0].match?.provider}
+              large
+            />
           ) : (
             <div className="search-summary">
               <MapPin size={28} />
@@ -218,6 +236,13 @@ export function Results({
             <h2>{t("Vožnje za tebe")}</h2>
             <span>{dateLabel(query.date)} · ± 60 min</span>
           </div>
+          {rides?.routingUnavailable && (
+            <ErrorBox
+              error={t(
+                "Cestovni ili pješački servis nije dostupan za dio ponuda. Rezultati mogu biti nepotpuni; pokušaj ponovo.",
+              )}
+            />
+          )}
           {error ? (
             <>
               <ErrorBox error={error} />
@@ -237,7 +262,13 @@ export function Results({
               />
             ))
           ) : (
-            <Empty title={t("Još nema tvog spoja.")}>
+            <Empty
+              title={t(
+                rides.routingUnavailable
+                  ? "Proračun trenutno nije dostupan."
+                  : "Još nema tvog spoja.",
+              )}
+            >
               <p>
                 {t(
                   " Za ova mjesta i vrijeme još nema slobodne ponude. Probaj drugo vrijeme ili ponudi svoje mjesto. ",
@@ -251,10 +282,10 @@ export function Results({
           <p className="fine-print">
             {rides?.some((r) => r.match)
               ? t(
-                  "Poredak uzima u obzir cestovnu rutu, dodatno vrijeme vozača i dolazak po tebe. Procjene ne uključuju gužvu. Izračun: OSRM / FOSSGIS, podaci © OpenStreetMap contributors.",
+                  "Poredak uzima u obzir stvarnu trasu, hodanje, dodatno vrijeme vozača i dolazak po tebe. Procjene ne uključuju gužvu.",
                 )
               : t(
-                  "Prikazana su podudaranja istih mjesta. Cestovni proračun trenutno nije dostupan ili je ovo demo.",
+                  "Rezultati zavise od dostupnosti cestovnog i pješačkog proračuna.",
                 )}
           </p>
         </section>
@@ -377,7 +408,13 @@ export function RideDetails({
       </header>
       <div className="details-layout">
         <section className="detail-map">
-          <RouteMap from={pickup} to={dropoff} large />
+          <RouteMap
+            from={pickup}
+            to={dropoff}
+            geometry={agreed?.geometry || ride.geometry}
+            provider={agreed?.provider || ride.routeProvider}
+            large
+          />
           <div className="meeting-label">
             <MapPin size={19} />
             <div>
@@ -388,7 +425,9 @@ export function RideDetails({
           </div>
           <p className="fine-print">
             {t(
-              " Prikaz je skica, nije navigacija. Mjesta su probni prijedlozi. Prije stvarne vožnje provjeri gdje je sigurno stati. ",
+              agreed?.geometry || ride.geometry
+                ? "Prikazana je cestovna trasa, bez navigacije uživo. Zajedno potvrdite gdje se može stati."
+                : " Prikaz je skica, nije navigacija. Mjesta su probni prijedlozi. Prije stvarne vožnje provjeri gdje je sigurno stati. ",
             )}
           </p>
         </section>
@@ -420,7 +459,7 @@ export function RideDetails({
               </span>
               <span>
                 <Leaf size={16} />
-                {t("Dijeljenje troškova")}: {t(ride.costSharing ? "Da" : "Ne")}
+                <CostSharingBadge shared={ride.costSharing} />
               </span>
             </div>
             {ride.note && <p className="driver-note">“{ride.note}”</p>}

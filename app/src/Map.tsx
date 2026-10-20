@@ -7,14 +7,21 @@ export function RouteMap({
   from,
   to,
   large = false,
+  geometry,
+  provider,
 }: {
   from: Place;
   to: Place;
   large?: boolean;
+  geometry?: number[][];
+  provider?: string;
 }) {
-  const [live, setLive] = useState(false),
+  const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false);
   const container = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (geometry) setLive(true);
+  }, [geometry]);
   useEffect(() => {
     if (!live || !container.current) return;
     let cleanup = () => {},
@@ -51,12 +58,15 @@ export function RouteMap({
             fillColor: "#d7f56a",
             fillOpacity: 1,
           }).addTo(map);
-        L.polyline(points, {
+        const line: [number, number][] = geometry?.length
+          ? geometry.map((p) => [p[1], p[0]])
+          : points;
+        L.polyline(line, {
           color: "#151815",
           weight: 4,
-          dashArray: "7 10",
+          dashArray: geometry ? undefined : "7 10",
         }).addTo(map);
-        map.fitBounds(L.latLngBounds(points), {
+        map.fitBounds(L.latLngBounds(line), {
           padding: [35, 45],
           maxZoom: 14,
         });
@@ -176,12 +186,27 @@ export function RouteMap({
         <Layers size={16} />
         {live ? t("Skica") : t("Mapa")}
       </button>
+      {geometry && provider === "openrouteservice" && (
+        <small className="route-provider-credit">
+          <a
+            href="https://openrouteservice.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            © openrouteservice.org by HeiGIT
+          </a>
+        </small>
+      )}
       <span className="map-note">
         <MapPin size={12} />
         {failed
           ? t("Mapa nije dostupna · koristi skicu")
           : live
-            ? t("OSM · linija nije cestovna ruta")
+            ? t(
+                geometry
+                  ? t("Cestovna trasa · bez gužve uživo")
+                  : "OSM · linija nije cestovna ruta",
+              )
             : t("Ilustrativna skica · nije navigacija")}
       </span>
     </div>

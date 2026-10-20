@@ -1,3 +1,6 @@
+import { api } from "./api";
+import { RouteMap } from "./Map";
+import { StreetPicker } from "./StreetPicker";
 import { PlacePicker } from "./PlacePicker";
 import { t } from "./i18n";
 import { VehicleManager, vehicleDescription } from "./VehicleManager";
@@ -12,8 +15,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import type { User, Place, Search, Offer, Service, Vehicle } from "./types";
-import { dateLabel } from "./types";
-import { Avatar, Button, ErrorBox } from "./ui";
+import { dateLabel, searchPlace } from "./types";
+import { Avatar, Button, ErrorBox, Modal } from "./ui";
 export function SearchFields({
   value,
   onChange,
@@ -26,40 +29,89 @@ export function SearchFields({
   const set = (k: string, v: string) => onChange({ ...value, [k]: v });
   return (
     <>
-      <div className="route-fields">
-        <label className="location-field">
-          <span className="location-symbol origin-dot" />
-          <div>
-            <span>{t("POLAZIŠTE")}</span>
-            <PlacePicker
-              label={t("Polazište")}
-              value={value.from}
-              places={places}
-              onChange={(id) => set("from", id)}
-            />
-          </div>
-        </label>
+      <div className="street-fields">
+        <StreetPicker
+          label={t("Polazište")}
+          value={searchPlace(value, "from", places)}
+          onChange={(p) =>
+            onChange({
+              ...value,
+              from: p?.id || "",
+              fromLocation: p ? JSON.stringify(p) : undefined,
+            })
+          }
+        />
         <button
-          className="swap-button"
+          className="street-swap"
           type="button"
           aria-label={t("Zamijeni polazište i odredište")}
-          onClick={() => onChange({ ...value, from: value.to, to: value.from })}
+          onClick={() =>
+            onChange({
+              ...value,
+              from: value.to,
+              to: value.from,
+              fromLocation: value.toLocation,
+              toLocation: value.fromLocation,
+            })
+          }
         >
           <ArrowDownUp size={17} />
         </button>
-        <label className="location-field">
-          <MapPin size={20} />
-          <div>
-            <span>{t("ODREDIŠTE")}</span>
-            <PlacePicker
-              label={t("Odredište")}
-              value={value.to}
-              places={places}
-              onChange={(id) => set("to", id)}
-            />
-          </div>
-        </label>
+        <StreetPicker
+          label={t("Odredište")}
+          value={searchPlace(value, "to", places)}
+          onChange={(p) =>
+            onChange({
+              ...value,
+              to: p?.id || "",
+              toLocation: p ? JSON.stringify(p) : undefined,
+            })
+          }
+        />
       </div>
+      <details className="legacy-places">
+        <summary>{t("Probna mjesta iz prethodne bete")}</summary>
+        <div className="route-fields">
+          <label className="location-field">
+            <span className="location-symbol origin-dot" />
+            <div>
+              <span>{t("POLAZIŠTE")}</span>
+              <PlacePicker
+                label={t("Polazište")}
+                value={value.from}
+                places={places}
+                onChange={(id) =>
+                  onChange({ ...value, from: id, fromLocation: undefined })
+                }
+              />
+            </div>
+          </label>
+          <button
+            className="swap-button"
+            type="button"
+            aria-label={t("Zamijeni polazište i odredište")}
+            onClick={() =>
+              onChange({ ...value, from: value.to, to: value.from })
+            }
+          >
+            <ArrowDownUp size={17} />
+          </button>
+          <label className="location-field">
+            <MapPin size={20} />
+            <div>
+              <span>{t("ODREDIŠTE")}</span>
+              <PlacePicker
+                label={t("Odredište")}
+                value={value.to}
+                places={places}
+                onChange={(id) =>
+                  onChange({ ...value, to: id, toLocation: undefined })
+                }
+              />
+            </div>
+          </label>
+        </div>
+      </details>
       <div className="date-time-fields">
         <DatePicker value={value.date} onChange={(date) => set("date", date)} />
         <TimePicker value={value.time} onChange={(time) => set("time", time)} />
@@ -91,13 +143,24 @@ export function Home({
   const [role, setRole] = useState<"passenger" | "driver">("passenger"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [vehicle, setVehicle] = useState<Vehicle | null>(null);
+    [vehicle, setVehicle] = useState<Vehicle | null>(null),
+    [preview, setPreview] = useState<{
+      offer: Offer;
+      route: {
+        coordinates: number[][];
+        duration: number;
+        distance: number;
+        provider?: string;
+      };
+      from: Place;
+      to: Place;
+    } | null>(null);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (
-      !places.some((p) => p.id === query.from) ||
-      !places.some((p) => p.id === query.to)
+      !(query.fromLocation || places.some((p) => p.id === query.from)) ||
+      !(query.toLocation || places.some((p) => p.id === query.to))
     ) {
       setError("Odaberi polazište i odredište iz prijedloga.");
       return;
@@ -107,6 +170,10 @@ export function Home({
       return;
     }
     if (role === "passenger") {
+      if (!["5", "10", "15"].includes(query.walkMinutes || "")) {
+        setError("Odaberi koliko minuta si spreman hodati.");
+        return;
+      }
       onSearch();
       return;
     }
@@ -117,13 +184,26 @@ export function Home({
     const f = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      await onPublish({
+      const offer: Offer = {
         ...query,
         car: vehicleDescription(vehicle),
         vehicleId: vehicle.id,
         note: String(f.get("note")),
         costSharing: f.get("costSharing") === "on",
-      });
+      };
+      if (query.fromLocation || query.toLocation) {
+        const result = await api<{
+          route: {
+            coordinates: number[][];
+            duration: number;
+            distance: number;
+            provider?: string;
+          };
+          from: Place;
+          to: Place;
+        }>("/routes/preview", offer);
+        setPreview({ ...result, offer });
+      } else await onPublish(offer);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -132,6 +212,50 @@ export function Home({
   }
   return (
     <div className="home-page">
+      {preview && (
+        <Modal
+          title={t("Je li ovo ruta kojom stvarno voziš?")}
+          onClose={() => {
+            if (!busy) setPreview(null);
+          }}
+        >
+          <RouteMap
+            from={preview.from}
+            to={preview.to}
+            geometry={preview.route.coordinates}
+            provider={preview.route.provider}
+            large
+          />
+          <p>
+            {Math.round(preview.route.distance / 100) / 10} km ·{" "}
+            {Math.ceil(preview.route.duration / 60)} min
+          </p>
+          <p>
+            {t(
+              "Ako ova trasa nije tvoj put, nemoj je potvrditi. Vrati se i promijeni polazište ili odredište.",
+            )}
+          </p>
+          <ErrorBox error={error} />
+          <Button
+            busy={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                await onPublish({ ...preview.offer, routeConfirmed: true });
+                setPreview(null);
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t("Vozim ovom trasom — objavi")}
+          </Button>
+        </Modal>
+      )}
+
       <section className="home-hero">
         <div className="home-top">
           <span className="eyebrow">
@@ -161,7 +285,7 @@ export function Home({
         />
         <span className="home-hero-tag">
           <i />
-          {places.find((p) => p.id === query.from)?.city || t("Beta područje")}
+          {searchPlace(query, "from", places)?.city || t("Beta područje")}
           {t(" · prvi krug")}
         </span>
       </section>
@@ -205,6 +329,30 @@ export function Home({
           </div>
           <form onSubmit={submit}>
             <SearchFields value={query} onChange={setQuery} places={places} />
+            {role === "passenger" && (
+              <label className="walking-budget">
+                {t("Koliko si spreman hodati?")}
+                <select
+                  aria-label={t("Najviše minuta hodanja")}
+                  value={query.walkMinutes || ""}
+                  onChange={(e) =>
+                    setQuery({ ...query, walkMinutes: e.target.value })
+                  }
+                >
+                  <option value="">{t("Odaberi 5, 10 ili 15 minuta")}</option>
+                  {[5, 10, 15].map((n) => (
+                    <option key={n} value={String(n)}>
+                      {n} min
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {t(
+                    "Najviše po dionici: do mjesta ulaska i od mjesta izlaska.",
+                  )}
+                </small>
+              </label>
+            )}
             {role === "driver" && (
               <div className="offer-fields">
                 <VehicleManager
@@ -270,9 +418,9 @@ export function Home({
           </p>
           <div className="journey-preview">
             <span className="line-dot" />
-            <span>{places.find((p) => p.id === query.from)?.name}</span>
+            <span>{searchPlace(query, "from", places)?.name}</span>
             <span className="journey-line" />
-            <span>{places.find((p) => p.id === query.to)?.name}</span>
+            <span>{searchPlace(query, "to", places)?.name}</span>
             <MapPin size={17} />
           </div>
           <div className="aside-bottom">

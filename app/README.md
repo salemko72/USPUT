@@ -119,3 +119,13 @@ Reproduktivni SQL generator: `node scripts/seed-kerim.mjs /tmp/kerim.sql`. Gener
 Pri objavi vozač može uključiti „Očekujem dijeljenje troškova”. Checkbox je podrazumijevano isključen; postojeće ponude, uključujući Kerimove testne vožnje, imaju `false`. API prihvata samo boolean i čuva flag uz ponudu (`rides.cost_sharing`, migracija `0005_cost_sharing.sql`). Putnik vidi Da/Ne na kartici i detaljima u BHS/ENG. Dogovor o iznosu i načinu podjele je izvan aplikacije; USPUT ovim dodatkom ne obračunava i ne provodi plaćanje. Globalne tvrdnje da su sve vožnje besplatne uklonjene su iz interfejsa.
 
 Provjera: API testovi pokrivaju izostavljen/false/true i neispravne tipove; `tests/cost-sharing-browser.py` pokriva checkbox, objavu, trajnost nakon reloada i ENG prikaz.
+
+## Ulice, pinovi i koridor trase
+
+Novi glavni unos je ulica, približan broj i grad. Korisnik eksplicitno pretražuje adresu i potvrđuje/pomjera pin, ili ručno unosi pin bez geokodera. Stara beta mjesta ostaju u zatvorenom pomoćnom odjeljku radi postojećih testnih ponuda. Za objavu sa uličnim pinovima vozač prvo pregleda i potvrdi stvarnu izračunatu trasu. Potvrđena trasa i lokacije ostaju snapshot ponude (`0006_street_locations.sql`).
+
+Putnik bira5/10/15 minuta hodanja pri svakoj pretrazi. Engine projektuje tačke na stvarnu poliliniju i provjerava redoslijed ulaska/izlaska, koridor do500m za kandidate susreta, cestovni dodatak vozaču i stvarni pješački proračun do/od predloženih pinova. Biraju se konačni kandidati duž trase, pa dostupnost podataka i izvora za stajanje ograničava pokrivenost; rezultat nije dokaz da je pronađena svaka teoretska tačka u kontinuiranom prostoru. Limit hodanja važi zasebno na oba kraja. Nema pretvaranja vazdušne udaljenosti u tvrdnju o stvarnom pješačkom putu. Mjesta nisu verifikovana kao zakonita/sigurna za zaustavljanje; oba učesnika potvrđuju susret postojećim zahtjevom/prihvatanjem.
+
+Cestovne/pješačke putanje dolaze od OpenRouteService ako postoji tajni binding, inače od javnihOSRM endpointa. Geokoder je Nominatim; šalju se adresa i grad, bez korisničkog imena/emaila. Eksplicitne pretrage i rutiranje su keširani i globalno ograničeni na1upstreamzahtjev/1,1s. Nedostupnost se prikazuje kao nepotpuna pretraga, bez tihog proglašavanja ruta nepodudarnim. Stanje servisa je u `routing_health`. Upute: [ROUTING-SETUP.md](ROUTING-SETUP.md).
+
+Provjere: `npm test` i `npm run build`; `node tests/street-fixture-server.mjs` + `python tests/street-browser.py` dokazuju tok adresa/pin→potvrda trase→usputni segment→hodanje→obostrani dogovor na kontrolisanim podacima. Ne dokazuju dostupnost javnog geokodera/rutera. Nova ulična beta je kompatibilna s ranijim Kerimovim ponudama. Oznake troškova su NE u zelenom krugu i DA u crnom s bijelim slovima.

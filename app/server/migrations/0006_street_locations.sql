@@ -1,0 +1,4 @@
+ALTER TABLE rides ADD COLUMN from_json TEXT;
+ALTER TABLE rides ADD COLUMN to_json TEXT;
+ALTER TABLE rides ADD COLUMN route_json TEXT;
+CREATE TABLE IF NOT EXISTS routing_health(id TEXT PRIMARY KEY,status TEXT NOT NULL,detail TEXT,checked_at INTEGER NOT NULL);

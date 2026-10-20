@@ -938,3 +938,150 @@ test("cost-sharing flag defaults to false, persists true and rejects non-boolean
       400,
     );
 });
+
+test("street coordinates require route confirmation and corridor agreement persists for both participants", async () => {
+  env.OPENROUTESERVICE_API_KEY = "fixture-only";
+  env.ROUTING_FETCH = async (url, options) => {
+    const points = JSON.parse(options.body).coordinates,
+      legs = points.slice(1).map(() => ({ duration: 200, distance: 1000 }));
+    return new Response(
+      JSON.stringify({
+        features: [
+          {
+            geometry: { coordinates: points },
+            properties: {
+              summary: { duration: 600, distance: 3335 },
+              segments: legs,
+              way_points: points.map((_, i) => i),
+            },
+          },
+        ],
+      }),
+    );
+  };
+  const driver = await signup("Driver", "street-driver@example.test"),
+    passenger = await signup();
+  const fromLocation = JSON.stringify({
+      name: "Example Street 1, Test City",
+      lat: 0,
+      lng: 0,
+    }),
+    toLocation = JSON.stringify({
+      name: "Example Street 30, Test City",
+      lat: 0,
+      lng: 0.03,
+    });
+  const input = { ...ride(), fromLocation, toLocation };
+  assert.equal((await call("/rides", input, driver.cookie)).status, 400);
+  const preview = await call("/routes/preview", input, driver.cookie);
+  assert.equal(preview.status, 200);
+  assert.equal(preview.data.route.coordinates.length, 2);
+  const published = await call(
+    "/rides",
+    { ...input, routeConfirmed: true },
+    driver.cookie,
+  );
+  assert.equal(published.status, 201);
+  assert.equal(published.data.ride.from.name, "Example Street 1, Test City");
+  const search = {
+    ...ride(),
+    fromLocation: JSON.stringify({
+      name: "Street 10, Test City",
+      lat: 0,
+      lng: 0.01,
+    }),
+    toLocation: JSON.stringify({
+      name: "Street 20, Test City",
+      lat: 0,
+      lng: 0.02,
+    }),
+    walkMinutes: "5",
+  };
+  const results = await call("/rides/search", search, passenger.cookie);
+  assert.equal(results.status, 200);
+  assert.equal(results.data.rides.length, 1);
+  assert.equal(results.data.rides[0].match.source, "osrm-corridor");
+  const booked = await call(
+    "/rides/" + published.data.ride.id + "/request",
+    { search },
+    passenger.cookie,
+  );
+  assert.equal(booked.status, 201);
+  delete env.OPENROUTESERVICE_API_KEY;
+  for (const cookie of [driver.cookie, passenger.cookie]) {
+    const mine = await call("/my-rides", null, cookie);
+    assert.equal(mine.data.bookings[0].match.walkingLimit, 5);
+    assert.equal(mine.data.bookings[0].match.source, "osrm-corridor");
+  }
+});
+
+test("explicit geocoding rejects coarse city results and keeps street/number, without exposing credentials", async () => {
+  env.GEOCODER_URL = "https://geocoder.example.test/";
+  env.ROUTING_FETCH = async () =>
+    new Response(
+      JSON.stringify([
+        { lat: "43.85", lon: "18.4", address: { city: "Sarajevo" } },
+        {
+          lat: "43.85",
+          lon: "18.4",
+          display_name: "Example street 10, Sarajevo",
+          address: {
+            road: "Example street",
+            house_number: "10",
+            city: "Sarajevo",
+            country_code: "ba",
+          },
+        },
+      ]),
+    );
+  const user = await signup();
+  assert.equal(
+    (await call("/locations/search", { query: "Street 10 Sarajevo" })).status,
+    401,
+  );
+  const result = await call(
+    "/locations/search",
+    { query: "Street 10 Sarajevo" },
+    user.cookie,
+  );
+  assert.equal(result.status, 200);
+  assert.equal(result.data.locations.length, 1);
+  assert.equal(result.data.locations[0].name, "Example street 10, Sarajevo");
+  assert.equal(result.data.locations[0].countryCode, "BA");
+});
+
+test("corridor outage is explicit, retains a whole-trip exact offer, and does not invent intermediate matches", async () => {
+  const driver = await signup("Driver", "outage-corridor@example.test"),
+    passenger = await signup();
+  const offer = ride();
+  await call("/rides", offer, driver.cookie);
+  const exact = await call(
+    "/rides/search",
+    { ...offer, walkMinutes: "5" },
+    passenger.cookie,
+  );
+  assert.equal(exact.data.routingUnavailable, true);
+  assert.equal(exact.data.rides.length, 1);
+  assert.equal(exact.data.rides[0].match, undefined);
+  const intermediate = await call(
+    "/rides/search",
+    { ...offer, from: "otoka", walkMinutes: "15" },
+    passenger.cookie,
+  );
+  assert.equal(intermediate.data.routingUnavailable, true);
+  assert.equal(intermediate.data.rides.length, 0);
+});
+
+test("routing health never persists a provider exception containing credentials", async () => {
+  env.OPENROUTESERVICE_API_KEY = "fixture-secret";
+  env.ROUTING_FETCH = async () => {
+    throw Error("Authorization: fixture-secret\ninvalid header");
+  };
+  const user = await signup();
+  const response = await call("/routes/preview", ride(), user.cookie);
+  assert.equal(response.status, 503);
+  const health = sqlite.prepare("SELECT detail FROM routing_health").all();
+  assert.equal(health.length, 1);
+  assert.equal(health[0].detail, "UpstreamRequestFailed");
+  assert.ok(!JSON.stringify(health).includes("fixture-secret"));
+});

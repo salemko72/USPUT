@@ -1,3 +1,4 @@
+import { providerGate, health } from "./route-provider.mjs";
 import { places } from "./places.mjs";
 const inflight = new WeakMap();
 export async function readRoadMatrix(env) {
@@ -37,6 +38,7 @@ async function loadMatrix(env) {
     .run();
   if (!claim.meta.changes) return null;
   try {
+    await providerGate(env);
     const url = new URL(
       `table/v1/driving/${coordinates}`,
       root.href.replace(/\/?$/, "/"),
@@ -88,8 +90,15 @@ async function loadMatrix(env) {
     )
       .bind(key, JSON.stringify(result), Date.now() + 86400000)
       .run();
+    await health(env, "legacy-matrix", "ready");
     return result;
-  } catch {
+  } catch (error) {
+    await health(
+      env,
+      "legacy-matrix",
+      "unavailable",
+      error.message || error.name,
+    );
     // Brief negative cache prevents an outage causing one upstream call per search.
     await env.DB.prepare(
       "INSERT OR REPLACE INTO routing_cache(id,payload,expires) VALUES(?,?,?)",

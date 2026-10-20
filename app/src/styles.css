@@ -4200,3 +4200,175 @@ textarea::placeholder {
   margin: 12px 0;
   color: #505a45;
 }
+
+/* Cost sharing keeps the same translated circular status in cards and details. */
+.cost-sharing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cost-sharing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.cost-sharing-no {
+  background: #b8e06e;
+  color: #000;
+}
+.cost-sharing-yes {
+  background: #000;
+  color: #fff;
+}
+
+.street-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+.street-picker {
+  min-width: 0;
+}
+.street-label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #525c45;
+}
+.street-search-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  background: #f7f8f2;
+  border: 1px solid #e4e8da;
+  border-radius: 17px;
+}
+.street-search-row input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  min-width: 0;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 650;
+}
+.street-search-row button {
+  padding: 7px;
+  background: #e8eedd;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.street-search-row button:disabled {
+  opacity: 0.4;
+}
+.street-legacy-note {
+  display: block;
+  font-size: 10px;
+  color: #748067;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.street-adjust {
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  margin-top: 6px;
+  color: #536b30;
+}
+.street-swap {
+  align-self: flex-end;
+  background: #e9eddf;
+  border-radius: 50%;
+  padding: 7px;
+}
+.street-results {
+  background: white;
+  border: 1px solid #e4e8da;
+  border-radius: 15px;
+  padding: 8px;
+  margin: 8px 0;
+}
+.street-results button {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  padding: 12px;
+  border-radius: 10px;
+}
+.street-results button:hover {
+  background: #edf4db;
+}
+.street-results small {
+  font-size: 10px;
+  color: #758067;
+}
+.street-pin-map {
+  height: 300px;
+  width: 100%;
+  border-radius: 16px;
+  margin: 14px 0;
+  z-index: 0;
+}
+.street-map-pin span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #bded57;
+  border: 3px solid #151b12;
+  box-shadow: 0 3px 12px #0004;
+}
+.legacy-places {
+  margin: 12px 0;
+}
+.legacy-places summary {
+  font-size: 11px;
+  color: #6d795e;
+  cursor: pointer;
+}
+.walking-budget {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 750;
+  margin: 15px 0;
+}
+.walking-budget select {
+  background: #eef3e3;
+  border: 1px solid #dce5cb;
+  border-radius: 12px;
+  padding: 11px;
+  font: inherit;
+  color: #26311c;
+}
+.walking-budget small {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #728063;
+  font-weight: 500;
+}
+.street-results strong,
+.street-results small,
+.modal h3 {
+  overflow-wrap: anywhere;
+}
+.route-provider-credit{position:absolute;top:12px;left:12px;max-width:65%;padding:5px 8px;background:#fffffff0;border-radius:8px;font-size:9px;z-index:500;}

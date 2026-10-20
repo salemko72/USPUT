@@ -20,10 +20,21 @@ if (
   sqlite.exec(
     "ALTER TABLE rides ADD COLUMN cost_sharing INTEGER NOT NULL DEFAULT 0 CHECK(cost_sharing IN (0,1))",
   );
-const env = {
+for (const column of ["from_json", "to_json", "route_json"])
+  if (
+    !sqlite
+      .prepare("PRAGMA table_info(rides)")
+      .all()
+      .some((c) => c.name === column)
+  )
+    sqlite.exec(`ALTER TABLE rides ADD COLUMN ${column} TEXT`);
+export const env = {
   DB: adaptSqlite(sqlite),
   PHOTOS: localPhotoStorage(resolve(data, "photos")),
   OSRM_URL: process.env.OSRM_URL,
+  OSRM_FOOT_URL: process.env.OSRM_FOOT_URL,
+  OPENROUTESERVICE_API_KEY: process.env.OPENROUTESERVICE_API_KEY,
+  GEOCODER_URL: process.env.GEOCODER_URL,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 };
