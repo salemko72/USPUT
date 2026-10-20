@@ -580,5 +580,8 @@
   "Grad nije prepoznat. Upiši grad ručno.": "The city could not be identified. Enter it manually.",
   "Lokacija nije ispravna.": "Invalid location.",
   "Profil je sačuvan.": "Profile saved.",
-  "Ulice tražimo u odabranom gradu. Grad možeš promijeniti ručno.": "Street searches use the selected city. You can change the city manually."
+  "Ulice tražimo u odabranom gradu. Grad možeš promijeniti ručno.": "Street searches use the selected city. You can change the city manually.",
+  "Tvoj račun već postoji. Potvrdi postojeću lozinku jednom da povežeš Google. Sljedeći put ulaziš direktno preko Googlea.": "Your account already exists. Confirm your existing password once to connect Google. Next time, sign in directly with Google.",
+  "Ovaj račun je već povezan s drugim Google računom.": "This account is already connected to a different Google account.",
+  "Prijavi se postojećom lozinkom da povežeš Google račun.": "Sign in with your existing password to connect Google."
 }

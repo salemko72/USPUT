@@ -95,14 +95,42 @@ async function session(request, env) {
 }
 async function newSession(user, request, env) {
   const token = random();
-  const expires = Date.now() + 14 * 86400000;
+  const expires = Date.now() + 30 * 86400000;
   await env.DB.prepare("DELETE FROM sessions WHERE expires<?")
     .bind(Date.now())
     .run();
   await env.DB.prepare("INSERT INTO sessions(id,user_id,expires) VALUES(?,?,?)")
     .bind(await hash(token), user.id, expires)
     .run();
-  return `usput_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1209600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
+  return `usput_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
+}
+// Linking is conditional: an existing Google identity is never overwritten.
+async function linkGoogle(db, user, subject, retireLegacyCredentials = false) {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE users SET google_id=?,password=CASE WHEN ? THEN NULL ELSE password END,salt=CASE WHEN ? THEN NULL ELSE salt END WHERE id=? AND google_id IS NULL AND NOT EXISTS (SELECT 1 FROM users WHERE google_id=?)",
+      )
+      .bind(
+        subject,
+        retireLegacyCredentials ? 1 : 0,
+        retireLegacyCredentials ? 1 : 0,
+        user.id,
+        subject,
+      ),
+    db
+      .prepare(
+        "DELETE FROM sessions WHERE user_id=? AND ?=1 AND changes()=1 AND EXISTS (SELECT 1 FROM users WHERE id=? AND google_id=?)",
+      )
+      .bind(user.id, retireLegacyCredentials ? 1 : 0, user.id, subject),
+  ]);
+  const linked = await db
+    .prepare("SELECT * FROM users WHERE id=?")
+    .bind(user.id)
+    .first();
+  if (linked?.google_id !== subject)
+    fail(409, "Ovaj račun je već povezan s drugim Google računom.");
+  return linked;
 }
 const rideView = (r) => ({
   id: r.id,
@@ -256,13 +284,51 @@ export async function handleApi(request, env) {
       );
       if (!profileResponse.ok) fail(502, "Google profil nije dostupan.");
       const profile = await profileResponse.json();
-      if (!profile.email_verified || !profile.email || !profile.sub)
+      if (
+        profile.email_verified !== true ||
+        typeof profile.email !== "string" ||
+        typeof profile.sub !== "string" ||
+        !profile.sub ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)
+      )
         fail(403, "Potreban je potvrđen Google email.");
       // Google login never silently creates an account: new users must confirm adult/terms via onboarding.
       let user = await db
         .prepare("SELECT * FROM users WHERE google_id=?")
         .bind(profile.sub)
         .first();
+      const googleEmail = profile.email.trim().toLowerCase();
+      let existingEmail = null;
+      if (!user) {
+        existingEmail = await db
+          .prepare("SELECT * FROM users WHERE email=?")
+          .bind(googleEmail)
+          .first();
+        if (existingEmail) {
+          if (
+            existingEmail.google_id &&
+            existingEmail.google_id !== profile.sub
+          )
+            fail(409, "Ovaj račun je već povezan s drugim Google računom.");
+          const domain = googleEmail.split("@")[1];
+          // Google is authoritative for Gmail and its hosted Workspace domains.
+          // A third-party address needs proof of the existing account once.
+          const authoritative =
+            ["gmail.com", "googlemail.com"].includes(domain) ||
+            (typeof profile.hd === "string" &&
+              profile.hd.toLowerCase() === domain);
+          const current = await session(request, env);
+          if (authoritative || current?.id === existingEmail.id)
+            // Local email signups are unverified: do not retain unproven
+            // passwords/sessions when Google first establishes ownership.
+            user = await linkGoogle(
+              db,
+              existingEmail,
+              profile.sub,
+              current?.id !== existingEmail.id,
+            );
+        }
+      }
       if (!user) {
         const enrollment = random();
         await db
@@ -273,8 +339,9 @@ export async function handleApi(request, env) {
             await hash(enrollment),
             JSON.stringify({
               sub: profile.sub,
-              email: profile.email.toLowerCase(),
+              email: googleEmail,
               name: safeText(profile.name, 60),
+              mode: existingEmail ? "link" : "enroll",
             }),
             "enroll",
             Date.now() + 600000,
@@ -283,7 +350,9 @@ export async function handleApi(request, env) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: url.origin + "/?google=onboard",
+            Location:
+              url.origin +
+              (existingEmail ? "/?google=link" : "/?google=onboard"),
             "Set-Cookie": `usput_enroll=${enrollment}; Path=/api/auth; HttpOnly; SameSite=Lax; Max-Age=600${url.protocol === "https:" ? "; Secure" : ""}`,
           },
         });
@@ -310,6 +379,8 @@ export async function handleApi(request, env) {
           .first());
       if (!state) fail(400, "Google prijava je istekla. Pokušaj ponovo.");
       const p = JSON.parse(state.verifier);
+      if (p.mode === "link")
+        fail(400, "Prijavi se postojećom lozinkom da povežeš Google račun.");
       const existing = await db
         .prepare("SELECT id FROM users WHERE email=?")
         .bind(p.email)
@@ -397,7 +468,7 @@ export async function handleApi(request, env) {
           "Set-Cookie": await newSession(u, request, env),
         });
       }
-      const u = await db
+      let u = await db
         .prepare("SELECT * FROM users WHERE email=?")
         .bind(email)
         .first();
@@ -407,6 +478,25 @@ export async function handleApi(request, env) {
       );
       if (!u?.password || candidate !== u.password)
         fail(401, "Email ili lozinka nisu ispravni.");
+      const pending = cookieValue(request, "usput_enroll");
+      if (pending) {
+        const state = await db
+          .prepare(
+            "SELECT * FROM oauth_states WHERE id=? AND redirect_uri=? AND expires>?",
+          )
+          .bind(await hash(pending), "enroll", Date.now())
+          .first();
+        if (state) {
+          const identity = JSON.parse(state.verifier);
+          if (identity.mode === "link" && identity.email === u.email) {
+            u = await linkGoogle(db, u, identity.sub);
+            await db
+              .prepare("DELETE FROM oauth_states WHERE id=?")
+              .bind(await hash(pending))
+              .run();
+          }
+        }
+      }
       return json({ user: selfUser(u) }, 200, {
         "Set-Cookie": await newSession(u, request, env),
       });

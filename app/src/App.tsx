@@ -31,7 +31,11 @@ export default function App() {
   useLanguage();
   const [user, setUser] = useState<User | null>(null),
     [loading, setLoading] = useState(true),
-    [auth, setAuth] = useState<"landing" | "login" | "register">("landing"),
+    [auth, setAuth] = useState<"landing" | "login" | "register">(
+      new URLSearchParams(location.search).get("google") === "link"
+        ? "login"
+        : "landing",
+    ),
     [places, setPlaces] = useState<Place[]>([]),
     [query, setQuery] = useState<Search>(defaultSearch),
     [path, setPath] = useState(route),

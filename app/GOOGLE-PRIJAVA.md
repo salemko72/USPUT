@@ -19,7 +19,13 @@ Cloudflare Worker: postaviti Client ID kroz Workers Settings/Variables, a secret
 
 ## Provjera
 
-Klik na „Nastavi s Googleom” treba otvoriti Google, vratiti aplikaciju i, za novi račun, zatražiti potvrdu punoljetnosti i pravila. Postojeći Google račun treba dobiti HttpOnly sesiju. Otkazivanje na Googleu ne smije napraviti račun. Ako već postoji email/lozinka račun s istim emailom, koristi tu prijavu; automatsko povezivanje tih računa još nije uključeno.
+Klik na „Nastavi s Googleom” treba otvoriti Google, vratiti aplikaciju i, za novi račun, zatražiti potvrdu punoljetnosti i pravila. Postojeći Google račun treba dobiti HttpOnly sesiju. Otkazivanje na Googleu ne smije napraviti račun. Ako već postoji račun s istim emailom, potvrđeni Gmail ili Google Workspace identitet povezuje se s tim računom i otvara ga bez onboarding forme. Ime, grad, vožnje i fotografije ostaju vezani uz isti ID. Za email treće strane kojim Google ne upravlja, postojeća lozinka se potvrđuje jednom na prijavi, bez nove registracije.
+
+Pri automatskom povezivanju bez dokaza postojeće lokalne sesije, ranija nepotvrđena lozinka se ukida i stare sesije poništavaju; račun prelazi na Google prijavu. Time lozinka unesena prije provjere emaila ne ostaje dodatni način pristupa. Ako je postojeći račun već autentificiran ili je lozinka potvrđena tokom povezivanja, lozinka se zadržava. Google identitet koji je već povezan nikad se ne prepisuje drugim.
+
+Sesija ima 30 dana na serveru i HttpOnly/Secure/SameSite=Lax cookie s Max-Age=2592000. Aplikacija pri otvaranju obnavlja korisnika preko /api/auth/me; token se ne čuva u localStorage. Odjava briše sesiju. Privatni način rada ili brisanje kolačića mogu prekinuti pamćenje.
+
+Provjera bez stvarnih Google tajni: `node tests/google-fixture-server.mjs`, zatim `python tests/google-browser.py`. Koristi sintetički Google odgovor i provjerava isti račun, preskakanje registracije, trajni cookie, obnovu preglednika, odjavu i ponovni Google ulaz. Ne dokazuje stvarni Google consent/deployment pristup.
 
 Prije javne produkcije završiti Google branding/consent zahtjeve i objaviti stvarne uslove i politiku privatnosti. U testing režimu pristup imaju samo uneseni testni korisnici.
 

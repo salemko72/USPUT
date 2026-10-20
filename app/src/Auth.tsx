@@ -255,6 +255,13 @@ export function Auth({
               </div>
             </>
           )}
+          {new URLSearchParams(location.search).get("google") === "link" && (
+            <p className="search-flexibility-note">
+              {t(
+                "Tvoj račun već postoji. Potvrdi postojeću lozinku jednom da povežeš Google. Sljedeći put ulaziš direktno preko Googlea.",
+              )}
+            </p>
+          )}
           <form onSubmit={submit}>
             {register && (
               <label className="field-label">

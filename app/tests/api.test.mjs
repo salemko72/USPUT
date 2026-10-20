@@ -1213,3 +1213,142 @@ test("street search accepts city district metadata and short scoped street names
   assert.equal(r.data.locations.length, 1);
   assert.match(r.data.locations[0].name, /Put/);
 });
+
+test("verified Google Gmail login reuses an email account, preserves profile and issues a persistent session", async (t) => {
+  const account = await signup("Salem Original", "salem@gmail.com");
+  env.GOOGLE_CLIENT_ID = "fixture";
+  env.GOOGLE_CLIENT_SECRET = "fixture";
+  let profile = {
+    sub: "stable-google-id",
+    email: "Salem@gmail.com",
+    email_verified: true,
+    name: "Different Google Name",
+  };
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async (url) =>
+      new Response(
+        JSON.stringify(
+          String(url).includes("/token")
+            ? { access_token: "fixture" }
+            : profile,
+        ),
+      ),
+  );
+  async function google() {
+    const start = await handleApi(
+      new Request("https://usput.example/api/auth/google"),
+      env,
+    );
+    const state = new URL(start.headers.get("Location")).searchParams.get(
+      "state",
+    );
+    return handleApi(
+      new Request(
+        "https://usput.example/api/auth/google/callback?state=" +
+          state +
+          "&code=fixture",
+        { headers: { Cookie: start.headers.get("set-cookie").split(";")[0] } },
+      ),
+      env,
+    );
+  }
+  const result = await google();
+  assert.equal(result.status, 302);
+  assert.match(result.headers.get("Location"), /welcome=1/);
+  const cookie = result.headers.get("set-cookie");
+  assert.match(cookie, /Max-Age=2592000/);
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /Secure/);
+  const me = await call("/auth/me", null, cookie.split(";")[0]);
+  assert.equal(me.data.user.id, account.data.user.id);
+  assert.equal(me.data.user.name, "Salem Original");
+  assert.equal(me.data.user.city, "Sarajevo");
+  assert.equal(me.data.user.provider, "google");
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM users").get().n, 1);
+  assert.match((await google()).headers.get("Location"), /welcome=1/);
+  // Unverified local credentials and old sessions cannot survive automatic linking.
+  assert.equal(
+    (
+      await call("/auth/login", {
+        email: "salem@gmail.com",
+        password: "sigurna-lozinka-123",
+      })
+    ).status,
+    401,
+  );
+  assert.equal((await call("/auth/me", null, account.cookie)).status, 401);
+  profile = { ...profile, sub: "other-google-id" };
+  assert.equal((await google()).status, 409);
+});
+
+test("third-party Google email requires existing-account proof once and never starts duplicate registration", async (t) => {
+  const account = await signup("Existing", "existing@example.test");
+  env.GOOGLE_CLIENT_ID = "fixture";
+  env.GOOGLE_CLIENT_SECRET = "fixture";
+  let profile = {
+    sub: "third-party-sub",
+    email: "existing@example.test",
+    email_verified: true,
+    name: "Existing",
+  };
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async (url) =>
+      new Response(
+        JSON.stringify(
+          String(url).includes("/token")
+            ? { access_token: "fixture" }
+            : profile,
+        ),
+      ),
+  );
+  async function google() {
+    const start = await handleApi(
+      new Request("http://localhost:8787/api/auth/google"),
+      env,
+    );
+    const state = new URL(start.headers.get("Location")).searchParams.get(
+      "state",
+    );
+    return handleApi(
+      new Request(
+        "http://localhost:8787/api/auth/google/callback?state=" +
+          state +
+          "&code=fixture",
+        { headers: { Cookie: start.headers.get("set-cookie").split(";")[0] } },
+      ),
+      env,
+    );
+  }
+  const r = await google();
+  assert.match(r.headers.get("Location"), /google=link/);
+  const pending = r.headers.get("set-cookie").split(";")[0];
+  assert.equal(
+    sqlite.prepare("SELECT google_id FROM users").get().google_id,
+    null,
+  );
+  assert.equal(
+    (
+      await call(
+        "/auth/login",
+        { email: "existing@example.test", password: "wrong" },
+        pending,
+      )
+    ).status,
+    401,
+  );
+  const login = await call(
+    "/auth/login",
+    { email: "existing@example.test", password: "sigurna-lozinka-123" },
+    pending,
+  );
+  assert.equal(login.status, 200);
+  assert.equal(login.data.user.id, account.data.user.id);
+  assert.equal(login.data.user.provider, "google");
+  assert.match((await google()).headers.get("Location"), /welcome=1/);
+  profile = { ...profile, email_verified: "false", sub: "fake" };
+  assert.equal((await google()).status, 403);
+});
