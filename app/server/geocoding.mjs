@@ -54,7 +54,7 @@ export async function locateCity(env, raw) {
 export async function geocode(env, query, rawScope) {
   if (!env.GEOCODER_URL) return null;
   const q = typeof query === "string" ? query.trim().replace(/\s+/g, " ") : "";
-  if (q.length < 5 || q.length > 180)
+  if (q.length < 3 || q.length > 180)
     throw new TypeError("Unesi ulicu, približan broj i grad.");
   const scope = rawScope && typeof rawScope === "object" ? rawScope : {};
   const city =
@@ -66,7 +66,7 @@ export async function geocode(env, query, rawScope) {
   const scopedQuery =
     city && !fold(q).includes(fold(city)) ? q + ", " + city : q;
   const key =
-    "geocode-v2:" +
+    "geocode-v3:" +
     env.GEOCODER_URL +
     ":" +
     JSON.stringify([scopedQuery.toLowerCase(), city, point]);
@@ -92,6 +92,7 @@ export async function geocode(env, query, rawScope) {
         url.searchParams.set("bounded", "1");
       }
       url.searchParams.set("format", "jsonv2");
+      url.searchParams.set("accept-language", "bs,hr,sr-Latn,en");
       url.searchParams.set("addressdetails", "1");
       url.searchParams.set("limit", "6");
       url.searchParams.set("countrycodes", "ba,hr,rs,me,si,mk,xk");
@@ -103,10 +104,28 @@ export async function geocode(env, query, rawScope) {
             street = a.road || a.pedestrian || a.residential || a.footway,
             city = a.city || a.town || a.village || a.municipality;
           if (!street || !city) return null;
+          // City metadata can identify a district/municipality rather than the
+          // metropolitan city. Check its administrative parents as well.
+          const requested = fold(scope.city || "");
+          const cityMatches = (name) => {
+            if (typeof name !== "string") return false;
+            const value = fold(name);
+            return (
+              value === requested ||
+              value.endsWith(" " + requested) ||
+              value.startsWith(requested + " ")
+            );
+          };
           if (
-            typeof scope.city === "string" &&
-            scope.city.trim() &&
-            fold(city) !== fold(scope.city.trim())
+            requested &&
+            ![
+              a.city,
+              a.town,
+              a.village,
+              a.municipality,
+              a.county,
+              a.state_district,
+            ].some(cityMatches)
           )
             return null;
           if (point) {

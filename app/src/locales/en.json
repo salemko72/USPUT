@@ -579,5 +579,6 @@
   "Unesi grad ili mjesto.": "Enter a city or town.",
   "Grad nije prepoznat. Upiši grad ručno.": "The city could not be identified. Enter it manually.",
   "Lokacija nije ispravna.": "Invalid location.",
-  "Profil je sačuvan.": "Profile saved."
+  "Profil je sačuvan.": "Profile saved.",
+  "Ulice tražimo u odabranom gradu. Grad možeš promijeniti ručno.": "Street searches use the selected city. You can change the city manually."
 }

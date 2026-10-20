@@ -1181,3 +1181,35 @@ test("registration city is required, survives login/profile and stays private in
   const me = await call("/auth/me", null, created.cookie);
   assert.equal(me.data.user.city, "Zagreb");
 });
+
+test("street search accepts city district metadata and short scoped street names without accepting another city", async () => {
+  env.GEOCODER_URL = "https://geocoder.example.test/";
+  env.ROUTING_FETCH = async () =>
+    new Response(
+      JSON.stringify([
+        {
+          lat: "43.85",
+          lon: "18.4",
+          address: {
+            road: "Put",
+            city: "Novi Grad Sarajevo",
+            county: "Kanton Sarajevo",
+          },
+        },
+        {
+          lat: "45.81",
+          lon: "15.97",
+          address: { road: "Put", city: "Zagreb", county: "Grad Zagreb" },
+        },
+      ]),
+    );
+  const user = await signup();
+  const r = await call(
+    "/locations/search",
+    { query: "Put", scope: { city: "Sarajevo" } },
+    user.cookie,
+  );
+  assert.equal(r.status, 200);
+  assert.equal(r.data.locations.length, 1);
+  assert.match(r.data.locations[0].name, /Put/);
+});

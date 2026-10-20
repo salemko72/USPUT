@@ -123,7 +123,10 @@ export function StreetPicker({
     editing.current = false;
   }, [value?.id, value?.name]);
   async function search() {
-    if (scope.city.trim().length < 2) {
+    const city =
+      scope.city.trim() ||
+      (query.includes(",") ? query.split(",").at(-1)!.trim() : "");
+    if (city.length < 2) {
       setError("Prvo odaberi grad za pretragu ulica.");
       return;
     }
@@ -134,7 +137,7 @@ export function StreetPicker({
     try {
       const r = await api<{ locations: Place[] }>("/locations/search", {
         query,
-        scope,
+        scope: { ...scope, city },
       });
       if (ticket !== requestId.current) return;
       setResults(r.locations);
@@ -159,6 +162,7 @@ export function StreetPicker({
             onChange={(e) => {
               requestId.current++;
               setBusy(false);
+              setError("");
               setQuery(e.target.value);
               editing.current = !!value;
               onChange(null);
@@ -167,14 +171,14 @@ export function StreetPicker({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                if (query.trim().length >= 5) search();
+                if (query.trim().length >= 3) search();
               }
             }}
           />
           <button
             type="button"
             aria-label={t("Pretraži adresu") + " — " + label}
-            disabled={busy || query.trim().length < 5}
+            disabled={busy || query.trim().length < 3}
             onClick={search}
           >
             <Search size={18} />
@@ -184,7 +188,7 @@ export function StreetPicker({
       <button
         type="button"
         className="street-adjust"
-        disabled={query.trim().length < 5}
+        disabled={query.trim().length < 3}
         onClick={() => {
           const centers: Record<string, [number, number]> = {
             beograd: [44.8125, 20.4612],

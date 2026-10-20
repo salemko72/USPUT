@@ -346,7 +346,9 @@ export function Home({
               value={query}
               onChange={setQuery}
               places={places}
-              defaultCity={user.city || ""}
+              defaultCity={
+                user.city || searchPlace(query, "from", places)?.city || ""
+              }
             />
             {role === "passenger" && (
               <label className="walking-budget">
