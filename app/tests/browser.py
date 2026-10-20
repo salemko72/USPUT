@@ -1,0 +1,36 @@
+from playwright.sync_api import sync_playwright, expect
+from pathlib import Path
+import os,json
+base=os.environ.get('USPUT_TEST_URL','http://127.0.0.1:8787')
+Path('test-results').mkdir(exist_ok=True)
+with sync_playwright() as p:
+ browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium')
+ context=browser.new_context(viewport={'width':390,'height':844},device_scale_factor=1)
+ page=context.new_page();errors=[]
+ page.on('pageerror',lambda e:errors.append(str(e)))
+ page.goto(base)
+ page.get_by_role('button',name='Isprobaj demo').click()
+ page.get_by_role('button',name='Pronađi vožnju').click()
+ page.get_by_role('button',name='Pogledaj vožnju').first.click()
+ page.get_by_role('button',name='Pošalji zahtjev').click()
+ page.get_by_role('button',name='Simuliraj potvrdu vozača').click()
+ page.get_by_role('button',name='Na mjestu sam').click()
+ expect(page.get_by_text('Vozač zna da si tu.')).to_be_visible()
+ page.screenshot(path='test-results/mobile-confirmed.png',full_page=True)
+ assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+ page.reload();expect(page.get_by_text('Vozač zna da si tu.')).to_be_visible()
+ page.get_by_role('button',name='Početna',exact=True).click()
+ page.screenshot(path='test-results/mobile-home.png',full_page=True)
+ page.get_by_role('button',name='Nudim vožnju',exact=True).click()
+ assert page.get_by_role('button',name='Objavi vožnju').is_visible()
+ page.get_by_role('button',name='Profil',exact=True).click()
+ page.get_by_role('button',name='Odjavi se').click()
+ page.get_by_role('button',name='Krenimo zajedno').click()
+ assert page.get_by_role('heading',name='Dobro došao nazad.').is_visible()
+ page.screenshot(path='test-results/mobile-login.png',full_page=True)
+ page.get_by_role('button',name='Napravi račun').click()
+ assert page.get_by_role('heading',name='Dobro društvo počinje tobom.').is_visible()
+ page.screenshot(path='test-results/mobile-register.png',full_page=True)
+ assert not errors,errors
+ browser.close()
+ print('PASS: demo landing/search/detail/request/confirm/ready/persistence/role/profile/logout/auth navigation; no JS errors, no mobile overflow')

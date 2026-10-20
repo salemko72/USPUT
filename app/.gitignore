@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.data/
+.wrangler/
+test-results/
+.env
+.env.*
+.dev.vars
+
+*.tsbuildinfo

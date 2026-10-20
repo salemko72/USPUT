@@ -1,0 +1,11 @@
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,password TEXT,salt TEXT,google_id TEXT UNIQUE,created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS rate_limits(id TEXT PRIMARY KEY,count INTEGER NOT NULL,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS oauth_states(id TEXT PRIMARY KEY,verifier TEXT NOT NULL,redirect_uri TEXT NOT NULL,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS rides(id TEXT PRIMARY KEY,driver_id TEXT NOT NULL REFERENCES users(id),from_id TEXT NOT NULL,to_id TEXT NOT NULL,date TEXT NOT NULL,time TEXT NOT NULL,departure INTEGER NOT NULL,car TEXT NOT NULL,note TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','matched','cancelled','completed')),created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS bookings(id TEXT PRIMARY KEY,ride_id TEXT NOT NULL REFERENCES rides(id),passenger_id TEXT NOT NULL REFERENCES users(id),status TEXT NOT NULL CHECK(status IN ('pending','accepted','declined','ready','cancelled','completed')),created_at INTEGER NOT NULL,UNIQUE(ride_id,passenger_id));
+CREATE UNIQUE INDEX IF NOT EXISTS one_seat ON bookings(ride_id) WHERE status IN ('accepted','ready','completed');
+CREATE INDEX IF NOT EXISTS rides_search ON rides(date,from_id,to_id,status);
+CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires);
+CREATE INDEX IF NOT EXISTS bookings_passenger ON bookings(passenger_id);

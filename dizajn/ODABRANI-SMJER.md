@@ -19,3 +19,7 @@ Prije odabira mapnog rješenja provjeriti licencu, atribuciju, limite besplatnog
 
 ## Status
 Odabran vizuelni smjer. Dorada ilustracije i implementacija još nisu urađene. Ove odluke ne predstavljaju odobrenje za objavu aplikacije.
+
+## Implementacija — 20.10.2026.
+Prva Pulse beta je izrađena u `app/`: splash, email auth, pripremljeni Google OAuth, glavni ekran, tok putnika/vozača, ponude i dogovori. Nova urbanija ilustracija bez vjerskih objekata sačuvana je kao `03-USPUT-Pulse-urban-hero.png`; web asset je u `app/public/urban-hero.webp`.
+Stvarni snimci aplikacije su u `pulse-implementacija/`. Originalni Float i Pulse mockupi ostaju neizmijenjeni. Mapa je označena skica s opcionalnim OSM pregledom, ne navigacija. Stvarna Google prijava čeka OAuth podatke. Nije urađena javna objava niti odobrena stvarna proba vožnji.
