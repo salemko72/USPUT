@@ -129,3 +129,11 @@ Putnik bira5/10/15 minuta hodanja pri svakoj pretrazi. Engine projektuje tačke 
 Cestovne/pješačke putanje dolaze od OpenRouteService ako postoji tajni binding, inače od javnihOSRM endpointa. Geokoder je Nominatim; šalju se adresa i grad, bez korisničkog imena/emaila. Eksplicitne pretrage i rutiranje su keširani i globalno ograničeni na1upstreamzahtjev/1,1s. Nedostupnost se prikazuje kao nepotpuna pretraga, bez tihog proglašavanja ruta nepodudarnim. Stanje servisa je u `routing_health`. Upute: [ROUTING-SETUP.md](ROUTING-SETUP.md).
 
 Provjere: `npm test` i `npm run build`; `node tests/street-fixture-server.mjs` + `python tests/street-browser.py` dokazuju tok adresa/pin→potvrda trase→usputni segment→hodanje→obostrani dogovor na kontrolisanim podacima. Ne dokazuju dostupnost javnog geokodera/rutera. Nova ulična beta je kompatibilna s ranijim Kerimovim ponudama. Oznake troškova su NE u zelenom krugu i DA u crnom s bijelim slovima.
+
+## Grad korisnika i lokacija telefona
+
+Registracija emailom i novi Google račun traže grad/mjesto (`0007_user_city.sql`). Grad se vraća samo u vlastitom profilu i može se uređivati; postojeći računi ostaju važeći i mogu ga dopuniti. Pretraga ulica počinje gradom iz profila, a grad se može privremeno promijeniti za drugo polazište/odredište. To ne mijenja već potvrđene pinove.
+
+„Koristi moju lokaciju” poziva browser geolocation samo na klik, uz dozvolu korisnika. Za određivanje grada šalju se koordinate zaokružene na 3 decimale, bez stalnog praćenja i bez spremanja GPS-a u korisnički profil. Reverse geocoder ima zajednički cache i ograničenje upita kao pretraga adresa. GPS pretraga dobija bounded viewbox; rezultati iz drugog grada ili udaljeni više od 50 km odbacuju se i na serveru. Ručna promjena grada uklanja prethodno GPS ograničenje. Nedostupna/odbijena lokacija ostavlja ručni unos.
+
+Nominatim se poziva samo na eksplicitnu pretragu, bez autocomplete upita na svaki znak. `tests/city-browser.py` pokriva registraciju, dozvolu/odbijanje lokacije, zaokruživanje koordinata, promjenu grada i odbacivanje starih sugestija. Vanjski geocoder u testovima je sintetički fixture; test ne dokazuje dostupnost javnog servisa. Tipografija je lokalno posluženi Montserrat Alternates, regular 400 za osnovni tekst.

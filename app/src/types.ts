@@ -10,6 +10,7 @@ export type Vehicle = VehicleInput & { id: string; make: string };
 export type User = {
   id: string;
   name: string;
+  city?: string;
   email?: string;
   provider?: string;
 };
@@ -93,7 +94,7 @@ export type Service = {
   request: (id: string, query?: Search) => Promise<Booking>;
   booking: (id: string, action: string) => Promise<void>;
   cancelRide: (id: string) => Promise<void>;
-  profile: (name: string) => Promise<User>;
+  profile: (name: string, city?: string) => Promise<User>;
 };
 export const tomorrow = () => {
   const d = new Date(today() + "T12:00:00Z");

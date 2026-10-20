@@ -7,7 +7,7 @@ with sync_playwright() as p:
  driver=browser.new_context();passenger=browser.new_context(viewport={'width':390,'height':844})
  def post(ctx,path,data):
   r=ctx.request.post(base+'/api'+path,data=data,headers={'Origin':base});assert r.ok,r.text();return r.json()
- for c,name in [(driver,'Driver'),(passenger,'Passenger')]:post(c,'/auth/register',{'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','adult':True,'terms':True})
+ for c,name in [(driver,'Driver'),(passenger,'Passenger')]:post(c,'/auth/register',{'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True})
  date=(datetime.now()+timedelta(days=1)).strftime('%Y-%m-%d')
  ride=post(driver,'/rides',{'from':'ilidza','to':'centar','date':date,'time':'07:30','car':'Test Car','note':''})['ride']
  page=passenger.new_page();page.goto(base);page.get_by_role('button',name='Pronađi vožnju').click()

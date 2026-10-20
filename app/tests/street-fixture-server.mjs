@@ -7,6 +7,7 @@ env.OPENROUTESERVICE_API_KEY = "fixture-only";
 env.GEOCODER_URL = "https://geocoder.example.test/";
 env.ROUTING_FETCH = async (input, options = {}) => {
   const url = new URL(input);
+  if (url.pathname.endsWith("/reverse")) return new Response(JSON.stringify({address:{city:"Sarajevo"}}));
   if (url.pathname.endsWith("/search")) {
     const query = url.searchParams.get("q"),
       end = /ilid|butmir|30/i.test(query),

@@ -1,3 +1,4 @@
+import type { LocationScope } from "./LocationScope";
 import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Search, Move } from "lucide-react";
@@ -92,9 +93,11 @@ export function PinMap({
 export function StreetPicker({
   label,
   value,
+  scope,
   onChange,
 }: {
   label: string;
+  scope: LocationScope;
   value?: Place;
   onChange: (place: Place | null) => void;
 }) {
@@ -106,27 +109,41 @@ export function StreetPicker({
   const [manual, setManual] = useState(false),
     [moved, setMoved] = useState(false),
     [ready, setReady] = useState(false);
-  const editing = useRef(false);
+  const editing = useRef(false),
+    requestId = useRef(0);
+  useEffect(() => {
+    requestId.current++;
+    setResults(null);
+    setError("");
+    setBusy(false);
+  }, [scope.city, scope.lat, scope.lng]);
   useEffect(() => {
     if (value) setQuery(value.name);
     else if (!editing.current) setQuery("");
     editing.current = false;
   }, [value?.id, value?.name]);
   async function search() {
+    if (scope.city.trim().length < 2) {
+      setError("Prvo odaberi grad za pretragu ulica.");
+      return;
+    }
+    const ticket = ++requestId.current;
     setBusy(true);
     setError("");
     setResults(null);
     try {
       const r = await api<{ locations: Place[] }>("/locations/search", {
         query,
+        scope,
       });
+      if (ticket !== requestId.current) return;
       setResults(r.locations);
       if (!r.locations.length)
         setError("Nismo pronašli ulicu. Dodaj približan broj i grad.");
     } catch (e) {
-      setError((e as Error).message);
+      if (ticket === requestId.current) setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (ticket === requestId.current) setBusy(false);
     }
   }
   return (
@@ -140,6 +157,8 @@ export function StreetPicker({
             value={query}
             placeholder={t("Ulica, približan broj, grad")}
             onChange={(e) => {
+              requestId.current++;
+              setBusy(false);
               setQuery(e.target.value);
               editing.current = !!value;
               onChange(null);
@@ -182,17 +201,23 @@ export function StreetPicker({
           const found = Object.entries(centers).find(([city]) =>
               query.toLowerCase().includes(city),
             ),
-            center = found?.[1] || [
-              value?.lat || 43.8598,
-              value?.lng || 18.4256,
-            ];
+            scopedCenter = Object.entries(centers).find(([city]) =>
+              scope.city.toLowerCase().includes(city),
+            )?.[1],
+            center = found?.[1] ||
+              (scope.lat !== undefined && scope.lng !== undefined
+                ? [scope.lat, scope.lng]
+                : scopedCenter) || [
+                value?.lat ?? 43.8598,
+                value?.lng ?? 18.4256,
+              ];
           const p: Place = {
             id: `pin_${center[0].toFixed(5)}_${center[1].toFixed(5)}`,
             name: query.trim(),
             detail: "Približna lokacija ručno označena na karti",
             lat: center[0],
             lng: center[1],
-            city: found?.[0] || value?.city || "",
+            city: found?.[0] || scope.city || value?.city || "",
           };
           setManual(true);
           setMoved(false);

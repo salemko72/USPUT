@@ -6,7 +6,7 @@ with sync_playwright() as p:
     for width in (390,1280):
         page=browser.new_page(viewport={'width':width,'height':900},locale='en-US')
         base=os.environ.get('CALENDAR_URL','http://127.0.0.1:8788')
-        response=page.request.post(base+'/api/auth/register',data={'name':'Calendar Test','email':f'calendar-{time.time_ns()}@example.test','password':'testna-lozinka-123','adult':True,'terms':True},headers={'Origin':base})
+        response=page.request.post(base+'/api/auth/register',data={'name':'Calendar Test','email':f'calendar-{time.time_ns()}@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True},headers={'Origin':base})
         assert response.ok,response.text()
         page.goto(base)
         trigger=page.get_by_role('button',name=re.compile('Datum polaska:'))

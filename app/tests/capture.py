@@ -14,10 +14,10 @@ with sync_playwright() as p:
  page.goto(base);capture('01-splash-mobile',True)
  page.get_by_role('button',name='Krenimo zajedno').click();capture('02-login-mobile',True)
  page.get_by_role('button',name='Napravi račun',exact=True).click();capture('03-registration-mobile',True)
- response=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':'Capture Passenger','email':'capture-'+uuid.uuid4().hex+'@example.test','password':'testna-lozinka-123','adult':True,'terms':True});assert response.ok,response.text()
+ response=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':'Capture Passenger','email':'capture-'+uuid.uuid4().hex+'@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True});assert response.ok,response.text()
  # Publish a real driver's offer on the same default route and departure.
  driver_ctx=browser.new_context(viewport={'width':390,'height':844},locale='bs-BA')
- response=driver_ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':driver_name,'email':'driver-'+uuid.uuid4().hex+'@example.test','password':'testna-lozinka-123','adult':True,'terms':True});assert response.ok,response.text()
+ response=driver_ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':driver_name,'email':'driver-'+uuid.uuid4().hex+'@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True});assert response.ok,response.text()
  driver=driver_ctx.new_page();driver.goto(base);driver.get_by_role('button',name='Nudim vožnju').click();driver.get_by_role('button',name='Dodaj vozilo',exact=True).click();driver.get_by_role('button',name='Marka nije na listi',exact=True).click();driver.get_by_label('Naziv marke').fill('Capture');driver.get_by_label('Naziv modela').fill('Car');driver.get_by_role('radio',name='Siva',exact=True).check();driver.get_by_role('button',name='Sačuvaj vozilo',exact=True).click();driver.get_by_role('button',name='Objavi vožnju',exact=True).click();expect(driver.get_by_role('heading',name='Tvoja vožnja.')).to_be_visible()
  page.goto(base);page.get_by_role('button',name='Pronađi vožnju').wait_for();capture('04-main-mobile')
  page.get_by_role('button',name='Pronađi vožnju').click();page.get_by_role('button',name='Pogledaj vožnju').first.wait_for();capture('05-routes-mobile',True)

@@ -564,5 +564,20 @@
   "Za pretragu adresa šaljemo unesenu ulicu i grad geokoderu. Za putanje šaljemo koordinate servisu za cestovno i pješačko rutiranje, bez tvog imena ili emaila. Objavljena ponuda prikazuje približne lokacije koje potvrdiš.": "Address search sends the street and city to a geocoder. Road and walking directions send coordinates to a routing service, without your name or email. Published offers show the approximate locations you confirm.",
   "Potvrdi polazište i odredište.": "Confirm the departure and destination.",
   "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.": "Road or walking directions are currently unavailable. Search again.",
-  "Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.": "More flexibility, more chances to find a ride. Being open to a slightly different time or a nearby meeting point can help you find someone to travel with."
+  "Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.": "More flexibility, more chances to find a ride. Being open to a slightly different time or a nearby meeting point can help you find someone to travel with.",
+  "Grad ili mjesto": "City or town",
+  "Npr. Sarajevo, Zagreb, Beograd…": "E.g. Sarajevo, Zagreb, Belgrade…",
+  "Ovdje ćemo prvo tražiti tvoje ulice. Grad možeš promijeniti.": "We will look for streets in this city first. You can change it later.",
+  "Grad za pretragu ulica": "City for street searches",
+  "Upiši grad ili mjesto": "Enter a city or town",
+  "Koristi moju lokaciju": "Use my location",
+  "Tražimo tvoj grad…": "Finding your city…",
+  "Ulice tražimo u odabranom gradu. Lokacija telefona koristi se samo na tvoj zahtjev.": "Street searches stay in the selected city. Your phone location is used only when you request it.",
+  "Lokacija nije dostupna. Upiši grad ručno.": "Location is unavailable. Enter your city manually.",
+  "Lokacija nije dostupna ili grad nije prepoznat. Dozvoli lokaciju ili upiši grad ručno.": "Location is unavailable or the city could not be identified. Allow location access or enter your city manually.",
+  "Prvo odaberi grad za pretragu ulica.": "Choose a city for street searches first.",
+  "Unesi grad ili mjesto.": "Enter a city or town.",
+  "Grad nije prepoznat. Upiši grad ručno.": "The city could not be identified. Enter it manually.",
+  "Lokacija nije ispravna.": "Invalid location.",
+  "Profil je sačuvan.": "Profile saved."
 }

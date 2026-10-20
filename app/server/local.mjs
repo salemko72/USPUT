@@ -20,6 +20,13 @@ if (
   sqlite.exec(
     "ALTER TABLE rides ADD COLUMN cost_sharing INTEGER NOT NULL DEFAULT 0 CHECK(cost_sharing IN (0,1))",
   );
+if (
+  !sqlite
+    .prepare("PRAGMA table_info(users)")
+    .all()
+    .some((c) => c.name === "city")
+)
+  sqlite.exec("ALTER TABLE users ADD COLUMN city TEXT NOT NULL DEFAULT ''");
 for (const column of ["from_json", "to_json", "route_json"])
   if (
     !sqlite
@@ -53,7 +60,7 @@ export const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "DENY",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
   "Content-Security-Policy":
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https://tile.openstreetmap.org; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 };

@@ -5,7 +5,7 @@ with sync_playwright() as p:
  browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium');ctx=browser.new_context(viewport={'width':390,'height':844});page=ctx.new_page();page.set_default_timeout(5000)
  def post(path,data):
   r=ctx.request.post(base+'/api'+path,data=data,headers={'Origin':base});assert r.ok,r.text();return r.json()
- post('/auth/register',{'name':'Cost Test','email':f'cost-{time.time_ns()}@example.test','password':'testna-lozinka-123','adult':True,'terms':True})
+ post('/auth/register',{'name':'Cost Test','email':f'cost-{time.time_ns()}@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True})
  day=(datetime.date.today()+datetime.timedelta(days=2)).isoformat()
  rides=[]
  for shared in (False,True):

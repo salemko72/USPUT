@@ -155,6 +155,7 @@ export function Auth({
             : "/auth/login",
         {
           name: f.get("name"),
+          city: f.get("city"),
           email: f.get("email"),
           password: f.get("password"),
           adult: f.get("adult") === "on",
@@ -269,6 +270,27 @@ export function Auth({
                     required
                   />
                 </div>
+              </label>
+            )}
+            {register && (
+              <label className="field-label">
+                {t("Grad ili mjesto")}
+                <div className="input-wrap">
+                  <input
+                    name="city"
+                    aria-label={t("Grad ili mjesto")}
+                    autoComplete="address-level2"
+                    required
+                    minLength={2}
+                    maxLength={80}
+                    placeholder={t("Npr. Sarajevo, Zagreb, Beograd…")}
+                  />
+                </div>
+                <small className="fine-print">
+                  {t(
+                    "Ovdje ćemo prvo tražiti tvoje ulice. Grad možeš promijeniti.",
+                  )}
+                </small>
               </label>
             )}
             {!googleEnroll && (

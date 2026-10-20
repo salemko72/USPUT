@@ -1,6 +1,6 @@
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
 import { corridorMatch } from "./corridor.mjs";
-import { geocode } from "./geocoding.mjs";
+import { geocode, locateCity } from "./geocoding.mjs";
 import { readRoadMatrix, matchRoute } from "./routing.mjs";
 import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
@@ -56,6 +56,7 @@ const publicUser = (u) => ({ id: u.id, name: u.name });
 const selfUser = (u) => ({
   ...publicUser(u),
   email: u.email,
+  city: u.city || "",
   provider: u.google_id ? "google" : "email",
 });
 const cookieValue = (request, name) =>
@@ -323,14 +324,16 @@ export async function handleApi(request, env) {
         name: safeText(body.name || p.name, 60),
         email: p.email,
         google_id: p.sub,
+        city: safeText(body.city, 80),
       };
+      if (u.city.length < 2) fail(400, "Unesi grad ili mjesto.");
       if (u.name.length < 2) fail(400, "Unesi ime od najmanje dva znaka.");
       await db.batch([
         db
           .prepare(
-            "INSERT INTO users(id,name,email,google_id,created_at) VALUES(?,?,?,?,?)",
+            "INSERT INTO users(id,name,email,google_id,city,created_at) VALUES(?,?,?,?,?,?)",
           )
-          .bind(u.id, u.name, u.email, u.google_id, Date.now()),
+          .bind(u.id, u.name, u.email, u.google_id, u.city, Date.now()),
         db
           .prepare("DELETE FROM oauth_states WHERE id=?")
           .bind(await hash(token)),
@@ -354,7 +357,9 @@ export async function handleApi(request, env) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length > 128)
         fail(400, "Provjeri email i lozinku.");
       if (path === "/auth/register") {
-        const name = safeText(body.name, 60);
+        const name = safeText(body.name, 60),
+          city = safeText(body.city, 80);
+        if (city.length < 2) fail(400, "Unesi grad ili mjesto.");
         if (
           name.length < 2 ||
           password.length < 10 ||
@@ -373,10 +378,10 @@ export async function handleApi(request, env) {
         )
           fail(409, "Račun s ovim emailom već postoji. Prijavi se.");
         const salt = random(),
-          u = { id: crypto.randomUUID(), name, email };
+          u = { id: crypto.randomUUID(), name, email, city };
         await db
           .prepare(
-            "INSERT INTO users(id,name,email,password,salt,created_at) VALUES(?,?,?,?,?,?)",
+            "INSERT INTO users(id,name,email,password,salt,city,created_at) VALUES(?,?,?,?,?,?,?)",
           )
           .bind(
             u.id,
@@ -384,6 +389,7 @@ export async function handleApi(request, env) {
             email,
             await passwordHash(password, salt),
             salt,
+            city,
             Date.now(),
           )
           .run();
@@ -466,11 +472,15 @@ export async function handleApi(request, env) {
     if (path === "/profile" && method === "POST") {
       const name = safeText(body.name, 60);
       if (name.length < 2) fail(400, "Unesi ime od najmanje dva znaka.");
+      const city =
+        body.city === undefined ? user.city || "" : safeText(body.city, 80);
+      if (body.city !== undefined && city.length < 2)
+        fail(400, "Unesi grad ili mjesto.");
       await db
-        .prepare("UPDATE users SET name=? WHERE id=?")
-        .bind(name, user.id)
+        .prepare("UPDATE users SET name=?,city=? WHERE id=?")
+        .bind(name, city, user.id)
         .run();
-      return json({ user: selfUser({ ...user, name }) });
+      return json({ user: selfUser({ ...user, name, city }) });
     }
     if (path === "/routes/preview" && method === "POST") {
       const from = normalizeLocation(body.fromLocation) || getPlace(body.from),
@@ -485,11 +495,24 @@ export async function handleApi(request, env) {
         );
       return json({ route, from, to });
     }
+    if (path === "/locations/city" && method === "POST") {
+      await rateLimit(db, "geocode:" + user.id, 20);
+      let scope;
+      try {
+        scope = await locateCity(env, body);
+      } catch (e) {
+        if (e instanceof TypeError) fail(400, e.message);
+        throw e;
+      }
+      if (!scope || !scope.city)
+        fail(503, "Grad nije prepoznat. Upiši grad ručno.");
+      return json(scope);
+    }
     if (path === "/locations/search" && method === "POST") {
       await rateLimit(db, "geocode:" + user.id, 20);
       let locations;
       try {
-        locations = await geocode(env, body.query);
+        locations = await geocode(env, body.query, body.scope);
       } catch (e) {
         if (e instanceof TypeError) fail(400, e.message);
         throw e;

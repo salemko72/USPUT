@@ -16,7 +16,7 @@ export default {
     headers.set("X-Frame-Options", "DENY");
     headers.set(
       "Permissions-Policy",
-      "camera=(), microphone=(), geolocation=()",
+      "camera=(), microphone=(), geolocation=(self)",
     );
     headers.set(
       "Content-Security-Policy",

@@ -1,5 +1,5 @@
 :root {
-  font-family: "Montserrat Variable", Montserrat, Arial, sans-serif;
+  font-family: "Montserrat Alternates", Arial, sans-serif;
   color: #151815;
   background: #f6f5f0;
   font-synthesis: none;
@@ -4371,7 +4371,17 @@ textarea::placeholder {
 .modal h3 {
   overflow-wrap: anywhere;
 }
-.route-provider-credit{position:absolute;top:12px;left:12px;max-width:65%;padding:5px 8px;background:#fffffff0;border-radius:8px;font-size:9px;z-index:500;}
+.route-provider-credit {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  max-width: 65%;
+  padding: 5px 8px;
+  background: #fffffff0;
+  border-radius: 8px;
+  font-size: 9px;
+  z-index: 500;
+}
 
 .search-flexibility-note {
   margin: 0 0 16px;
@@ -4382,4 +4392,22 @@ textarea::placeholder {
   font-size: 12px;
   font-weight: 400;
   line-height: 1.65;
+}
+
+.location-scope {
+  margin: 0 0 18px;
+  padding: 14px;
+  background: #f6f7f1;
+  border-radius: 16px;
+}
+.location-scope input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px;
+  background: white;
+  color: var(--ink);
+}
+.location-scope > small {
+  display: block;
 }

@@ -10,7 +10,7 @@ with sync_playwright() as p:
  ctx=browser.new_context(viewport={'width':390,'height':844});page=ctx.new_page();errors=[];page.on('pageerror',lambda e: errors.append(str(e)))
  def post(path,data):
   r=ctx.request.post(base+'/api'+path,data=data,headers={'Origin':base});assert r.ok,r.text();return r.json()
- post('/auth/register',{'name':'Photo Test','email':f'photo-{time.time_ns()}@example.test','password':'testna-lozinka-123','adult':True,'terms':True})
+ post('/auth/register',{'name':'Photo Test','email':f'photo-{time.time_ns()}@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True})
  post('/vehicle',{'makeId':'other','make':'Test','model':'Test Car','color':'siva','manualModel':True})
  page.goto(base+'/#profile')
  for label,kind,alt,cap in [('Odaberi profilnu fotografiju','avatar','Tvoja profilna fotografija',50*1024),('Odaberi fotografiju automobila','vehicle','Fotografija tvog automobila',150*1024)]:

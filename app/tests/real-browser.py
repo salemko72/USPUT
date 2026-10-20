@@ -12,7 +12,7 @@ with sync_playwright() as p:
   c=browser.new_context(viewport={'width':390,'height':844},locale='bs-BA');page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));return c,page
  def register(page,name,email):
   page.goto(base);page.get_by_role('button',name='Krenimo zajedno').click();page.get_by_role('button',name='Napravi račun',exact=True).click()
-  page.get_by_label('Tvoje ime').fill(name);page.get_by_label('Email adresa').fill(email);page.get_by_label('Lozinka',exact=True).fill(password)
+  page.get_by_label('Grad ili mjesto',exact=True).fill('Sarajevo');page.get_by_label('Tvoje ime').fill(name);page.get_by_label('Email adresa').fill(email);page.get_by_label('Lozinka',exact=True).fill(password)
   page.get_by_text('Imam najmanje 18 godina.').click();page.locator('input[name="terms"]').check();page.get_by_role('button',name='Napravi račun',exact=True).click()
   expect(page.get_by_role('button',name='Pronađi vožnju')).to_be_visible()
  ca,a=context();cb,b=context()

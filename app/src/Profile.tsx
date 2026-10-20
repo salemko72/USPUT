@@ -32,6 +32,7 @@ export function Profile({
   onToast: (s: string) => void;
 }) {
   const [name, setName] = useState(user.name),
+    [city, setCity] = useState(user.city || ""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [modal, setModal] = useState(""),
@@ -41,9 +42,9 @@ export function Profile({
     setBusy(true);
     setError("");
     try {
-      const u = await service.profile(name);
+      const u = await service.profile(name, city);
       onUser(u);
-      onToast(t("Ime je sačuvano."));
+      onToast(t("Profil je sačuvan."));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -96,6 +97,19 @@ export function Profile({
                   maxLength={60}
                   required
                   autoComplete="given-name"
+                />
+              </div>
+            </label>
+            <label className="field-label">
+              {t("Grad ili mjesto")}
+              <div className="input-wrap">
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  autoComplete="address-level2"
                 />
               </div>
             </label>

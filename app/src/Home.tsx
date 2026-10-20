@@ -1,3 +1,4 @@
+import { LocationScopeControl, type LocationScope } from "./LocationScope";
 import { api } from "./api";
 import { RouteMap } from "./Map";
 import { StreetPicker } from "./StreetPicker";
@@ -21,17 +22,22 @@ export function SearchFields({
   value,
   onChange,
   places,
+  defaultCity = "",
 }: {
+  defaultCity?: string;
   value: Search;
   onChange: (s: Search) => void;
   places: Place[];
 }) {
+  const [scope, setScope] = useState<LocationScope>({ city: defaultCity });
   const set = (k: string, v: string) => onChange({ ...value, [k]: v });
   return (
     <>
+      <LocationScopeControl scope={scope} onChange={setScope} />
       <div className="street-fields">
         <StreetPicker
           label={t("Polazište")}
+          scope={scope}
           value={searchPlace(value, "from", places)}
           onChange={(p) =>
             onChange({
@@ -59,6 +65,7 @@ export function SearchFields({
         </button>
         <StreetPicker
           label={t("Odredište")}
+          scope={scope}
           value={searchPlace(value, "to", places)}
           onChange={(p) =>
             onChange({
@@ -329,11 +336,18 @@ export function Home({
           </div>
           {role === "passenger" && (
             <p className="search-flexibility-note">
-              {t("Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.")}
+              {t(
+                "Više fleksibilnosti, više prilika za vožnju. Ako ti odgovara malo drugačije vrijeme ili obližnje mjesto susreta, lakše ćeš pronaći saputnika.",
+              )}
             </p>
           )}
           <form onSubmit={submit}>
-            <SearchFields value={query} onChange={setQuery} places={places} />
+            <SearchFields
+              value={query}
+              onChange={setQuery}
+              places={places}
+              defaultCity={user.city || ""}
+            />
             {role === "passenger" && (
               <label className="walking-budget">
                 {t("Koliko si spreman hodati?")}

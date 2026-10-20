@@ -5,7 +5,7 @@ with sync_playwright() as p:
  browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium')
  def new(name):
   ctx=browser.new_context(viewport={'width':390,'height':844});page=ctx.new_page();page.set_default_timeout(20000)
-  r=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','adult':True,'terms':True});assert r.ok,r.text()
+  r=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True});assert r.ok,r.text()
   # A test grid replaces external tiles; this verifies controls, not real map availability.
   page.route('**/tile.openstreetmap.org/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
   return ctx,page

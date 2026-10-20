@@ -70,6 +70,6 @@ export const realService: Service = {
   cancelRide: async (id) => {
     await api("/rides/" + id + "/cancel", {});
   },
-  profile: async (name) =>
-    (await api<{ user: User }>("/profile", { name })).user,
+  profile: async (name, city) =>
+    (await api<{ user: User }>("/profile", { name, city })).user,
 };

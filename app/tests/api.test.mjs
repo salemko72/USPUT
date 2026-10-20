@@ -43,6 +43,7 @@ async function signup(name = "Lejla", email = "lejla@example.test") {
     name,
     email,
     password: "sigurna-lozinka-123",
+    city: "Sarajevo",
     adult: true,
     terms: true,
   });
@@ -107,6 +108,7 @@ test("registration validates adult, terms, email, name and password", async () =
           name: "Ana",
           email: "a@example.test",
           password: "sigurna-lozinka-123",
+          city: "Sarajevo",
           adult: true,
           terms: true,
           ...patch,
@@ -370,6 +372,7 @@ test("sessions use HttpOnly cookie and expiration is enforced", async () => {
         name: "Lejla",
         email: "lejla@example.test",
         password: "sigurna-lozinka-123",
+        city: "Sarajevo",
         adult: true,
         terms: true,
       }),
@@ -505,7 +508,7 @@ test("Google OAuth validates state and PKCE, requires consent and reuses a Googl
   );
   const created = await call(
     "/auth/google/enroll",
-    { name: "Google User", adult: true, terms: true },
+    { name: "Google User", city: "Sarajevo", adult: true, terms: true },
     enroll,
   );
   assert.equal(created.status, 201);
@@ -1084,4 +1087,97 @@ test("routing health never persists a provider exception containing credentials"
   assert.equal(health.length, 1);
   assert.equal(health[0].detail, "UpstreamRequestFailed");
   assert.ok(!JSON.stringify(health).includes("fixture-secret"));
+});
+
+test("city-aware street search bounds GPS results, isolates scope caches and rejects invalid coordinates", async () => {
+  env.GEOCODER_URL = "https://geocoder.example.test/";
+  const seen = [];
+  env.ROUTING_FETCH = async (input) => {
+    const url = new URL(input);
+    seen.push(url);
+    if (url.pathname.endsWith("/reverse"))
+      return new Response(JSON.stringify({ address: { city: "Sarajevo" } }));
+    return new Response(
+      JSON.stringify([
+        {
+          lat: "43.85",
+          lon: "18.4",
+          address: { road: "Ista ulica", city: "Sarajevo" },
+        },
+        {
+          lat: "45.81",
+          lon: "15.97",
+          address: { road: "Ista ulica", city: "Zagreb" },
+        },
+      ]),
+    );
+  };
+  const user = await signup();
+  const near = await call(
+    "/locations/city",
+    { lat: 43.856, lng: 18.413 },
+    user.cookie,
+  );
+  assert.equal(near.status, 200);
+  assert.equal(near.data.city, "Sarajevo");
+  const result = await call(
+    "/locations/search",
+    {
+      query: "Ista ulica",
+      scope: { city: "Sarajevo", lat: 43.856, lng: 18.413 },
+    },
+    user.cookie,
+  );
+  assert.equal(result.status, 200);
+  assert.equal(result.data.locations.length, 1);
+  assert.equal(result.data.locations[0].city, "Sarajevo");
+  const search = seen.find((u) => u.pathname.endsWith("/search"));
+  assert.equal(search.searchParams.get("bounded"), "1");
+  assert.ok(search.searchParams.get("viewbox"));
+  assert.match(search.searchParams.get("q"), /Sarajevo/);
+  const other = await call(
+    "/locations/search",
+    { query: "Ista ulica", scope: { city: "Zagreb" } },
+    user.cookie,
+  );
+  assert.equal(other.data.locations.length, 1);
+  assert.equal(other.data.locations[0].city, "Zagreb");
+  assert.equal(
+    (await call("/locations/city", { lat: 999, lng: 0 }, user.cookie)).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        "/locations/search",
+        {
+          query: "Ista ulica",
+          scope: { city: "Sarajevo", lat: "43", lng: 18 },
+        },
+        user.cookie,
+      )
+    ).status,
+    400,
+  );
+});
+
+test("registration city is required, survives login/profile and stays private in public user data", async () => {
+  const missing = await call("/auth/register", {
+    name: "City User",
+    email: "missing-city@example.test",
+    password: "testna-lozinka",
+    adult: true,
+    terms: true,
+  });
+  assert.equal(missing.status, 400);
+  const created = await signup();
+  assert.equal(created.data.user.city, "Sarajevo");
+  const edited = await call(
+    "/profile",
+    { name: "City User", city: "Zagreb" },
+    created.cookie,
+  );
+  assert.equal(edited.data.user.city, "Zagreb");
+  const me = await call("/auth/me", null, created.cookie);
+  assert.equal(me.data.user.city, "Zagreb");
 });
