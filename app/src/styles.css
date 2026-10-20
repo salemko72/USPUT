@@ -4424,3 +4424,13 @@ h6,
 .walking-budget {
   font-weight: 800;
 }
+
+/* iOS Safari zooms focused text controls below 16px. Keep pinch zoom enabled. */
+@media (max-width: 1024px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  [contenteditable="true"] {
+    font-size: 16px !important;
+  }
+}
