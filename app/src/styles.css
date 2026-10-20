@@ -77,7 +77,7 @@ h1,
 h2,
 h3 {
   letter-spacing: -0.02em;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.09;
 }
 p {
@@ -99,7 +99,7 @@ input[type="checkbox"] {
   display: inline-flex;
   align-items: center;
   font-size: 29px;
-  font-weight: 700;
+  font-weight: 800;
   font-style: italic;
   letter-spacing: -1.8px;
   line-height: 1;
@@ -122,7 +122,7 @@ input[type="checkbox"] {
 }
 .eyebrow {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1.8px;
   display: inline-flex;
   align-items: center;
@@ -141,7 +141,7 @@ input[type="checkbox"] {
   border-radius: 18px;
   padding: 15px 23px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.3px;
   transition:
     transform 0.2s,
@@ -210,7 +210,7 @@ input[type="checkbox"] {
   gap: 8px;
   background: transparent;
   padding: 8px 0;
-  font-weight: 700;
+  font-weight: 800;
 }
 .demo-link {
   display: flex;
@@ -219,7 +219,7 @@ input[type="checkbox"] {
   gap: 8px;
   background: transparent;
   padding: 13px 0;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 5px;
   font-size: 13px;
@@ -246,7 +246,7 @@ input[type="checkbox"] {
   width: 58px;
   height: 58px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -1px;
   border-radius: 50%;
   background: #e8e0d0;
@@ -327,7 +327,7 @@ input[type="checkbox"] {
   border: 1px solid #15181519;
   border-radius: 30px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1px;
   padding: 9px 13px;
 }
@@ -444,7 +444,7 @@ input[type="checkbox"] {
   gap: 16px;
   font-size: 8px;
   letter-spacing: 1.2px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 60px;
 }
 .landing-panel h2 {
@@ -462,7 +462,7 @@ input[type="checkbox"] {
   flex-wrap: wrap;
   margin: 30px 0 44px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .landing-perks span {
   display: flex;
@@ -578,7 +578,7 @@ input[type="checkbox"] {
   background: #fff;
   padding: 16px;
   margin-top: 30px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
 }
 .google-button:hover {
@@ -602,7 +602,7 @@ input[type="checkbox"] {
 .field-label {
   display: block;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 17px;
 }
 .input-wrap {
@@ -656,7 +656,7 @@ textarea::placeholder {
 .auth-switch button {
   padding: 0 0 2px;
   background: none;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink);
   border-bottom: 1px solid var(--ink);
   margin-left: 4px;
@@ -721,7 +721,7 @@ textarea::placeholder {
 }
 .sidebar-edition {
   font-size: 7px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1.4px;
   margin-top: 15px;
   color: #838777;
@@ -811,7 +811,7 @@ textarea::placeholder {
   gap: 10px;
   font-size: 8px;
   letter-spacing: 1.2px;
-  font-weight: 700;
+  font-weight: 800;
   color: #7e8373;
 }
 .header-context > span:not(.live-dot) {
@@ -824,7 +824,7 @@ textarea::placeholder {
   align-items: center;
   gap: 10px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .small-avatar {
   display: grid;
@@ -833,7 +833,7 @@ textarea::placeholder {
   height: 29px;
   background: #e4e8d9;
   border-radius: 50%;
-  font-weight: 700;
+  font-weight: 800;
 }
 .mobile-brand {
   display: none;
@@ -860,7 +860,7 @@ textarea::placeholder {
   border-bottom: 1px solid #96a27c;
   padding: 0;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   margin-left: 12px;
 }
 .app-footer {
@@ -971,7 +971,7 @@ textarea::placeholder {
   padding: 10px 14px;
   border-radius: 25px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -1013,7 +1013,7 @@ textarea::placeholder {
   padding: 13px 10px;
   border-radius: 30px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
 }
 .role-switch button.selected {
@@ -1056,7 +1056,7 @@ textarea::placeholder {
   font-size: 7px;
   letter-spacing: 1px;
   color: #8c8f83;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 5px;
 }
 .location-field select {
@@ -1065,7 +1065,7 @@ textarea::placeholder {
   background: transparent;
   border: 0;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink);
   padding-right: 25px;
   outline: none !important;
@@ -1211,7 +1211,7 @@ textarea::placeholder {
 .aside-bottom strong {
   display: block;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink);
   letter-spacing: -1px;
   margin-top: 4px;
@@ -1293,7 +1293,7 @@ textarea::placeholder {
   border-radius: 30px;
   padding: 10px 13px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
 }
 .results-layout {
@@ -1338,7 +1338,7 @@ textarea::placeholder {
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   box-shadow: 0 3px 10px #15181509;
   z-index: 500;
 }
@@ -1428,7 +1428,7 @@ textarea::placeholder {
   color: var(--ink);
   border-radius: 30px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 6px 12px;
   margin-bottom: 18px;
 }
@@ -1448,7 +1448,7 @@ textarea::placeholder {
 .ride-time {
   display: block;
   font-size: 36px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.3;
   letter-spacing: -1.8px;
 }
@@ -1659,7 +1659,7 @@ textarea::placeholder {
   gap: 5px;
   margin: 22px 0;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .route-line > div {
   display: flex;
@@ -1760,7 +1760,7 @@ textarea::placeholder {
   color: var(--lime);
   border-radius: 30px;
   min-height: 56px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
 }
 .pending-pulse {
@@ -1888,7 +1888,7 @@ textarea::placeholder {
   border-radius: 20px;
   padding: 7px 11px;
   background: #eff1e6;
-  font-weight: 700;
+  font-weight: 800;
 }
 .status-accepted,
 .status-ready,
@@ -1913,7 +1913,7 @@ textarea::placeholder {
   font-size: 36px;
   margin-left: 9px;
   color: var(--ink);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -1.7px;
 }
 .trip-person {
@@ -1974,7 +1974,7 @@ textarea::placeholder {
   padding: 24px 0 0;
   margin-top: 26px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .logout-button > svg:last-child {
   margin-left: auto;
@@ -2018,7 +2018,7 @@ textarea::placeholder {
 }
 .settings-row strong {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   display: block;
 }
 .settings-row small {
@@ -2626,7 +2626,7 @@ textarea::placeholder {
   }
   .dock small {
     font-size: 8px;
-    font-weight: 700;
+    font-weight: 800;
   }
   .dock button.active small {
     color: var(--ink);
@@ -3326,7 +3326,7 @@ textarea::placeholder {
 }
 .native-picker .picker-display {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   flex: 1;
   pointer-events: none;
 }
@@ -3505,7 +3505,7 @@ textarea::placeholder {
   background: #e9f4ca;
 }
 .vehicle-options > button[aria-selected="true"] {
-  font-weight: 700;
+  font-weight: 800;
 }
 .vehicle-options > p {
   font-size: 11px;
@@ -3531,7 +3531,7 @@ textarea::placeholder {
   gap: 7px;
 }
 .vehicle-colors legend {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 11px;
   margin-bottom: 14px;
   padding: 0;
@@ -3704,7 +3704,7 @@ textarea::placeholder {
   align-items: center;
   gap: 5px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   position: relative;
   cursor: pointer;
   text-decoration: underline;
@@ -3853,7 +3853,7 @@ textarea::placeholder {
   background: #ffffffe8;
   padding: 8px 11px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: 30px;
 }
 .recognition-no-car {
@@ -3943,7 +3943,7 @@ textarea::placeholder {
   color: inherit;
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 .date-picker-trigger:focus-visible,
@@ -4003,7 +4003,7 @@ textarea::placeholder {
 .calendar-weekdays span {
   text-align: center;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   padding-bottom: 6px;
 }
 .calendar-panel button:hover:not(:disabled) {
@@ -4072,7 +4072,7 @@ textarea::placeholder {
   border-radius: 999px;
   padding: 7px 10px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   color: #545c4a;
 }
@@ -4120,7 +4120,7 @@ textarea::placeholder {
   border: 0;
   outline: none;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink, #151815);
 }
 .location-field .place-picker input:focus-visible {
@@ -4217,7 +4217,7 @@ textarea::placeholder {
   border-radius: 50%;
   font-size: 11px;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.02em;
 }
 .cost-sharing-no {
@@ -4243,7 +4243,7 @@ textarea::placeholder {
   flex-direction: column;
   gap: 7px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: #525c45;
 }
 .street-search-row {
@@ -4349,7 +4349,7 @@ textarea::placeholder {
   flex-direction: column;
   gap: 7px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   margin: 15px 0;
 }
 .walking-budget select {
@@ -4433,4 +4433,10 @@ h6,
   [contenteditable="true"] {
     font-size: 16px !important;
   }
+}
+
+/* Semantic emphasis follows the same ExtraBold hierarchy as screen titles. */
+strong,
+b {
+  font-weight: 800;
 }
