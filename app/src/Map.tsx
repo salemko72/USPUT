@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "./types";
 import { Layers, MapPin } from "lucide-react";
@@ -160,7 +161,7 @@ export function RouteMap({
           fontSize="12"
           letterSpacing="5"
         >
-          PRIKAZ MJESTA
+          {t(" PRIKAZ MJESTA ")}
         </text>
       </svg>
       {live && <div className="leaflet-container-wrap" ref={container} />}
@@ -170,18 +171,18 @@ export function RouteMap({
           setLive(!live);
           setFailed(false);
         }}
-        aria-label={live ? "Prikaži skicu" : "Uključi OpenStreetMap"}
+        aria-label={live ? t("Prikaži skicu") : t("Uključi OpenStreetMap")}
       >
         <Layers size={16} />
-        {live ? "Skica" : "Mapa"}
+        {live ? t("Skica") : t("Mapa")}
       </button>
       <span className="map-note">
         <MapPin size={12} />
         {failed
-          ? "Mapa nije dostupna · koristi skicu"
+          ? t("Mapa nije dostupna · koristi skicu")
           : live
-            ? "OSM · linija nije cestovna ruta"
-            : "Ilustrativna skica · nije navigacija"}
+            ? t("OSM · linija nije cestovna ruta")
+            : t("Ilustrativna skica · nije navigacija")}
       </span>
     </div>
   );

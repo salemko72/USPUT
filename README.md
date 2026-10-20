@@ -7,7 +7,7 @@ Implementacija je u [`app/`](app/README.md). Originalni projektni materijali i o
 ## Šta radi
 
 - Splash / uvod, email registracija, prijava, sigurne sesije i odjava.
-- Odvojeni demo s izmišljenim profilima.
+- Obavezna prijava/registracija, BHS/ENG interfejs i evropski izbor datuma/vremena.
 - Glavni ekran putnika/vozača, objava i pretraga ponuda, detalji rute.
 - Zahtjev putnika → prihvatanje vozača → spremnost → završetak ili otkazivanje.
 - Moje vožnje, profil i sačuvano vozilo s pretragom 640 marki/modela i izborom boje.

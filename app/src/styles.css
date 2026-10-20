@@ -3923,3 +3923,242 @@ textarea::placeholder {
   opacity: 0.75;
   font-size: 11px;
 }
+
+/* European date picker: explicit trigger and a Monday-first calendar. */
+.date-picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.date-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line, #e1e5dc);
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.date-picker-trigger:focus-visible,
+.calendar-panel button:focus-visible {
+  outline: 3px solid #638521;
+  outline-offset: 2px;
+}
+.calendar-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 294px;
+  max-width: calc(100vw - 48px);
+  padding: 14px;
+  border: 1px solid #dce2d5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 36px #20331026;
+  color: #233120;
+}
+.calendar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.calendar-heading strong {
+  font-size: 14px;
+  text-transform: capitalize;
+}
+.calendar-panel button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  min-width: 0;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.calendar-heading button {
+  width: 34px;
+}
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding-bottom: 6px;
+}
+.calendar-panel button:hover:not(:disabled) {
+  background: #edf2e4;
+}
+.calendar-panel button[aria-pressed="true"] {
+  background: #385620;
+  color: #fff;
+}
+.calendar-panel button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.calendar-panel p {
+  font-size: 10px;
+  margin: 10px 0 0;
+  color: #65725e;
+}
+.time-panel {
+  left: auto;
+  right: 0;
+  width: 230px;
+}
+.time-selects {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.date-time-fields .time-selects label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  font-size: 12px;
+}
+.time-selects select {
+  padding: 8px;
+  border: 1px solid #dce2d5;
+  border-radius: 8px;
+  background: #fff;
+  color: #233120;
+  font: inherit;
+  font-size: 18px;
+}
+.calendar-panel .time-confirm {
+  width: 100%;
+  margin-top: 12px;
+  background: #385620;
+  color: white;
+}
+
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: #e9ecdf;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.language-switch button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #545c4a;
+}
+.language-switch button[aria-pressed="true"] {
+  background: #192018;
+  color: #fff;
+}
+.language-switch button:focus-visible {
+  outline: 2px solid #5f7d16;
+  outline-offset: 2px;
+}
+.entry-tools {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .entry-tools {
+    gap: 8px;
+  }
+  .entry-tools .beta-pill {
+    display: none;
+  }
+  .app-header .header-context {
+    display: none;
+  }
+  .language-switch button {
+    padding: 6px 8px;
+  }
+  .app-header .language-switch {
+    margin-left: auto;
+    margin-right: 8px;
+  }
+}
+
+.place-picker {
+  position: relative;
+  width: 100%;
+}
+.location-field .place-picker input {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font: inherit;
+  font-weight: 750;
+  color: var(--ink, #151815);
+}
+.location-field .place-picker input:focus-visible {
+  box-shadow: 0 2px 0 #70931a;
+}
+.place-options {
+  position: absolute;
+  left: -32px;
+  right: -10px;
+  top: calc(100% + 14px);
+  background: #fff;
+  border: 1px solid #e5e8dc;
+  border-radius: 18px;
+  padding: 7px;
+  max-height: 300px;
+  overflow: auto;
+  box-shadow: 0 15px 40px #15181520;
+  z-index: 60;
+}
+.place-options [role="option"] {
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.place-options [role="option"].highlighted {
+  background: #edf4da;
+}
+.place-options small {
+  font-size: 10px;
+  color: #697360;
+  font-weight: 500;
+}
+.place-options p {
+  font-size: 12px;
+  padding: 10px;
+  line-height: 1.5;
+}

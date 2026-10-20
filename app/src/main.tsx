@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import "@fontsource-variable/manrope";
@@ -15,13 +16,15 @@ class ErrorBoundary extends React.Component<
     if (this.state.failed)
       return (
         <main className="boot-screen">
-          <h1>Vratimo se na pravi put.</h1>
-          <p>Aplikacija se nije ispravno učitala. Probaj je osvježiti.</p>
+          <h1>{t("Vratimo se na pravi put.")}</h1>
+          <p>
+            {t("Aplikacija se nije ispravno učitala. Probaj je osvježiti.")}
+          </p>
           <button
             className="button dark"
             onClick={() => window.location.reload()}
           >
-            Osvježi stranicu
+            {t(" Osvježi stranicu ")}
           </button>
         </main>
       );

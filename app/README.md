@@ -25,7 +25,7 @@ npm run build
 python tests/browser.py
 ```
 
-Browser test treba Python Playwright i `/usr/bin/chromium` (dostupni u cloud okruženju). Testira odvojeni demo. Za stvarne račune koristiti **posebnu lokalnu bazu i server**, ne stvarne podatke:
+Browser test treba Python Playwright i `/usr/bin/chromium` (dostupni u cloud okruženju). Testira stvarne probne račune. Koristiti **posebnu lokalnu bazu i server**, ne stvarne podatke:
 
 ```bash
 PORT=8788 USPUT_DATA_DIR=/tmp/usput-pulse-e2e node server/local.mjs
@@ -62,11 +62,11 @@ Google OAuth koristi server-side razmjenu koda, PKCE i jednokratni state vezan z
 
 ## Demo
 
-„Isprobaj demo” koristi izmišljene profile, zasebno lokalno stanje u pregledniku i označeno simuliranje potvrde vozača. Ne pravi stvarne korisnike ni ponude u bazi. Reset je u profilu. Demo ne dokazuje stvarni matching, OAuth, GPS ili sigurnost osobe.
+Anonimni demo ulaz je uklonjen. Za ulazak u aplikaciju potrebna je prijava/registracija; postojeća važeća sesija se obnavlja. Stara demo oznaka u localStorage ne daje pristup aplikaciji. Izvorni demo modul ostaje razvojni materijal i nije put za ulazak u objavljenu aplikaciju.
 
 ## Rute i mape
 
-Deset probnih mjesta susreta u Sarajevu, isti polazak/izlazak, datum i vremenski prozor ±60 minuta. Jedno mjesto po ponudi. Vozač prihvata zahtjev; slanje zahtjeva nije potvrđena vožnja. SQL transakcije i jedinstveni indeks sprečavaju dva potvrđena putnika. Ovo je diskretno spajanje mjesta, ne cestovno rutiranje ili procjena hoda. Nema GPS praćenja.
+Beta katalog ima 17 sarajevskih područja/orijentira/probnih mjesta; pretraga je po nazivu i podržava unos bez dijakritike. Bez cestovnog servisa traži isti polazak/izlazak, datum i vremenski prozor ±60 minuta. Jedno mjesto po ponudi. Vozač prihvata zahtjev; slanje zahtjeva nije potvrđena vožnja. SQL transakcije i jedinstveni indeks sprečavaju dva potvrđena putnika. Uz OSRM radi cestovno spajanje opisano niže. Procjena pješačkog puta i GPS izbor pina još nisu povezani. Nema GPS praćenja.
 
 Podrazumijevano se prikazuje jasno označena skica. Dugme „Mapa” uključuje Leaflet i OpenStreetMap sa atribucijom. Prikazana spojna linija NIJE cestovna ruta. OSM standardni tile servis ima [pravila korištenja](https://operations.osmfoundation.org/policies/tiles/), bez garancije/SLA; nema unaprijed skinutih pločica, offline cache-a ili masovnog preuzimanja. Za širu produkciju procijeniti odgovarajući tile servis ili hosting; Leafletova besplatna licenca ne znači neograničen besplatan servis.
 
@@ -76,11 +76,11 @@ Nije odobrena za organizaciju stvarnih vožnji. Prije stvarne alfe trebaju provj
 
 ## Katalog i sačuvano vozilo
 
-Profil i tok vozača imaju pretraživanje marke/modela, boju i ručni unos. Jedno vozilo po profilu. Model se briše kada promijeniš marku; nova ponuda koristi vozilo vlasnika i trajno čuva opis iz trenutka objave. Kasnija promjena vozila ne mijenja postojeći dogovor. Tablice i fotografije nisu dio ove dorade.
+Profil i tok vozača imaju pretraživanje marke/modela, boju i ručni unos. Jedno vozilo po profilu. Model se briše kada promijeniš marku; nova ponuda koristi vozilo vlasnika i trajno čuva opis iz trenutka objave. Kasnija promjena vozila ne mijenja postojeći dogovor. Tablice nisu dio ove dorade. Za fotografije vidi niže.
 
 Katalog je build-time snapshot `@meterapp/vehicle-db@2.19.1`, putnička vozila i MPV: 640 marki, 20.576 različitih naziva modela. Nije obećanje potpunog globalnog pokrića, zato postoji ručni unos. Nema vanjskog API poziva, API ključa ili troška po upitu. Paket je samo dev dependency, ne šalje se cijeli browseru. Izvori i licence su u `public/vehicle-catalog-notices.txt`. Osvježavanje: `npm run catalog:build`, zatim pregled diff-a i testovi; server i public snapshot moraju biti isti.
 
-D1 migracija `0002_vehicles.sql` je aditivna i primjenjuje se prije objave novog Workera. Lokalni Node runner kreira tabelu pri sljedećem startu. Novi browser testovi: `python tests/vehicle-browser.py` i `python tests/catalog-fallback-browser.py`. Backend suite sada ima 21 test.
+D1 migracija `0002_vehicles.sql` je aditivna i primjenjuje se prije objave novog Workera. Lokalni Node runner kreira tabelu pri sljedećem startu. Novi browser testovi: `python tests/vehicle-browser.py` i `python tests/catalog-fallback-browser.py`. Backend suite ima 35 testova.
 
 Google Client ID je usklađen u wrangler vars; `keep_vars: true` čuva dashboard varijable pri objavama. Client secret ostaje isključivo šifrovani Worker binding, nikad u ovom repozitoriju. Metapodaci potvrđuju konfiguraciju; stvarnu Google prijavu još mora potvrditi testni korisnik kroz preglednik.
 
@@ -91,10 +91,19 @@ Profilna fotografija: WebP do 320×320 i 50 KiB. Fotografija auta: do 960 px i 1
 
 `PHOTOS` je privatni R2 bucket `usput-photos` u EU jurisdikciji, bez javnih URL-ova. D1 čuva samo metapodatke. Vlasnik može vidjeti svoju sliku; saputnik tek nakon prihvaćenog dogovora, dok je dogovor aktivan, najduže do 24 sata nakon polaska. Otkazivanje/završetak ukida API pristup. Zamjena/brisanje uklanja staru sliku; dnevni cron u 03:00 UTC čisti prekinute uploade. Odgovori koriste `private, no-store`. Već preuzetu kopiju/screenshot nije moguće povući. Demo slike ostaju u lokalnom pregledniku.
 
-`OSRM_URL` uključuje cestovnu matricu za deset probnih mjesta u Sarajevu. Lokalno je opcionalan; bez njega radi pretraga istih mjesta. Matrica se čuva 24 sata u D1; neuspjeh se pamti minutu. Atomska D1 rezervacija sprječava paralelne upstream pozive pri praznom kešu. Procjene su bez saobraćaja uživo. Spajanje poredi vozačev put sa putem preko ulaska/izlaska putnika, odbija suprotan smjer, nedostupne tačke, cestovne snapove dalje od 200 m, dodatak preko 10 minuta ili preko max(3 min, 50% izvornog trajanja), te vrijeme susreta izvan ±60 min. Izabrana mjesta i procjene ostaju uz zahtjev u `booking_routes`.
+`OSRM_URL` uključuje cestovnu matricu za beta katalog mjesta u Sarajevu. Lokalno je opcionalan; bez njega radi pretraga istih mjesta. Matrica se čuva 24 sata u D1; neuspjeh se pamti minutu. Atomska D1 rezervacija sprječava paralelne upstream pozive pri praznom kešu. Procjene su bez saobraćaja uživo. Spajanje poredi vozačev put sa putem preko ulaska/izlaska putnika, odbija suprotan smjer, nedostupne tačke, cestovne snapove dalje od 200 m, dodatak preko 10 minuta ili preko max(3 min, 50% izvornog trajanja), te vrijeme susreta izvan ±60 min. Izabrana mjesta i procjene ostaju uz zahtjev u `booking_routes`.
 
 Beta koristi javni OSRM/FOSSGIS demo za razumno nekomercijalno testiranje. Nema SLA i nije obećanje trajno besplatne infrastrukture. Prije komercijalnog ili većeg javnog lansiranja zamijeniti endpoint vlastitim OSRM servisom ili pružaocem s odgovarajućim uslovima. [Uslovi demo servisa](https://github.com/Project-OSRM/osrm-backend/wiki/Demo-server). Šalju se isključivo koordinate javnih probnih mjesta, bez korisničkog identiteta. Karta je označena skica; linija nije cestovna navigacija niti potvrda da je sigurno stati.
 
 Provjere: `npm test`, `npm run build`, `USPUT_TEST_URL=http://127.0.0.1:8788 python tests/photo-browser.py` i `tests/real-browser.py`. Testovi rutiranja koriste kontrolisanu matricu; nisu dokaz dostupnosti javnog OSRM servisa.
 
 Za test spajanja u pregledniku pokreni `node tests/routing-fixture.mjs`, zatim u drugom terminalu `PORT=8789 USPUT_DATA_DIR=/tmp/usput-road-e2e OSRM_URL=http://127.0.0.1:8790/ node server/local.mjs`, pa `python tests/routing-browser.py`. Fixture je isključivo sintetički testni servis i nikad se ne koristi na Cloudflareu.
+
+
+## Jezici, kalendar i preciznost lokacija
+
+BHS i ENG prekidač je dostupan prije i nakon prijave. Izbor se pamti u pregledniku ako je storage dostupan; promjena jezika ne mijenja podatke forme, ID mjesta, marku/model ili pohranjenu boju vozila. `src/locales/en.json` sadrži prevode, `i18n.ts` pruža reaktivni jezik i formatiranje; server poruke se prevode pri prikazu.
+
+Datum je uvijek `dd.MM.yyyy`, sedmica počinje ponedjeljkom, vrijeme je 00–23. Vlastiti pristupačni date/time popoveri zamjenjuju nepouzdani prozirni native picker. API i baza zadržavaju ISO datum i `HH:mm`. Dodano: `tests/calendar-browser.py`, `tests/language-auth-browser.py`, `tests/place-browser.py`.
+
+Bistrik, Alifakovac (pretraga prihvata i Alfakovac), Baščaršija, Logavina, Katedrala, Kovačići i Širokača su nova područja/orijentiri. Njihove koordinate su približne orijentacione tačke, nisu potvrđeni pinovi za ukrcavanje. Katedrala je označena kao pješačka zona. Grad i zemlja su metapodaci, a Sarajevo ostaje ograničenje testne pokrivenosti. Za regiju, GPS/ručni pin, stvarni pješački put i izbor 5/10/15 minuta vidi `../docs/superpowers/specs/2026-10-20-location-meeting-design.md`; taj dio je razrađen prijedlog, ne aktivan pješački filter.

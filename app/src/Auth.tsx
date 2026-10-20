@@ -1,3 +1,5 @@
+import { LanguageSwitch } from "./LanguageSwitch";
+import { t } from "./i18n";
 import { useState } from "react";
 import {
   ArrowUpRight,
@@ -13,43 +15,42 @@ import {
 import { api } from "./api";
 import type { User } from "./types";
 import { Brand, Button, ErrorBox, Modal } from "./ui";
-export function Landing({
-  onStart,
-  onDemo,
-}: {
-  onStart: () => void;
-  onDemo: () => void;
-}) {
+export function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div className="landing">
       <div className="landing-art">
         <header>
           <Brand />
-          <span className="beta-pill">PRVI KRUG · BETA</span>
+          <div className="entry-tools">
+            <span className="beta-pill">{t("PRVI KRUG · BETA")}</span>
+            <LanguageSwitch />
+          </div>
         </header>
         <div className="landing-headline">
-          <span className="eyebrow">DOBRO DOŠAO U SVOJ SMJER</span>
+          <span className="eyebrow">{t("DOBRO DOŠAO U SVOJ SMJER")}</span>
           <h1>
-            Tvoj put.
+            {t(" Tvoj put. ")}
             <br />
-            Dobro društvo<span className="punctuation">.</span>
+            {t(" Dobro društvo")}
+            <span className="punctuation">.</span>
           </h1>
           <p>
-            Već ideš tamo.
+            {t(" Već ideš tamo. ")}
             <br />
-            Nekome si baš usput.
+            {t(" Nekome si baš usput. ")}
           </p>
         </div>
         <img
           src="/urban-hero.webp"
           className="landing-image"
-          alt="Zeleni gradski automobil, urbana naselja, tramvaj i drveće"
+          alt={t("Zeleni gradski automobil, urbana naselja, tramvaj i drveće")}
           fetchPriority="high"
         />
         <div className="art-sticker">
-          <span className="sticker-dots">● ●</span> Manje praznih mjesta.
+          <span className="sticker-dots">● ●</span>
+          {t(" Manje praznih mjesta. ")}
           <br />
-          Više dobrih jutara.
+          {t(" Više dobrih jutara. ")}
         </div>
       </div>
       <section className="landing-panel">
@@ -59,42 +60,42 @@ export function Landing({
             <span />
             <i />
           </span>
-          <span>GRAD JE LJEPŠI ZAJEDNO</span>
+          <span>{t("GRAD JE LJEPŠI ZAJEDNO")}</span>
         </div>
         <h2>
-          Isti smjer.
+          {t(" Isti smjer. ")}
           <br />
-          Novi ljudi.
+          {t(" Novi ljudi. ")}
         </h2>
         <p>
-          Pronađi nekoga ko već ide tvojim putem. Ili ponudi slobodno mjesto na
-          svom.
+          {t(
+            " Pronađi nekoga ko već ide tvojim putem. Ili ponudi slobodno mjesto na svom. ",
+          )}
         </p>
         <div className="landing-perks">
           <span>
-            <Leaf size={16} /> Besplatne vožnje
+            <Leaf size={16} />
+            {t(" Besplatne vožnje ")}
           </span>
           <span>
-            <Sparkles size={16} /> Svakodnevno, jednostavno
+            <Sparkles size={16} />
+            {t(" Svakodnevno, jednostavno ")}
           </span>
         </div>
         <div className="landing-actions">
           <Button arrow onClick={onStart}>
-            Krenimo zajedno
+            {t(" Krenimo zajedno ")}
           </Button>
-          <button className="demo-link" onClick={onDemo}>
-            Isprobaj demo <ArrowUpRight size={18} />
-          </button>
         </div>
         <p className="fine-print">
-          Prvo upoznaj aplikaciju. Bez računa u demo verziji.
+          {t(" Za korištenje aplikacije prijavi se ili napravi račun. ")}
         </p>
         <div className="landing-footer">
           <Brand />
           <span>
-            Podijeli put.
+            {t(" Podijeli put. ")}
             <br />
-            Zadrži svoju rutinu.
+            {t(" Zadrži svoju rutinu. ")}
           </span>
         </div>
       </section>
@@ -127,13 +128,11 @@ export function Auth({
   initial = "login",
   googleEnroll = false,
   onUser,
-  onDemo,
   onBack,
 }: {
   initial?: "login" | "register";
   googleEnroll?: boolean;
   onUser: (u: User) => void;
-  onDemo: () => void;
   onBack: () => void;
 }) {
   const [mode, setMode] = useState(initial),
@@ -184,54 +183,61 @@ export function Auth({
       <aside className="auth-art">
         <Brand />
         <div>
-          <span className="eyebrow">SVAKI DAN, MALO BOLJI.</span>
+          <span className="eyebrow">{t("SVAKI DAN, MALO BOLJI.")}</span>
           <h2>
-            Slobodno
+            {t(" Slobodno ")}
             <br />
-            mjesto.
+            {t(" mjesto. ")}
             <br />
-            Dobar početak.
+            {t(" Dobar početak. ")}
           </h2>
           <p>
-            Za posao, za grad.
+            {t(" Za posao, za grad. ")}
             <br />
-            Za ljude kojima si usput.
+            {t(" Za ljude kojima si usput. ")}
           </p>
         </div>
-        <img src="/urban-hero.webp" alt="Gradska vožnja u zelenom automobilu" />
+        <img
+          src="/urban-hero.webp"
+          alt={t("Gradska vožnja u zelenom automobilu")}
+        />
       </aside>
       <main className="auth-main">
         <header>
           <button className="text-button" onClick={onBack}>
-            <ArrowLeft size={18} /> Početna
+            <ArrowLeft size={18} />
+            {t(" Početna ")}
           </button>
-          <Brand />
+          <div className="entry-tools">
+            <Brand />
+            <LanguageSwitch />
+          </div>
         </header>
         <div className="auth-form-wrap">
           <span className="eyebrow">
-            {register ? "TVOJ PRVI KORAK" : "TU SI. LIJEPO."}
+            {register ? t("TVOJ PRVI KORAK") : t("TU SI. LIJEPO.")}
           </span>
           <h1>
             {register ? (
               <>
-                Dobro društvo
+                {t(" Dobro društvo ")}
                 <br />
-                počinje tobom.
+                {t(" počinje tobom. ")}
               </>
             ) : (
               <>
-                Dobro došao
+                {t(" Dobro došao ")}
                 <br />
-                nazad.
+                {t(" nazad. ")}
               </>
             )}
           </h1>
           <p className="subtitle">
             {googleEnroll
-              ? "Još samo ime i dvije važne potvrde."
+              ? t("Još samo ime i dvije važne potvrde.")
               : register
-                ? "Napravi račun. Pronađi svoj smjer."
-                : "Tvoje mjesto u gradu te čeka."}
+                ? t("Napravi račun. Pronađi svoj smjer.")
+                : t("Tvoje mjesto u gradu te čeka.")}
           </p>
           {!googleEnroll && (
             <>
@@ -240,22 +246,23 @@ export function Auth({
                 onClick={google}
                 disabled={busy}
               >
-                <GoogleMark /> Nastavi s Googleom
+                <GoogleMark />
+                {t(" Nastavi s Googleom ")}
               </button>
               <div className="divider">
-                <span>ili emailom</span>
+                <span>{t("ili emailom")}</span>
               </div>
             </>
           )}
           <form onSubmit={submit}>
             {register && (
               <label className="field-label">
-                Tvoje ime
+                {t(" Tvoje ime ")}
                 <div className="input-wrap">
                   <UserRound size={18} />
                   <input
                     name="name"
-                    placeholder="Kako da te zovemo?"
+                    placeholder={t("Kako da te zovemo?")}
                     autoComplete="given-name"
                     minLength={2}
                     maxLength={60}
@@ -267,21 +274,21 @@ export function Auth({
             {!googleEnroll && (
               <>
                 <label className="field-label">
-                  Email adresa
+                  {t(" Email adresa ")}
                   <div className="input-wrap">
                     <Mail size={18} />
                     <input
                       name="email"
                       type="email"
                       autoComplete="email"
-                      placeholder="ime@primjer.ba"
+                      placeholder={t("ime@primjer.ba")}
                       maxLength={254}
                       required
                     />
                   </div>
                 </label>
                 <label className="field-label">
-                  Lozinka
+                  {t(" Lozinka ")}
                   <div className="input-wrap">
                     <LockKeyhole size={18} />
                     <input
@@ -291,7 +298,7 @@ export function Auth({
                         register ? "new-password" : "current-password"
                       }
                       placeholder={
-                        register ? "Najmanje 10 znakova" : "Tvoja lozinka"
+                        register ? t("Najmanje 10 znakova") : t("Tvoja lozinka")
                       }
                       minLength={register ? 10 : 1}
                       maxLength={128}
@@ -299,7 +306,9 @@ export function Auth({
                     />
                     <button
                       type="button"
-                      aria-label={show ? "Sakrij lozinku" : "Prikaži lozinku"}
+                      aria-label={
+                        show ? t("Sakrij lozinku") : t("Prikaži lozinku")
+                      }
                       onClick={() => setShow(!show)}
                     >
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -312,14 +321,14 @@ export function Auth({
               <div className="consent">
                 <label>
                   <input type="checkbox" name="adult" required />
-                  <span>Imam najmanje 18 godina.</span>
+                  <span>{t("Imam najmanje 18 godina.")}</span>
                 </label>
                 <label>
                   <input type="checkbox" name="terms" required />
                   <span>
-                    Prihvatam{" "}
+                    {t(" Prihvatam")}{" "}
                     <button type="button" onClick={() => setModal("terms")}>
-                      pravila beta verzije i privatnost
+                      {t(" pravila beta verzije i privatnost ")}
                     </button>
                     .
                   </span>
@@ -328,27 +337,24 @@ export function Auth({
             )}
             <ErrorBox error={error} />
             <Button type="submit" busy={busy} arrow>
-              {register ? "Napravi račun" : "Prijavi se"}
+              {register ? t("Napravi račun") : t("Prijavi se")}
             </Button>
           </form>
           {!googleEnroll && (
             <p className="auth-switch">
-              {register ? "Već imaš račun?" : "Prvi put si ovdje?"}{" "}
+              {register ? t("Već imaš račun?") : t("Prvi put si ovdje?")}{" "}
               <button
                 onClick={() => {
                   setMode(register ? "login" : "register");
                   setError("");
                 }}
               >
-                {register ? "Prijavi se" : "Napravi račun"}
+                {register ? t("Prijavi se") : t("Napravi račun")}
               </button>
             </p>
           )}
-          <button className="demo-link" onClick={onDemo}>
-            Samo razgledam — isprobaj demo <ArrowUpRight size={16} />
-          </button>
           <p className="fine-print">
-            Beta verzija. Bez naplate i bez automatskog praćenja.
+            {t(" Beta verzija. Bez naplate i bez automatskog praćenja. ")}
           </p>
         </div>
       </main>
@@ -356,47 +362,48 @@ export function Auth({
         <Modal
           title={
             modal === "google"
-              ? "Google veza se priprema."
-              : "Pravila beta verzije"
+              ? t("Google veza se priprema.")
+              : t("Pravila beta verzije")
           }
           onClose={() => setModal("")}
         >
           {modal === "google" ? (
             <>
               <p>
-                Google prijava je pripremljena, ali administrator još treba
-                dodati OAuth podatke za ovu adresu aplikacije.
+                {t(
+                  " Google prijava je pripremljena, ali administrator još treba dodati OAuth podatke za ovu adresu aplikacije. ",
+                )}
               </p>
               <p>
-                Do tada koristi email i lozinku ili razgledaj demo. Ništa nije
-                poslano Googleu.
+                {t(
+                  " Do tada koristi email i lozinku. Ništa nije poslano Googleu. ",
+                )}
               </p>
-              <Button onClick={() => setModal("")}>U redu</Button>
+              <Button onClick={() => setModal("")}>{t("U redu")}</Button>
             </>
           ) : (
             <>
               <p>
-                Ovo je razvojna beta verzija USPUT-a za punoljetne osobe. Još
-                nije odobrena za organizaciju stvarnih vožnji.
+                {t(
+                  " Ovo je razvojna beta verzija USPUT-a za punoljetne osobe. Još nije odobrena za organizaciju stvarnih vožnji. ",
+                )}
               </p>
               <p>
-                Ime, email, objavljene vožnje i dogovori čuvaju se u bazi ovog
-                okruženja. Lozinke su hashirane, a prijava koristi sesijski
-                kolačić. Email nije javno prikazan drugim korisnicima.
+                {t(
+                  " Ime, email, objavljene vožnje i dogovori čuvaju se u bazi ovog okruženja. Lozinke su hashirane, a prijava koristi sesijski kolačić. Email nije javno prikazan drugim korisnicima. ",
+                )}
               </p>
               <p>
-                Podatke koristi samo za testiranje; ne unosi privatnu adresu,
-                dokumente ni osjetljive podatke. Kontakt i pravila za stvarnu
-                probu bit će određeni prije njenog početka. Za uklanjanje
-                probnog računa obrati se administratoru projekta.
+                {t(
+                  " Podatke koristi samo za testiranje; ne unosi privatnu adresu, dokumente ni osjetljive podatke. Kontakt i pravila za stvarnu probu bit će određeni prije njenog početka. Za uklanjanje probnog računa obrati se administratoru projekta. ",
+                )}
               </p>
               <p>
-                Demo koristi izmišljene podatke i čuva ih samo u ovom
-                pregledniku. Mapa se učitava s OpenStreetMapa tek kada je
-                uključiš, pri čemu njihov servis prima uobičajene mrežne
-                podatke.
+                {t(
+                  " Demo koristi izmišljene podatke i čuva ih samo u ovom pregledniku. Mapa se učitava s OpenStreetMapa tek kada je uključiš, pri čemu njihov servis prima uobičajene mrežne podatke. ",
+                )}
               </p>
-              <Button onClick={() => setModal("")}>Razumijem</Button>
+              <Button onClick={() => setModal("")}>{t("Razumijem")}</Button>
             </>
           )}
         </Modal>

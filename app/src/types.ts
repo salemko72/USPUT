@@ -1,3 +1,4 @@
+import { t, locale } from "./i18n";
 export type VehicleInput = {
   makeId: string;
   make?: string;
@@ -13,6 +14,9 @@ export type User = {
   provider?: string;
 };
 export type Place = {
+  city?: string;
+  countryCode?: string;
+  kind?: "area" | "landmark";
   id: string;
   name: string;
   detail: string;
@@ -85,10 +89,10 @@ export const defaultSearch = (): Search => ({
 });
 export const dateLabel = (date: string) =>
   date === today()
-    ? "Danas"
+    ? t("Danas")
     : date === tomorrow()
-      ? "Sutra"
-      : new Intl.DateTimeFormat("bs-BA", {
+      ? t("Sutra")
+      : new Intl.DateTimeFormat(locale(), {
           day: "numeric",
           month: "short",
         }).format(new Date(date + "T12:00:00"));

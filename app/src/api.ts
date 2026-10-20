@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type { Service, User, Vehicle } from "./types";
 export class HttpError extends Error {
   constructor(
@@ -21,11 +22,14 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
   } catch {
     throw new HttpError(
       response.status,
-      "Server trenutno nije dostupan. Pokušaj ponovo.",
+      t("Server trenutno nije dostupan. Pokušaj ponovo."),
     );
   }
   if (!response.ok)
-    throw new HttpError(response.status, data.error || "Nešto nije uspjelo.");
+    throw new HttpError(
+      response.status,
+      data.error || t("Nešto nije uspjelo."),
+    );
   return data;
 }
 export const realService: Service = {

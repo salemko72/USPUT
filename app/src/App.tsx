@@ -1,3 +1,6 @@
+import { t } from "./i18n";
+import { useLanguage } from "./i18n";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { useEffect, useState } from "react";
 import {
   Home as HomeIcon,
@@ -10,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import { api, realService } from "./api";
-import { demoService, getDemoUser, resetDemo } from "./demo";
 import type { User, Place, Search, Offer } from "./types";
 import { defaultSearch } from "./types";
 import { Brand, Dock, Loading, Toast, ErrorBox } from "./ui";
@@ -26,8 +28,8 @@ function go(path: string) {
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 export default function App() {
+  useLanguage();
   const [user, setUser] = useState<User | null>(null),
-    [demo, setDemo] = useState(false),
     [loading, setLoading] = useState(true),
     [auth, setAuth] = useState<"landing" | "login" | "register">("landing"),
     [places, setPlaces] = useState<Place[]>([]),
@@ -36,27 +38,25 @@ export default function App() {
     [toast, setToast] = useState(""),
     [error, setError] = useState(
       new URLSearchParams(location.search).has("authError")
-        ? "Google prijava je otkazana. Možeš pokušati ponovo ili se prijaviti emailom."
+        ? t(
+            "Google prijava je otkazana. Možeš pokušati ponovo ili se prijaviti emailom.",
+          )
         : "",
     );
-  const service = demo ? demoService : realService;
+  const demo = false;
+  const service = realService;
   useEffect(() => {
     const handler = () => setPath(route());
     window.addEventListener("hashchange", handler);
     let alive = true;
     const init = async () => {
       try {
-        if (localStorage.getItem("usput-demo-active") === "1") {
-          setDemo(true);
-          setUser(getDemoUser());
-        } else {
-          try {
-            const r = await api<{ user: User }>("/auth/me");
-            if (alive) setUser(r.user);
-          } catch (e) {
-            if ((e as { status: number }).status !== 401 && alive)
-              setError((e as Error).message);
-          }
+        try {
+          const r = await api<{ user: User }>("/auth/me");
+          if (alive) setUser(r.user);
+        } catch (e) {
+          if ((e as { status: number }).status !== 401 && alive)
+            setError((e as Error).message);
         }
       } finally {
         if (alive) setLoading(false);
@@ -98,22 +98,7 @@ export default function App() {
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
   }, []);
-  function enterDemo() {
-    try {
-      localStorage.setItem("usput-demo-active", "1");
-      setDemo(true);
-      setUser(getDemoUser());
-      setError("");
-      go("home");
-    } catch {
-      setError(
-        "Demo treba lokalno čuvanje u pregledniku. Koristi prijavu ili omogući čuvanje.",
-      );
-    }
-  }
   function loggedIn(u: User) {
-    localStorage.removeItem("usput-demo-active");
-    setDemo(false);
     setUser(u);
     setAuth("landing");
     window.history.replaceState(null, "", window.location.pathname + "#home");
@@ -121,9 +106,7 @@ export default function App() {
   }
   async function logout() {
     if (!demo) await api("/auth/logout", {});
-    localStorage.removeItem("usput-demo-active");
     setUser(null);
-    setDemo(false);
     setAuth("landing");
     go("home");
   }
@@ -131,8 +114,8 @@ export default function App() {
     const r = await service.publish(q);
     setToast(
       demo
-        ? "Demo ponuda je sačuvana. Dodan je probni zahtjev putnika."
-        : "Ponuda je objavljena. Ti potvrđuješ zahtjeve.",
+        ? t("Demo ponuda je sačuvana. Dodan je probni zahtjev putnika.")
+        : t("Ponuda je objavljena. Ti potvrđuješ zahtjeve."),
     );
     go("ride/" + r.id);
   }
@@ -150,13 +133,13 @@ export default function App() {
       <>
         <ErrorBox error={error} />
         {auth === "landing" && !googleEnroll ? (
-          <Landing onStart={() => setAuth("login")} onDemo={enterDemo} />
+          <Landing onStart={() => setAuth("login")} />
         ) : (
           <Auth
             initial={auth === "register" ? "register" : "login"}
             googleEnroll={googleEnroll}
             onUser={loggedIn}
-            onDemo={enterDemo}
+
             onBack={() => {
               setAuth("landing");
               if (googleEnroll)
@@ -174,16 +157,16 @@ export default function App() {
         <button
           className="brand-button"
           onClick={() => go("home")}
-          aria-label="USPUT početna"
+          aria-label={t("USPUT početna")}
         >
           <Brand />
         </button>
-        <span className="sidebar-edition">TVOJ GRAD. TVOJ KRUG.</span>
-        <nav aria-label="Bočna navigacija">
+        <span className="sidebar-edition">{t("TVOJ GRAD. TVOJ KRUG.")}</span>
+        <nav aria-label={t("Bočna navigacija")}>
           {[
-            [HomeIcon, "Početna", "home"],
-            [Users, "Vožnje", "trips"],
-            [UserRound, "Profil", "profile"],
+            [HomeIcon, t("Početna"), "home"],
+            [Users, t("Vožnje"), "trips"],
+            [UserRound, t("Profil"), "profile"],
           ].map(([Icon, label, id]) => {
             const I = Icon as typeof HomeIcon;
             return (
@@ -207,17 +190,19 @@ export default function App() {
             <i />
           </span>
           <h3>
-            Već ideš tamo.
+            {t(" Već ideš tamo. ")}
             <br />
-            Nekome si usput.
+            {t(" Nekome si usput. ")}
           </h3>
           <span>
-            <Leaf size={14} /> Besplatno, svaki put.
+            <Leaf size={14} />
+            {t(" Besplatno, svaki put. ")}
           </span>
         </div>
         <div className="sidebar-bottom">
           <span className="beta-dot" />
-          Prvi krug · beta<span>© USPUT 2026</span>
+          {t(" Prvi krug · beta")}
+          <span>© USPUT 2026</span>
         </div>
       </aside>
       <div className="app-column">
@@ -225,17 +210,22 @@ export default function App() {
           <button
             className="brand-button mobile-brand"
             onClick={() => go("home")}
-            aria-label="USPUT početna"
+            aria-label={t("USPUT početna")}
           >
             <Brand />
           </button>
           <div className="header-context">
             <span className="live-dot" />
-            SARAJEVO <span>/</span> TVOJ SVAKODNEVNI SMJER
+            {places
+              .find((p) => p.id === query.from)
+              ?.city?.toLocaleUpperCase() || "BETA"}{" "}
+            <span>/</span>
+            {t(" TVOJ SVAKODNEVNI SMJER ")}
           </div>
+          <LanguageSwitch />
           <button
             className="header-profile"
-            aria-label="Otvori profil"
+            aria-label={t("Otvori profil")}
             onClick={() => go("profile")}
           >
             <span className="small-avatar">{user.name.charAt(0)}</span>
@@ -246,8 +236,10 @@ export default function App() {
         {demo && (
           <div className="demo-banner">
             <FlaskConical size={14} />
-            <span>Demo · izmišljeni profili i lokalni probni dogovori</span>
-            <button onClick={logout}>Izađi</button>
+            <span>
+              {t("Demo · izmišljeni profili i lokalni probni dogovori")}
+            </span>
+            <button onClick={logout}>{t("Izađi")}</button>
           </div>
         )}
         <main className="app-main" id="main-content">
@@ -256,7 +248,7 @@ export default function App() {
             <>
               <Loading />
               <button className="text-button" onClick={() => location.reload()}>
-                Pokušaj ponovo
+                {t(" Pokušaj ponovo ")}
               </button>
             </>
           ) : path === "home" ? (
@@ -312,27 +304,21 @@ export default function App() {
               demo={demo}
               onUser={setUser}
               onLogout={logout}
-              onReset={() => {
-                resetDemo();
-                setUser(getDemoUser());
-                go("home");
-                setToast("Demo je ponovo na početku.");
-              }}
               onToast={setToast}
             />
           ) : (
             <div className="not-found">
-              <h1>Ovdje nema puta.</h1>
+              <h1>{t("Ovdje nema puta.")}</h1>
               <button className="text-button" onClick={() => go("home")}>
-                Vrati se na početnu
+                {t(" Vrati se na početnu ")}
               </button>
             </div>
           )}
         </main>
         <Dock active={active} onNav={go} />
         <footer className="app-footer">
-          <span>Podijeli put. Zadrži svoju rutinu.</span>
-          <span>USPUT · Razvojna beta</span>
+          <span>{t("Podijeli put. Zadrži svoju rutinu.")}</span>
+          <span>{t("USPUT · Razvojna beta")}</span>
         </footer>
       </div>
       <Toast text={toast} />

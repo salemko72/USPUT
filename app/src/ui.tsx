@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   ArrowUpRight,
   ArrowLeft,
@@ -77,7 +78,7 @@ export function Avatar({
 }
 export function Back({
   onClick,
-  label = "Nazad",
+  label = t("Nazad"),
 }: {
   onClick: () => void;
   label?: string;
@@ -96,11 +97,11 @@ export function Dock({
   onNav: (s: string) => void;
 }) {
   return (
-    <nav className="dock" aria-label="Glavna navigacija">
+    <nav className="dock" aria-label={t("Glavna navigacija")}>
       {[
-        [Home, "Početna", "home"],
-        [Users, "Vožnje", "trips"],
-        [UserRound, "Profil", "profile"],
+        [Home, t("Početna"), "home"],
+        [Users, t("Vožnje"), "trips"],
+        [UserRound, t("Profil"), "profile"],
       ].map(([Icon, label, path]) => {
         const I = Icon as typeof Home;
         return (
@@ -141,17 +142,17 @@ export function Modal({
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={t(title)}
       >
         <button
           className="icon-button modal-close"
-          aria-label="Zatvori"
+          aria-label={t("Zatvori")}
           autoFocus
           onClick={onClose}
         >
           <X />
         </button>
-        <h2>{title}</h2>
+        <h2>{t(title)}</h2>
         {children}
       </section>
     </div>
@@ -160,7 +161,7 @@ export function Modal({
 export function ErrorBox({ error }: { error: string }) {
   return error ? (
     <div className="error-box" role="alert">
-      {error}
+      {t(error)}
     </div>
   ) : null;
 }
@@ -168,7 +169,7 @@ export function Loading() {
   return (
     <div className="loading" role="status">
       <LoaderCircle className="spin" />
-      <span>Samo trenutak…</span>
+      <span>{t("Samo trenutak…")}</span>
     </div>
   );
 }
@@ -186,7 +187,7 @@ export function Empty({
       <span className="empty-icon">
         {icon === "check" ? <Check size={32} /> : <Car size={32} />}
       </span>
-      <h2>{title}</h2>
+      <h2>{t(title)}</h2>
       {children}
     </div>
   );
@@ -210,7 +211,7 @@ export function Toast({ text }: { text: string }) {
   return text ? (
     <div className="toast" role="status">
       <Check size={18} />
-      {text}
+      {t(text)}
     </div>
   ) : null;
 }

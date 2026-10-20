@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { OwnPhoto } from "./Photos";
 import { vehicleDescription } from "./VehicleManager";
 import { VehicleManager } from "./VehicleManager";
@@ -27,7 +28,7 @@ export function Profile({
   demo: boolean;
   onUser: (u: User) => void;
   onLogout: () => Promise<void>;
-  onReset: () => void;
+  onReset?: () => void;
   onToast: (s: string) => void;
 }) {
   const [name, setName] = useState(user.name),
@@ -42,7 +43,7 @@ export function Profile({
     try {
       const u = await service.profile(name);
       onUser(u);
-      onToast("Ime je sačuvano.");
+      onToast(t("Ime je sačuvano."));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -63,12 +64,13 @@ export function Profile({
     <div className="profile-page">
       <header className="page-heading">
         <div>
-          <span className="eyebrow">TVOJE MJESTO U PRIČI</span>
+          <span className="eyebrow">{t("TVOJE MJESTO U PRIČI")}</span>
           <h1>
-            Hej, {user.name.split(" ")[0]}
+            {t(" Hej, ")}
+            {user.name.split(" ")[0]}
             <span className="punctuation">.</span>
           </h1>
-          <p>Dobro društvo počinje tobom.</p>
+          <p>{t("Dobro društvo počinje tobom.")}</p>
         </div>
       </header>
       <div className="profile-layout">
@@ -78,13 +80,13 @@ export function Profile({
             <div>
               <h2>{user.name}</h2>
               <span className="small-pill">
-                {demo ? "Demo profil" : "Prvi krug · beta"}
+                {demo ? t("Demo profil") : t("Prvi krug · beta")}
               </span>
             </div>
           </div>
           <form onSubmit={save}>
             <label className="field-label">
-              Tvoje ime
+              {t(" Tvoje ime ")}
               <div className="input-wrap">
                 <UserRound size={18} />
                 <input
@@ -98,21 +100,21 @@ export function Profile({
               </div>
             </label>
             <label className="field-label">
-              Email
+              {t(" Email ")}
               <div className="input-wrap disabled">
                 <Mail size={18} />
                 <input value={user.email || ""} readOnly type="email" />
               </div>
             </label>
             <p className="fine-print">
-              Email je privatan i nije vidljiv saputnicima.{" "}
+              {t(" Email je privatan i nije vidljiv saputnicima.")}{" "}
               {user.provider === "google"
-                ? "Prijava je povezana s Googleom."
-                : "Email potvrda još nije uključena."}
+                ? t("Prijava je povezana s Googleom.")
+                : t("Email potvrda još nije uključena.")}
             </p>
             <ErrorBox error={error} />
             <Button variant="lime" busy={busy} type="submit">
-              Sačuvaj promjene
+              {t(" Sačuvaj promjene ")}
             </Button>
           </form>
           <OwnPhoto kind="avatar" demo={demo} />
@@ -125,7 +127,7 @@ export function Profile({
           />
           <button className="logout-button" onClick={logout} disabled={busy}>
             <LogOut size={18} />
-            Odjavi se
+            {t(" Odjavi se ")}
             <ArrowUpRight size={18} />
           </button>
         </section>
@@ -133,20 +135,22 @@ export function Profile({
           <section className="community-card">
             <Leaf size={30} />
             <h2>
-              Manje praznih
+              {t(" Manje praznih ")}
               <br />
-              mjesta.
+              {t(" mjesta. ")}
               <br />
-              Više dobrih jutara.
+              {t(" Više dobrih jutara. ")}
             </h2>
-            <p>Tvoja rutina ostaje tvoja. USPUT joj dodaje dobro društvo.</p>
-            <span className="eyebrow">BEZ NAPLATE. S RAZLOGOM.</span>
+            <p>
+              {t("Tvoja rutina ostaje tvoja. USPUT joj dodaje dobro društvo.")}
+            </p>
+            <span className="eyebrow">{t("BEZ NAPLATE. S RAZLOGOM.")}</span>
           </section>
           <button className="settings-row" onClick={() => setModal("privacy")}>
             <ShieldCheck size={22} />
             <span>
-              <strong>Privatnost i beta pravila</strong>
-              <small>Šta čuvamo i gdje smo sada</small>
+              <strong>{t("Privatnost i beta pravila")}</strong>
+              <small>{t("Šta čuvamo i gdje smo sada")}</small>
             </span>
             <ArrowUpRight size={20} />
           </button>
@@ -154,8 +158,8 @@ export function Profile({
             <button className="settings-row" onClick={() => setModal("reset")}>
               <RotateCcw size={22} />
               <span>
-                <strong>Počni demo ispočetka</strong>
-                <small>Vrati probne vožnje i profil</small>
+                <strong>{t("Počni demo ispočetka")}</strong>
+                <small>{t("Vrati probne vožnje i profil")}</small>
               </span>
               <ArrowUpRight size={20} />
             </button>
@@ -166,57 +170,60 @@ export function Profile({
         <Modal
           title={
             modal === "reset"
-              ? "Ponovo od početka?"
-              : "Tvoji podaci, tvoja stvar."
+              ? t("Ponovo od početka?")
+              : t("Tvoji podaci, tvoja stvar.")
           }
           onClose={() => setModal("")}
         >
           {modal === "reset" ? (
             <>
               <p>
-                Ovo briše samo probne dogovore i promjene demo profila iz ovog
-                preglednika.
+                {t(
+                  " Ovo briše samo probne dogovore i promjene demo profila iz ovog preglednika. ",
+                )}
               </p>
               <Button
                 onClick={() => {
-                  onReset();
+                  onReset?.();
                   setModal("");
                 }}
               >
-                Resetuj demo
+                {t(" Resetuj demo ")}
               </Button>
             </>
           ) : (
             <>
-              <p>USPUT je razvojna beta. Stvarne vožnje još ne organizujemo.</p>
               <p>
-                Za probni račun čuvamo ime, email, hash lozinke, sesiju, ponude
-                i dogovore. Email nije javno prikazan; ime i podaci o ponudi
-                jesu dostupni prijavljenim korisnicima. Dogovore vide samo
-                učesnici.
+                {t(
+                  "USPUT je razvojna beta. Stvarne vožnje još ne organizujemo.",
+                )}
               </p>
               <p>
-                Ako dodaš fotografije, čuvamo samo male kompresovane kopije u
-                privatnom skladištu u EU. Saputnik ih može učitati tek nakon
-                potvrđenog dogovora; otkazivanje ili završetak ukida pristup.
-                Sliku možeš ukloniti u profilu. Već preuzetu kopiju nije moguće
-                povući.
+                {t(
+                  " Za probni račun čuvamo ime, email, hash lozinke, sesiju, ponude i dogovore. Email nije javno prikazan; ime i podaci o ponudi jesu dostupni prijavljenim korisnicima. Dogovore vide samo učesnici. ",
+                )}
               </p>
               <p>
-                Za procjenu kompatibilnih ruta OSRM servisu šaljemo koordinate
-                javnih probnih mjesta, bez tvog imena ili emaila. Vrijeme vožnje
-                je procjena bez podataka o gužvi.
+                {t(
+                  " Ako dodaš fotografije, čuvamo samo male kompresovane kopije u privatnom skladištu u EU. Saputnik ih može učitati tek nakon potvrđenog dogovora; otkazivanje ili završetak ukida pristup. Sliku možeš ukloniti u profilu. Već preuzetu kopiju nije moguće povući. ",
+                )}
               </p>
               <p>
-                Nema automatskog praćenja, naplate niti provjere identiteta.
-                Demo ostaje u ovom pregledniku. Za brisanje probnog računa
-                kontaktiraj administratora projekta.
+                {t(
+                  " Za procjenu kompatibilnih ruta OSRM servisu šaljemo koordinate javnih probnih mjesta, bez tvog imena ili emaila. Vrijeme vožnje je procjena bez podataka o gužvi. ",
+                )}
               </p>
               <p>
-                Prije stvarne probe objavit ćemo odgovornu osobu, rokove
-                čuvanja, podršku i završna pravila.
+                {t(
+                  " Nema automatskog praćenja, naplate niti provjere identiteta. Demo ostaje u ovom pregledniku. Za brisanje probnog računa kontaktiraj administratora projekta. ",
+                )}
               </p>
-              <Button onClick={() => setModal("")}>Razumijem</Button>
+              <p>
+                {t(
+                  " Prije stvarne probe objavit ćemo odgovornu osobu, rokove čuvanja, podršku i završna pravila. ",
+                )}
+              </p>
+              <Button onClick={() => setModal("")}>{t("Razumijem")}</Button>
             </>
           )}
         </Modal>

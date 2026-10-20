@@ -1,3 +1,5 @@
+import { displayVehicleLabel } from "./VehicleManager";
+import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -57,14 +59,25 @@ function MatchSummary({ match }: { match: RouteMatch }) {
   return (
     <div className="route-match-summary">
       <strong>
-        Susret: {match.pickup.name} · oko {pickupTime(match.pickupAt)}
+        {t(" Susret: ")}
+        {match.pickup.name}
+        {t(" · oko ")}
+        {pickupTime(match.pickupAt)}
       </strong>
-      <span>Izlazak: {match.dropoff.name}</span>
       <span>
-        Vozaču +{match.extraMinutes} min · zajedno oko {match.rideMinutes} min
+        {t("Izlazak: ")}
+        {match.dropoff.name}
+      </span>
+      <span>
+        {t(" Vozaču +")}
+        {match.extraMinutes}
+        {t(" min · zajedno oko ")}
+        {match.rideMinutes} min
       </span>
       <small>
-        Cestovna procjena bez podataka o gužvi. Potvrdite gdje se može stati.
+        {t(
+          " Cestovna procjena bez podataka o gužvi. Potvrdite gdje se može stati. ",
+        )}
       </small>
     </div>
   );
@@ -80,7 +93,7 @@ export function RideCard({
 }) {
   return (
     <article className={`ride-card ${selected ? "selected" : ""}`}>
-      {selected && <span className="ride-tag">Tvoj smjer</span>}
+      {selected && <span className="ride-tag">{t("Tvoj smjer")}</span>}
       <div className="ride-card-main">
         <Avatar name={ride.driver.name} />
         <div className="ride-person">
@@ -91,7 +104,7 @@ export function RideCard({
         </div>
         <span className="car-illustration">
           <Car strokeWidth={1.35} size={64} />
-          <small>{ride.car}</small>
+          <small>{displayVehicleLabel(ride.car)}</small>
         </span>
       </div>
       <div className="ride-direction">
@@ -103,15 +116,17 @@ export function RideCard({
       <div className="ride-card-bottom">
         <div className="chips">
           <span>
-            <MapPin size={14} /> Na stanici
+            <MapPin size={14} />
+            {t(" Na stanici ")}
           </span>
           <span>
-            <UserRound size={14} /> 1 mjesto
+            <UserRound size={14} />
+            {t(" 1 mjesto ")}
           </span>
         </div>
         <button
           className="round-open"
-          aria-label="Pogledaj vožnju"
+          aria-label={t("Pogledaj vožnju")}
           onClick={onOpen}
         >
           <ArrowUpRight size={22} />
@@ -155,14 +170,15 @@ export function Results({
       <header className="page-heading">
         <Back onClick={onBack} />
         <div>
-          <span className="eyebrow">ISTI PUT, NOVO DRUŠTVO</span>
+          <span className="eyebrow">{t("ISTI PUT, NOVO DRUŠTVO")}</span>
           <h1>
-            Usput ti je<span className="punctuation">.</span>
+            {t(" Usput ti je")}
+            <span className="punctuation">.</span>
           </h1>
         </div>
         {rides && (
           <span className="count-pill">
-            {rides.length} {rides.length === 1 ? "ponuda" : "ponude"}
+            {rides.length} {rides.length === 1 ? t("ponuda") : t("ponude")}
           </span>
         )}
       </header>
@@ -173,31 +189,32 @@ export function Results({
           ) : (
             <div className="search-summary">
               <MapPin size={28} />
-              <h2>Tvoj svakodnevni smjer.</h2>
+              <h2>{t("Tvoj svakodnevni smjer.")}</h2>
               <p>
-                Tražimo ponude za {dateLabel(query.date).toLowerCase()}, oko{" "}
-                {query.time}.
+                {t(" Tražimo ponude za ")}
+                {dateLabel(query.date).toLowerCase()}
+                {t(", oko")} {query.time}.
               </p>
             </div>
           )}
           <div className="map-caption">
             <Leaf size={19} />
             <div>
-              <strong>Malo bliže. Malo zajedno.</strong>
-              <p>Vožnje su besplatne. Povratak se dogovara posebno.</p>
+              <strong>{t("Malo bliže. Malo zajedno.")}</strong>
+              <p>{t("Vožnje su besplatne. Povratak se dogovara posebno.")}</p>
             </div>
           </div>
         </div>
         <section className="results-list">
           <div className="list-heading">
-            <h2>Vožnje za tebe</h2>
+            <h2>{t("Vožnje za tebe")}</h2>
             <span>{dateLabel(query.date)} · ± 60 min</span>
           </div>
           {error ? (
             <>
               <ErrorBox error={error} />
               <Button variant="outline" onClick={() => setRetry((x) => x + 1)}>
-                Pokušaj ponovo
+                {t(" Pokušaj ponovo ")}
               </Button>
             </>
           ) : !rides ? (
@@ -212,20 +229,25 @@ export function Results({
               />
             ))
           ) : (
-            <Empty title="Još nema tvog spoja.">
+            <Empty title={t("Još nema tvog spoja.")}>
               <p>
-                Za ova mjesta i vrijeme još nema slobodne ponude. Probaj drugo
-                vrijeme ili ponudi svoje mjesto.
+                {t(
+                  " Za ova mjesta i vrijeme još nema slobodne ponude. Probaj drugo vrijeme ili ponudi svoje mjesto. ",
+                )}
               </p>
               <Button variant="lime" onClick={onBack}>
-                Promijeni pretragu
+                {t(" Promijeni pretragu ")}
               </Button>
             </Empty>
           )}
           <p className="fine-print">
             {rides?.some((r) => r.match)
-              ? "Poredak uzima u obzir cestovnu rutu, dodatno vrijeme vozača i dolazak po tebe. Procjene ne uključuju gužvu. Izračun: OSRM / FOSSGIS, podaci © OpenStreetMap contributors."
-              : "Prikazana su podudaranja istih mjesta. Cestovni proračun trenutno nije dostupan ili je ovo demo."}
+              ? t(
+                  "Poredak uzima u obzir cestovnu rutu, dodatno vrijeme vozača i dolazak po tebe. Procjene ne uključuju gužvu. Izračun: OSRM / FOSSGIS, podaci © OpenStreetMap contributors.",
+                )
+              : t(
+                  "Prikazana su podudaranja istih mjesta. Cestovni proračun trenutno nije dostupan ili je ovo demo.",
+                )}
           </p>
         </section>
       </div>
@@ -314,16 +336,16 @@ export function RideDetails({
   const pickup = agreed?.pickup || ride.from,
     dropoff = agreed?.dropoff || ride.to;
   const title = finished
-    ? "Lijep put. Hvala!"
+    ? t("Lijep put. Hvala!")
     : inactive
-      ? "Plan se promijenio."
+      ? t("Plan se promijenio.")
       : confirmed
-        ? "Dogovoreno."
+        ? t("Dogovoreno.")
         : own
-          ? "Tvoja vožnja."
+          ? t("Tvoja vožnja.")
           : booking?.status === "pending"
-            ? "Još jedan korak."
-            : "Tvoj smjer. Tvoj izbor.";
+            ? t("Još jedan korak.")
+            : t("Tvoj smjer. Tvoj izbor.");
   return (
     <div className="details-page">
       <header className="page-heading">
@@ -331,15 +353,17 @@ export function RideDetails({
         <div>
           <span className="eyebrow">
             {own
-              ? "SLOBODNO MJESTO, DOBRA PRILIKA"
+              ? t("SLOBODNO MJESTO, DOBRA PRILIKA")
               : confirmed
-                ? "ISTI SMJER. DOBAR DOGOVOR."
-                : "BEZ NAPLATE. BEZ KOMPLIKACIJA."}
+                ? t("ISTI SMJER. DOBAR DOGOVOR.")
+                : t("BEZ NAPLATE. BEZ KOMPLIKACIJA.")}
           </span>
           <h1>{title}</h1>
           <p>
             {dateLabel(ride.date)} ·{" "}
-            {agreed ? "Susret oko " + pickupTime(agreed.pickupAt) : ride.time}
+            {agreed
+              ? t("Susret oko ") + pickupTime(agreed.pickupAt)
+              : ride.time}
           </p>
         </div>
       </header>
@@ -349,14 +373,15 @@ export function RideDetails({
           <div className="meeting-label">
             <MapPin size={19} />
             <div>
-              <span>MJESTO SUSRETA</span>
+              <span>{t("MJESTO SUSRETA")}</span>
               <strong>{pickup.name}</strong>
-              <p>{pickup.detail}</p>
+              <p>{t(pickup.detail)}</p>
             </div>
           </div>
           <p className="fine-print">
-            Prikaz je skica, nije navigacija. Mjesta su probni prijedlozi. Prije
-            stvarne vožnje provjeri gdje je sigurno stati.
+            {t(
+              " Prikaz je skica, nije navigacija. Mjesta su probni prijedlozi. Prije stvarne vožnje provjeri gdje je sigurno stati. ",
+            )}
           </p>
         </section>
         <div className="details-info">
@@ -364,8 +389,8 @@ export function RideDetails({
             <div className="driver-heading">
               <Avatar name={ride.driver.name} />
               <div>
-                <h2>{own ? "Ti voziš" : ride.driver.name}</h2>
-                <p>{ride.car}</p>
+                <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
+                <p>{displayVehicleLabel(ride.car)}</p>
               </div>
               {(confirmed || finished) && (
                 <span className="confirmed-icon">
@@ -378,15 +403,16 @@ export function RideDetails({
             <div className="ride-facts">
               <span>
                 <Clock3 size={16} />
-                {agreed ? "Polazak vozača " : ""}
+                {agreed ? t("Polazak vozača ") : ""}
                 {ride.time}
               </span>
               <span>
-                <UserRound size={16} />1 mjesto
+                <UserRound size={16} />
+                {t("1 mjesto ")}
               </span>
               <span>
                 <Leaf size={16} />
-                Besplatno
+                {t(" Besplatno ")}
               </span>
             </div>
             {ride.note && <p className="driver-note">“{ride.note}”</p>}
@@ -407,18 +433,19 @@ export function RideDetails({
           <ErrorBox error={error} />
           {own ? (
             <section className="action-card driver-actions">
-              <span className="eyebrow">{statusText[ride.status]}</span>
+              <span className="eyebrow">{t(statusText[ride.status])}</span>
               <h2>
                 {ride.status === "open"
-                  ? "Nekome ćeš biti usput."
+                  ? t("Nekome ćeš biti usput.")
                   : ride.status === "matched"
-                    ? "Društvo je dogovoreno."
-                    : "Vožnja je zatvorena."}
+                    ? t("Društvo je dogovoreno.")
+                    : t("Vožnja je zatvorena.")}
               </h2>
               {requests.length === 0 && (
                 <p>
-                  Zahtjevi putnika pojavit će se ovdje. Ti biraš i potvrđuješ
-                  saputnika.
+                  {t(
+                    " Zahtjevi putnika pojavit će se ovdje. Ti biraš i potvrđuješ saputnika. ",
+                  )}
                 </p>
               )}
               {requests.map((b) => (
@@ -427,18 +454,18 @@ export function RideDetails({
                     <Avatar name={b.passenger.name} size="small" />
                     <span>
                       <strong>{b.passenger.name}</strong>
-                      <small>{statusText[b.status]}</small>
+                      <small>{t(statusText[b.status])}</small>
                     </span>
                   </div>
                   {b.match && <MatchSummary match={b.match} />}
                   {b.status === "pending" && (
                     <div className="request-actions">
                       <button
-                        aria-label={"Odbij zahtjev: " + b.passenger.name}
+                        aria-label={t("Odbij zahtjev: ") + b.passenger.name}
                         onClick={() =>
                           action(
                             () => service.booking(b.id, "decline"),
-                            "Zahtjev je odbijen.",
+                            t("Zahtjev je odbijen."),
                           )
                         }
                         disabled={busy}
@@ -451,12 +478,14 @@ export function RideDetails({
                         onClick={() =>
                           action(
                             () => service.booking(b.id, "accept"),
-                            "Vožnja je dogovorena. Uvijek sačekaj obostranu potvrdu.",
+                            t(
+                              "Vožnja je dogovorena. Uvijek sačekaj obostranu potvrdu.",
+                            ),
                           )
                         }
                       >
                         <Check size={18} />
-                        Prihvati
+                        {t(" Prihvati ")}
                       </Button>
                     </div>
                   )}
@@ -467,12 +496,12 @@ export function RideDetails({
                       onClick={() =>
                         action(
                           () => service.booking(b.id, "complete"),
-                          "Hvala što ste podijelili put.",
+                          t("Hvala što ste podijelili put."),
                         )
                       }
                     >
                       <CheckCheck size={18} />
-                      Završi vožnju
+                      {t(" Završi vožnju ")}
                     </Button>
                   )}
                 </div>
@@ -483,7 +512,7 @@ export function RideDetails({
                   disabled={busy}
                   onClick={() => setCancel(true)}
                 >
-                  Otkaži ponudu
+                  {t(" Otkaži ponudu ")}
                 </button>
               )}
             </section>
@@ -491,28 +520,31 @@ export function RideDetails({
             <section className="action-card thank-you">
               <CheckCheck size={36} />
               <h2>
-                Jedno mjesto.
+                {t(" Jedno mjesto. ")}
                 <br />
-                Dobar dan.
+                {t(" Dobar dan. ")}
               </h2>
-              <p>Hvala što ste podijelili put. Povratak je novi dogovor.</p>
+              <p>
+                {t("Hvala što ste podijelili put. Povratak je novi dogovor.")}
+              </p>
               <Button variant="lime" onClick={onTrips}>
-                Moje vožnje
+                {t(" Moje vožnje ")}
               </Button>
             </section>
           ) : inactive ? (
             <section className="action-card">
               <h2>
                 {booking?.status === "declined"
-                  ? "Ovaj put se nije poklopilo."
-                  : "Vožnja je otkazana."}
+                  ? t("Ovaj put se nije poklopilo.")
+                  : t("Vožnja je otkazana.")}
               </h2>
               <p>
-                Nema potvrđene vožnje. Pripremi drugi plan ili potraži novu
-                ponudu.
+                {t(
+                  " Nema potvrđene vožnje. Pripremi drugi plan ili potraži novu ponudu. ",
+                )}
               </p>
               <Button variant="lime" onClick={onBack}>
-                Nazad na pretragu
+                {t(" Nazad na pretragu ")}
               </Button>
             </section>
           ) : confirmed ? (
@@ -520,18 +552,20 @@ export function RideDetails({
               <span className="eyebrow">
                 <MapPin size={14} />
                 {booking.status === "ready"
-                  ? "SPREMNI ZA SUSRET"
-                  : "KAD STIGNEŠ DO MJESTA SUSRETA"}
+                  ? t("SPREMNI ZA SUSRET")
+                  : t("KAD STIGNEŠ DO MJESTA SUSRETA")}
               </span>
               <h2>
                 {booking.status === "ready"
-                  ? "Vozač zna da si tu."
-                  : "Javi da si na mjestu."}
+                  ? t("Vozač zna da si tu.")
+                  : t("Javi da si na mjestu.")}
               </h2>
               <p>
                 {booking.status === "ready"
-                  ? "Sačekaj na dogovorenom, sigurnom mjestu."
-                  : "Potvrdi tek kad stigneš. Bez automatskog praćenja lokacije."}
+                  ? t("Sačekaj na dogovorenom, sigurnom mjestu.")
+                  : t(
+                      "Potvrdi tek kad stigneš. Bez automatskog praćenja lokacije.",
+                    )}
               </p>
               {booking.status === "accepted" ? (
                 <Button
@@ -540,17 +574,17 @@ export function RideDetails({
                   onClick={() =>
                     action(
                       () => service.booking(booking.id, "ready"),
-                      "Spremnost je potvrđena.",
+                      t("Spremnost je potvrđena."),
                     )
                   }
                 >
                   <Check size={20} />
-                  Na mjestu sam
+                  {t(" Na mjestu sam ")}
                 </Button>
               ) : (
                 <div className="ready-confirmation">
                   <CheckCheck size={20} />
-                  Na mjestu si.
+                  {t(" Na mjestu si. ")}
                 </div>
               )}
               <button
@@ -558,31 +592,32 @@ export function RideDetails({
                 onClick={() => setCancel(true)}
                 disabled={busy}
               >
-                Otkaži vožnju
+                {t(" Otkaži vožnju ")}
               </button>
             </section>
           ) : booking?.status === "pending" ? (
             <section className="action-card">
               <span className="pending-pulse" />
-              <h2>Zahtjev je poslan.</h2>
+              <h2>{t("Zahtjev je poslan.")}</h2>
               <p>
-                Čekamo potvrdu vozača. Ovo još nije dogovorena vožnja — imaj
-                rezervni plan.
+                {t(
+                  " Čekamo potvrdu vozača. Ovo još nije dogovorena vožnja — imaj rezervni plan. ",
+                )}
               </p>
               {demo && (
                 <div className="demo-simulation">
-                  <span>DEMO · ISPROBAJ SLJEDEĆI KORAK</span>
+                  <span>{t("DEMO · ISPROBAJ SLJEDEĆI KORAK")}</span>
                   <Button
                     variant="lime"
                     busy={busy}
                     onClick={() =>
                       action(
                         () => service.booking(booking.id, "accept"),
-                        "Demo: vozač je potvrdio zahtjev.",
+                        t("Demo: vozač je potvrdio zahtjev."),
                       )
                     }
                   >
-                    Simuliraj potvrdu vozača
+                    {t(" Simuliraj potvrdu vozača ")}
                   </Button>
                 </div>
               )}
@@ -591,14 +626,18 @@ export function RideDetails({
                 disabled={busy}
                 onClick={() => setCancel(true)}
               >
-                Povuci zahtjev
+                {t(" Povuci zahtjev ")}
               </button>
             </section>
           ) : (
             <section className="action-card">
-              <span className="eyebrow">PRVI KORAK JE TVOJ</span>
-              <h2>Ideš u istom smjeru?</h2>
-              <p>Pošalji zahtjev. Vožnja vrijedi tek kada je vozač prihvati.</p>
+              <span className="eyebrow">{t("PRVI KORAK JE TVOJ")}</span>
+              <h2>{t("Ideš u istom smjeru?")}</h2>
+              <p>
+                {t(
+                  "Pošalji zahtjev. Vožnja vrijedi tek kada je vozač prihvati.",
+                )}
+              </p>
               <Button
                 variant="lime"
                 busy={busy}
@@ -606,26 +645,28 @@ export function RideDetails({
                 onClick={() =>
                   action(async () => {
                     await service.request(ride.id, query);
-                  }, "Zahtjev je poslan vozaču.")
+                  }, t("Zahtjev je poslan vozaču."))
                 }
                 arrow
               >
-                Pošalji zahtjev
+                {t(" Pošalji zahtjev ")}
               </Button>
-              <small>Jedan putnik · povratak se dogovara posebno</small>
+              <small>{t("Jedan putnik · povratak se dogovara posebno")}</small>
             </section>
           )}
         </div>
       </div>
       {cancel && (
         <Modal
-          title={own ? "Otkazati ponudu?" : "Otkazati dogovor?"}
+          title={own ? t("Otkazati ponudu?") : t("Otkazati dogovor?")}
           onClose={() => setCancel(false)}
         >
           <p>
             {own
-              ? "Putnici će vidjeti da je ponuda otkazana."
-              : "Vozač će vidjeti promjenu. Zamjenska vožnja nije garantovana."}
+              ? t("Putnici će vidjeti da je ponuda otkazana.")
+              : t(
+                  "Vozač će vidjeti promjenu. Zamjenska vožnja nije garantovana.",
+                )}
           </p>
           <Button
             busy={busy}
@@ -635,14 +676,14 @@ export function RideDetails({
                   own
                     ? service.cancelRide(ride.id)
                     : service.booking(booking!.id, "cancel"),
-                "Otkazivanje je sačuvano.",
+                t("Otkazivanje je sačuvano."),
               )
             }
           >
-            Da, otkaži
+            {t(" Da, otkaži ")}
           </Button>
           <Button variant="outline" onClick={() => setCancel(false)}>
-            Zadrži dogovor
+            {t(" Zadrži dogovor ")}
           </Button>
         </Modal>
       )}
@@ -683,15 +724,16 @@ export function Trips({
     <div className="trips-page">
       <header className="page-heading">
         <div>
-          <span className="eyebrow">DOGOVORI KOJI ZNAČE</span>
+          <span className="eyebrow">{t("DOGOVORI KOJI ZNAČE")}</span>
           <h1>
-            Tvoj mali krug<span className="punctuation">.</span>
+            {t(" Tvoj mali krug")}
+            <span className="punctuation">.</span>
           </h1>
-          <p>Jedno mjesto. Puno dobrih jutara.</p>
+          <p>{t("Jedno mjesto. Puno dobrih jutara.")}</p>
         </div>
         <button
           className="icon-button"
-          aria-label="Osvježi vožnje"
+          aria-label={t("Osvježi vožnje")}
           onClick={() => load()}
         >
           <RefreshCw size={20} />
@@ -704,18 +746,21 @@ export function Trips({
             onClick={() => setTab("passenger")}
           >
             <UserRound size={17} />
-            Putujem <span>{bookings.length}</span>
+            {t(" Putujem ")}
+            <span>{bookings.length}</span>
           </button>
           <button
             className={tab === "driver" ? "selected" : ""}
             onClick={() => setTab("driver")}
           >
             <Car size={18} />
-            Vozim <span>{offered.length}</span>
+            {t(" Vozim ")}
+            <span>{offered.length}</span>
           </button>
         </div>
         <button className="text-button" onClick={onHome}>
-          <Plus size={18} /> Nova vožnja
+          <Plus size={18} />
+          {t(" Nova vožnja ")}
         </button>
       </div>
       <ErrorBox error={error} />
@@ -732,7 +777,7 @@ export function Trips({
               >
                 <div className="trip-card-top">
                   <span className={"status status-" + b.status}>
-                    {statusText[b.status]}
+                    {t(statusText[b.status])}
                   </span>
                   <ArrowUpRight size={20} />
                 </div>
@@ -749,13 +794,14 @@ export function Trips({
             ))}
           </div>
         ) : (
-          <Empty title="Tvoj prvi dogovor te čeka.">
+          <Empty title={t("Tvoj prvi dogovor te čeka.")}>
             <p>
-              Pronađi nekoga ko već ide tvojim smjerom. Slobodno mjesto može
-              biti početak dobrog dana.
+              {t(
+                " Pronađi nekoga ko već ide tvojim smjerom. Slobodno mjesto može biti početak dobrog dana. ",
+              )}
             </p>
             <Button variant="lime" arrow onClick={onHome}>
-              Pronađi vožnju
+              {t(" Pronađi vožnju ")}
             </Button>
           </Empty>
         )
@@ -774,10 +820,13 @@ export function Trips({
               >
                 <div className="trip-card-top">
                   <span className={"status status-" + r.status}>
-                    {statusText[r.status]}
+                    {t(statusText[r.status])}
                   </span>
                   {requests > 0 && (
-                    <span className="count-pill">{requests} na čekanju</span>
+                    <span className="count-pill">
+                      {requests}
+                      {t(" na čekanju")}
+                    </span>
                   )}
                   <ArrowUpRight size={20} />
                 </div>
@@ -788,17 +837,19 @@ export function Trips({
                 <div className="trip-person">
                   <Car size={21} />
                   <span>{r.car}</span>
-                  <span className="small-pill">Ti voziš</span>
+                  <span className="small-pill">{t("Ti voziš")}</span>
                 </div>
               </button>
             );
           })}
         </div>
       ) : (
-        <Empty title="Imaš jedno slobodno mjesto?">
-          <p>Objavi svoju uobičajenu rutu. Ti biraš vrijeme i saputnika.</p>
+        <Empty title={t("Imaš jedno slobodno mjesto?")}>
+          <p>
+            {t("Objavi svoju uobičajenu rutu. Ti biraš vrijeme i saputnika.")}
+          </p>
           <Button variant="lime" onClick={onHome}>
-            Ponudi vožnju
+            {t(" Ponudi vožnju ")}
           </Button>
         </Empty>
       )}

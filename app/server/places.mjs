@@ -69,7 +69,70 @@ export const places = [
     lat: 43.8595,
     lng: 18.4189,
   },
-];
+  {
+    id: "bistrik",
+    name: "Bistrik",
+    detail:
+      "Područje Bistrika · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.8547,
+    lng: 18.4331,
+    kind: "area",
+  },
+  {
+    id: "alifakovac",
+    name: "Alifakovac",
+    detail:
+      "Područje Alifakovca · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.8572,
+    lng: 18.4362,
+    kind: "area",
+  },
+  {
+    id: "bascarsija",
+    name: "Baščaršija",
+    detail:
+      "Područje Baščaršije · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.8598,
+    lng: 18.4314,
+    kind: "area",
+  },
+  {
+    id: "logavina",
+    name: "Logavina",
+    detail:
+      "Područje Logavine · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.8638,
+    lng: 18.4263,
+    kind: "area",
+  },
+  {
+    id: "katedrala",
+    name: "Katedrala",
+    detail:
+      "Orijentir u pješačkoj zoni · nije potvrđeno mjesto zaustavljanja vozila",
+    lat: 43.8594,
+    lng: 18.4256,
+    kind: "landmark",
+  },
+  {
+    id: "kovacici",
+    name: "Kovačići",
+    detail:
+      "Područje Kovačića · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.8502,
+    lng: 18.4027,
+    kind: "area",
+  },
+  {
+    id: "sirokaca",
+    name: "Širokača",
+    detail:
+      "Područje Širokače · orijentaciona tačka, potvrdi tačno mjesto susreta",
+    lat: 43.85,
+    lng: 18.4297,
+    kind: "area",
+  },
+].map((place) => ({ ...place, city: "Sarajevo", countryCode: "BA" }));
 export const getPlace = (id) => places.find((p) => p.id === id);
 // Departure is interpreted as Sarajevo wall time. Intl resolves the daylight-saving offset.
 export function departureMs(date, time) {

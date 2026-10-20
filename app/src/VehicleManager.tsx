@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -30,6 +31,12 @@ const colors = [
 ];
 export const vehicleDescription = (v: Vehicle) =>
   `${v.make} ${v.model} · ${colors.find((c) => c[0] === v.color)?.[1] || v.color}`;
+export function displayVehicleLabel(value: string) {
+  const parts = value.split(" · ");
+  if (parts.length < 2) return value;
+  const color = parts.pop()!;
+  return parts.join(" · ") + " · " + t(color);
+}
 const fold = (s: string) =>
   s
     .normalize("NFD")
@@ -42,7 +49,7 @@ function loadCatalog() {
     catalogPromise = fetch("/vehicle-catalog.json")
       .then(async (r) => {
         if (!r.ok)
-          throw Error("Katalog trenutno nije dostupan. Pokušaj ponovo.");
+          throw Error(t("Katalog trenutno nije dostupan. Pokušaj ponovo."));
         return r.json();
       })
       .catch((e) => {
@@ -155,7 +162,7 @@ function SearchSelect({
         <div
           id={id + "-options"}
           role="listbox"
-          aria-label={label + " — prijedlozi"}
+          aria-label={label + t(" — prijedlozi")}
           className="vehicle-options"
         >
           {results.length ? (
@@ -175,7 +182,7 @@ function SearchSelect({
               </button>
             ))
           ) : (
-            <p>Nema rezultata. Koristi ručni unos ispod polja.</p>
+            <p>{t("Nema rezultata. Koristi ručni unos ispod polja.")}</p>
           )}
         </div>
       )}
@@ -253,7 +260,7 @@ function VehicleEditor({
   return (
     <form className="vehicle-editor" onSubmit={save}>
       <p className="vehicle-intro">
-        Da te saputnik lakše prepozna. Podatke možeš kasnije urediti.
+        {t(" Da te saputnik lakše prepozna. Podatke možeš kasnije urediti. ")}
       </p>
       {!catalog ? (
         <>
@@ -261,7 +268,7 @@ function VehicleEditor({
           {error ? (
             <>
               <Button variant="outline" onClick={() => setRetry((r) => r + 1)}>
-                Učitaj katalog ponovo
+                {t(" Učitaj katalog ponovo ")}
               </Button>
               <Button
                 onClick={() => {
@@ -272,13 +279,13 @@ function VehicleEditor({
                   setError("");
                 }}
               >
-                Unesi vozilo ručno
+                {t(" Unesi vozilo ručno ")}
               </Button>
             </>
           ) : (
             <div className="catalog-loading">
               <LoaderCircle className="spin" size={20} />
-              Učitavamo marke i modele…
+              {t(" Učitavamo marke i modele… ")}
             </div>
           )}
         </>
@@ -286,7 +293,7 @@ function VehicleEditor({
         <>
           {makeId === "other" ? (
             <label className="field-label">
-              Naziv marke
+              {t(" Naziv marke ")}
               <div className="input-wrap">
                 <Car size={17} />
                 <input
@@ -300,11 +307,11 @@ function VehicleEditor({
             </label>
           ) : (
             <SearchSelect
-              label="Marka vozila"
+              label={t("Marka vozila")}
               value={makeId}
               options={makeOptions}
               aliases={{ vw: "volkswagen", merc: "mercedesbenz" }}
-              placeholder="Pretraži marku, npr. VW ili Škoda"
+              placeholder={t("Pretraži marku, npr. VW ili Škoda")}
               onSelect={(id) => {
                 setMakeId(id);
                 setMake("");
@@ -328,19 +335,19 @@ function VehicleEditor({
             }}
           >
             {makeId === "other"
-              ? "Vrati se na katalog marki"
-              : "Marka nije na listi"}
+              ? t("Vrati se na katalog marki")
+              : t("Marka nije na listi")}
           </button>
           {makeId &&
             (manualModel || makeId === "other" ? (
               <label className="field-label">
-                Naziv modela
+                {t(" Naziv modela ")}
                 <div className="input-wrap">
                   <Car size={17} />
                   <input
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
-                    placeholder="npr. Golf"
+                    placeholder={t("npr. Golf")}
                     maxLength={80}
                     required
                   />
@@ -348,10 +355,10 @@ function VehicleEditor({
               </label>
             ) : (
               <SearchSelect
-                label="Model vozila"
+                label={t("Model vozila")}
                 value={model}
                 options={modelOptions}
-                placeholder="Pretraži model svog vozila"
+                placeholder={t("Pretraži model svog vozila")}
                 onSelect={setModel}
               />
             ))}
@@ -365,12 +372,12 @@ function VehicleEditor({
               }}
             >
               {manualModel
-                ? "Vrati se na katalog modela"
-                : "Model nije na listi"}
+                ? t("Vrati se na katalog modela")
+                : t("Model nije na listi")}
             </button>
           )}
           <fieldset className="vehicle-colors">
-            <legend>Boja vozila</legend>
+            <legend>{t("Boja vozila")}</legend>
             {colors.map(([id, name, hex]) => (
               <label key={id} className={id === color ? "selected" : ""}>
                 <input
@@ -382,23 +389,23 @@ function VehicleEditor({
                   required
                 />
                 <span className="color-swatch" style={{ background: hex }} />
-                {name}
+                {t(name)}
                 {id === color && <Check size={12} />}
               </label>
             ))}
           </fieldset>
           <ErrorBox error={error} />
           <Button variant="lime" busy={busy} type="submit">
-            Sačuvaj vozilo
+            {t(" Sačuvaj vozilo ")}
           </Button>
           <p className="fine-print">
-            Ne vidiš svoje vozilo? Ručni unos je uvijek dostupan.{" "}
+            {t(" Ne vidiš svoje vozilo? Ručni unos je uvijek dostupan.")}{" "}
             <a
               href="/vehicle-catalog-notices.txt"
               target="_blank"
               rel="noreferrer"
             >
-              Izvori kataloga
+              {t(" Izvori kataloga ")}
             </a>
           </p>
         </>
@@ -446,20 +453,20 @@ export function VehicleManager({
     <section className={"vehicle-section " + (compact ? "compact" : "")}>
       <div className="vehicle-section-heading">
         <span className="eyebrow">
-          {compact ? "VOZILO ZA OVU PONUDU" : "TVOJE VOZILO"}
+          {compact ? t("VOZILO ZA OVU PONUDU") : t("TVOJE VOZILO")}
         </span>
         <Car size={19} />
       </div>
       {loading ? (
         <div className="catalog-loading">
           <LoaderCircle className="spin" size={18} />
-          Učitavamo vozilo…
+          {t(" Učitavamo vozilo… ")}
         </div>
       ) : error ? (
         <>
           <ErrorBox error={error} />
           <Button variant="outline" onClick={() => setRetry((x) => x + 1)}>
-            Pokušaj ponovo
+            {t(" Pokušaj ponovo ")}
           </Button>
         </>
       ) : vehicle ? (
@@ -477,13 +484,16 @@ export function VehicleManager({
                   background: colors.find((c) => c[0] === vehicle.color)?.[2],
                 }}
               />
-              {colors.find((c) => c[0] === vehicle.color)?.[1] || vehicle.color}
+              {t(
+                colors.find((c) => c[0] === vehicle.color)?.[1] ||
+                  vehicle.color,
+              )}
             </span>
           </div>
           <button
             className="icon-button"
             type="button"
-            aria-label="Uredi vozilo"
+            aria-label={t("Uredi vozilo")}
             onClick={() => setEditing(true)}
           >
             <Pencil size={17} />
@@ -492,19 +502,22 @@ export function VehicleManager({
       ) : (
         <>
           <p>
-            Voziš? Dodaj marku, model i boju jednom, pa ih koristi u svojim
-            ponudama.
+            {t(
+              " Voziš? Dodaj marku, model i boju jednom, pa ih koristi u svojim ponudama. ",
+            )}
           </p>
           <Button variant="outline" onClick={() => setEditing(true)}>
             <Plus size={17} />
-            Dodaj vozilo
+            {t(" Dodaj vozilo ")}
           </Button>
         </>
       )}
       {editing &&
         createPortal(
           <Modal
-            title={vehicle ? "Uredi svoje vozilo." : "S kojim autom dolaziš?"}
+            title={
+              vehicle ? t("Uredi svoje vozilo.") : t("S kojim autom dolaziš?")
+            }
             onClose={() => setEditing(false)}
           >
             <VehicleEditor
