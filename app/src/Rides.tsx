@@ -453,7 +453,7 @@ export function RideDetails({
                       <Mail size={22} strokeWidth={2} />
                     </span>
                     <span className="request-sent-caption" aria-hidden="true">
-                      {t("Poslano")}
+                      {t("Zahtjev je\nposlan")}
                     </span>
                   </span>
                 )}

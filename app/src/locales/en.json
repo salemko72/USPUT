@@ -585,5 +585,6 @@
   "Ovaj račun je već povezan s drugim Google računom.": "This account is already connected to a different Google account.",
   "Prijavi se postojećom lozinkom da povežeš Google račun.": "Sign in with your existing password to connect Google.",
   "Zahtjev poslan — čeka se odgovor vozača.": "Request sent — waiting for the driver to respond.",
-  "Poslano": "Sent"
+  "Poslano": "Sent",
+  "Zahtjev je\nposlan": "Request\nsent"
 }

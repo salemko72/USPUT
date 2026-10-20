@@ -4485,6 +4485,8 @@ b {
   animation: request-envelope 2.4s ease-in-out infinite;
 }
 .request-sent-caption {
+  white-space: pre;
+  text-align: center;
   font-size: 10px;
   line-height: 1.2;
   font-weight: 800;
