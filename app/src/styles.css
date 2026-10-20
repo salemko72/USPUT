@@ -3921,7 +3921,7 @@ textarea::placeholder {
 }
 .route-match-summary small {
   opacity: 0.75;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 /* European date picker: explicit trigger and a Monday-first calendar. */
@@ -4439,4 +4439,11 @@ h6,
 strong,
 b {
   font-weight: 800;
+}
+
+.cost-sharing-status > span {
+  font-weight: 800;
+}
+.ride-card.selected .cost-sharing-summary {
+  color: #f6f5f0;
 }
