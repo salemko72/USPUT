@@ -1,12 +1,7 @@
 import { t } from "./i18n";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource/montserrat-alternates/400.css";
-import "@fontsource/montserrat-alternates/500.css";
-import "@fontsource/montserrat-alternates/600.css";
-import "@fontsource/montserrat-alternates/700.css";
-import "@fontsource/montserrat-alternates/800.css";
-import "@fontsource/montserrat-alternates/900.css";
+import "@fontsource-variable/fredoka";
 import App from "./App";
 import "./styles.css";
 class ErrorBoundary extends React.Component<

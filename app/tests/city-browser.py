@@ -27,6 +27,6 @@ with sync_playwright() as p:
  ctx.clear_permissions();page.get_by_role('button',name='Koristi moju lokaciju',exact=True).click();expect(page.get_by_role('alert')).to_be_visible();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('Zagreb')
  page.get_by_role('button',name='ENG',exact=True).click();expect(page.get_by_label('City for street searches')).to_have_value('Zagreb')
  for width in [320,390,768,1440]:
-  page.set_viewport_size({'width':width,'height':1000});page.evaluate('document.fonts.ready');assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.evaluate('document.fonts.check(\'400 14px "Montserrat Alternates"\')')
- page.screenshot(path='test-results/city-montserrat-alternates.png',full_page=True)
+  page.set_viewport_size({'width':width,'height':1000});page.evaluate('document.fonts.ready');assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.evaluate('document.fonts.check(\'400 14px "Fredoka Variable"\')')
+ page.screenshot(path='test-results/city-fredoka.png',full_page=True)
  browser.close();print('PASS required registration city, default city, real browser geolocation, rounded coordinates, scoped searches, manual override, stale results, permission denied, BHS/ENG and responsive font')
