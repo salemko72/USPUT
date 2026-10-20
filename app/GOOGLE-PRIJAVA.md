@@ -22,3 +22,14 @@ Cloudflare Worker: postaviti Client ID kroz Workers Settings/Variables, a secret
 Klik na „Nastavi s Googleom” treba otvoriti Google, vratiti aplikaciju i, za novi račun, zatražiti potvrdu punoljetnosti i pravila. Postojeći Google račun treba dobiti HttpOnly sesiju. Otkazivanje na Googleu ne smije napraviti račun. Ako već postoji email/lozinka račun s istim emailom, koristi tu prijavu; automatsko povezivanje tih računa još nije uključeno.
 
 Prije javne produkcije završiti Google branding/consent zahtjeve i objaviti stvarne uslove i politiku privatnosti. U testing režimu pristup imaju samo uneseni testni korisnici.
+
+## Sadašnja testna web adresa
+
+Za Google Web client unesi:
+
+- **Authorized JavaScript origins:** `https://usput-pulse.salemko.workers.dev`
+- **Authorized redirect URIs:** `https://usput-pulse.salemko.workers.dev/api/auth/google/callback`
+
+Ako je Publishing status **Testing**, u Audience / Test users dodaj svoj Google email. To je dovoljno za probnu prijavu osnovnim profilom; ne treba sada objavljivati Google aplikaciju svim korisnicima.
+
+Ne trebaš programirati. Napravi Google projekt i Web client kroz navedene ekrane; Client ID i Client secret unose se sigurno u postavke USPUT Workera, ne u chat.

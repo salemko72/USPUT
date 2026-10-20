@@ -6,6 +6,7 @@ export default {
       ? await handleApi(request, env)
       : await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
+    headers.set("X-Robots-Tag", "noindex, nofollow");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     headers.set("X-Frame-Options", "DENY");

@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "usput-pulse",
+  "workers_dev": true,
+  "preview_urls": false,
   "main": "server/worker.mjs",
   "compatibility_date": "2026-10-20",
   "assets": {
@@ -13,7 +15,7 @@
     {
       "binding": "DB",
       "database_name": "usput-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "72c9853b-fd62-4dc0-a393-e8408a4934bc",
       "migrations_dir": "server/migrations",
     },
   ],

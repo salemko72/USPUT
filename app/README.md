@@ -35,9 +35,9 @@ USPUT_TEST_URL=http://127.0.0.1:8788 python tests/real-browser.py
 
 Za čiste ponovljene browser testove kreiraj novu privremenu bazu; postojeće ponude drugih testnih korisnika mogu uticati na odabir rezultata. Testove ne pokretati na javnoj instanci.
 
-## Cloudflare Worker i D1 (još nije objavljeno)
+## Cloudflare Worker i D1 — testna objava
 
-Isti API i SQL rade na Cloudflare Workeru preko D1 bindinga `DB`. `wrangler.jsonc` ima NAMJERNI placeholder za D1 database ID; prije objave kreirati posebnu USPUT bazu i upisati njen ID. Ne koristiti tuđe projektne baze.
+Isti API i SQL rade na Cloudflare Workeru preko D1 bindinga `DB`. `wrangler.jsonc` je vezan za zasebnu USPUT D1 bazu `usput-db`, napravljenu za ovu beta verziju. Ne koristiti tuđe projektne baze. Testna adresa: https://usput-pulse.salemko.workers.dev. Objavljeno 20.10.2026. na zahtjev korisnika za web test; bez Google OAuth podataka.
 
 Lokalna provjera D1 runtime-a:
 
@@ -52,7 +52,7 @@ Provjera pakovanja, BEZ objave:
 XDG_CONFIG_HOME=/tmp/usput-config WRANGLER_SEND_METRICS=false npm run deploy:check
 ```
 
-Kada vlasnik odobri objavu: napraviti USPUT D1 bazu, postaviti stvarni binding ID, primijeniti migracije na tu novu bazu, podesiti Google OAuth i eventualnu domenu, pa objaviti Worker. Lokalni Node SQLite i lokalni D1 su odvojeni razvojni podaci i ne sele se automatski u produkciju.
+Nova ažuriranja testnog Workera: nakon builda i testova koristiti `wrangler deploy` samo kada je objava u korisnikovom obimu zahtjeva. D1 migracije primjenjivati samo na ovu USPUT bazu. Google OAuth i eventualna vlastita domena podešavaju se zasebno. Lokalni Node SQLite i lokalni D1 su odvojeni razvojni podaci i ne sele se automatski u produkciju.
 
 ## Prijava i privatnost
 

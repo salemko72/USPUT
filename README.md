@@ -2,7 +2,7 @@
 
 **Tvoj put. Dobro društvo.** Razvojna web beta za svakodnevni gradski put do posla.
 
-Implementacija je u [`app/`](app/README.md). Originalni projektni materijali i odabrani mockupi ostaju sačuvani. Ova grana dodaje prvu povezanu aplikaciju; javna objava nije urađena.
+Implementacija je u [`app/`](app/README.md). Originalni projektni materijali i odabrani mockupi ostaju sačuvani. Ova grana dodaje prvu povezanu aplikaciju. Testna web adresa: https://usput-pulse.salemko.workers.dev (razvojna beta, nije za organizaciju stvarnih vožnji).
 
 ## Šta radi
 
