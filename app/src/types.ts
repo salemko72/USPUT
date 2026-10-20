@@ -106,8 +106,8 @@ export const today = () =>
     new Date(),
   );
 export const defaultSearch = (): Search => ({
-  from: "cengic",
-  to: "marijin",
+  from: "",
+  to: "",
   date: tomorrow(),
   time: "07:30",
 });

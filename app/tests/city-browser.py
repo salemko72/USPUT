@@ -20,10 +20,10 @@ with sync_playwright() as p:
  with page.expect_response('**/api/locations/search') as search:
   page.get_by_role('button',name='Pretraži adresu — Polazište',exact=True).click()
  assert search.value.request.post_data_json['scope']=={'city':'Zagreb'};expect(page.locator('.street-results button')).to_have_count(0)
- # Old accounts have no city: use the explicitly selected route area's city.
+ # Old accounts and initial routes stay empty until the user enters a location.
  def old_account(route):
   response=route.fetch();data=response.json();data['user']['city']='';route.fulfill(response=response,json=data)
- page.route('**/api/auth/me',old_account);page.reload();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('Sarajevo')
+ page.route('**/api/auth/me',old_account);page.reload();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('');expect(page.get_by_role('textbox',name='Polazište',exact=True)).to_have_value('');expect(page.get_by_role('textbox',name='Odredište',exact=True)).to_have_value('')
  # A complete street + city can also be searched with an empty city field.
  page.get_by_label('Grad za pretragu ulica').fill('');page.get_by_role('textbox',name='Polazište',exact=True).fill('Put, Sarajevo')
  with page.expect_response('**/api/locations/search') as search:
