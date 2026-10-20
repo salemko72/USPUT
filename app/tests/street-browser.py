@@ -7,7 +7,7 @@ with sync_playwright() as p:
   ctx=browser.new_context(viewport={'width':390,'height':844});page=ctx.new_page();page.set_default_timeout(20000)
   r=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','adult':True,'terms':True});assert r.ok,r.text()
   # A test grid replaces external tiles; this verifies controls, not real map availability.
-  page.route('**/basemaps.cartocdn.com/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
+  page.route('**/tile.openstreetmap.org/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
   return ctx,page
  def choose(page,label,query):
   page.get_by_role('textbox',name=label,exact=True).fill(query);page.get_by_role('button',name='Pretraži adresu — '+label,exact=True).click();page.locator('.street-results button').first.click();expect(page.get_by_role('dialog',name='Potvrdi približnu lokaciju')).to_be_visible();page.get_by_role('button',name='Potvrdi ovaj pin',exact=True).click();expect(page.get_by_role('button',name='Provjeri ili pomjeri pin',exact=True)).to_have_count(1 if label=='Polazište' else 2)
