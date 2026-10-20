@@ -1,4 +1,4 @@
-import type { Service, User } from "./types";
+import type { Service, User, Vehicle } from "./types";
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -29,6 +29,10 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
   return data;
 }
 export const realService: Service = {
+  vehicle: async () =>
+    (await api<{ vehicle: Vehicle | null }>("/vehicle")).vehicle,
+  saveVehicle: async (v) =>
+    (await api<{ vehicle: Vehicle }>("/vehicle", v)).vehicle,
   places: async () =>
     (await api<{ places: Awaited<ReturnType<Service["places"]>> }>("/places"))
       .places,

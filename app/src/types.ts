@@ -1,3 +1,11 @@
+export type VehicleInput = {
+  makeId: string;
+  make?: string;
+  model: string;
+  color: string;
+  manualModel?: boolean;
+};
+export type Vehicle = VehicleInput & { id: string; make: string };
 export type User = {
   id: string;
   name: string;
@@ -32,9 +40,11 @@ export type Booking = {
   ride: Ride;
 };
 export type Search = { from: string; to: string; date: string; time: string };
-export type Offer = Search & { car: string; note: string };
+export type Offer = Search & { car: string; note: string; vehicleId?: string };
 export type MyRides = { rides: Ride[]; bookings: Booking[] };
 export type Service = {
+  vehicle: () => Promise<Vehicle | null>;
+  saveVehicle: (v: VehicleInput) => Promise<Vehicle>;
   places: () => Promise<Place[]>;
   search: (q: Search) => Promise<Ride[]>;
   ride: (id: string) => Promise<Ride>;

@@ -17,7 +17,7 @@ with sync_playwright() as p:
   expect(page.get_by_role('button',name='Pronađi vožnju')).to_be_visible()
  ca,a=context();cb,b=context()
  register(a,'Amar Test','amar-'+stamp+'@example.test')
- a.get_by_role('button',name='Nudim vožnju').click();a.get_by_label('Vozilo i boja').fill('VW Golf · sivi');a.get_by_role('button',name='Objavi vožnju').click()
+ a.get_by_role('button',name='Nudim vožnju').click();a.get_by_role('button',name='Dodaj vozilo',exact=True).click();a.get_by_role('combobox',name='Marka vozila').fill('vw');a.get_by_role('option',name='Volkswagen',exact=True).click();a.get_by_role('combobox',name='Model vozila').fill('golf');a.get_by_role('option',name='GOLF',exact=True).click();a.get_by_role('radio',name='Siva',exact=True).check();a.get_by_role('button',name='Sačuvaj vozilo',exact=True).click();a.get_by_role('button',name='Objavi vožnju').click()
  expect(a.get_by_role('heading',name='Tvoja vožnja.')).to_be_visible()
  a.screenshot(path='test-results/mobile-offer.png',full_page=True)
  register(b,'Lejla Test','lejla-'+stamp+'@example.test')

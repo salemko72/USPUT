@@ -261,6 +261,7 @@ export default function App() {
             </>
           ) : path === "home" ? (
             <Home
+              service={service}
               user={user}
               places={places}
               query={query}

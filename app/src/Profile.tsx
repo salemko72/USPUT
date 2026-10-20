@@ -1,3 +1,4 @@
+import { VehicleManager } from "./VehicleManager";
 import { useState } from "react";
 import {
   LogOut,
@@ -111,6 +112,7 @@ export function Profile({
               Sačuvaj promjene
             </Button>
           </form>
+          <VehicleManager service={service} />
           <button className="logout-button" onClick={logout} disabled={busy}>
             <LogOut size={18} />
             Odjavi se

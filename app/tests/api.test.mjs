@@ -539,3 +539,86 @@ test("Google OAuth validates state and PKCE, requires consent and reuses a Googl
   );
   assert.equal(replay.status, 400);
 });
+test("vehicle save validates catalogue, persists on own profile and updates one vehicle", async () => {
+  const u = await signup();
+  const input = { makeId: "volkswagen", model: "Golf", color: "siva" };
+  const r = await call("/vehicle", input, u.cookie);
+  assert.equal(r.status, 200);
+  assert.equal(r.data.vehicle.make, "Volkswagen");
+  assert.equal(r.data.vehicle.model.toLowerCase(), "golf");
+  assert.equal(
+    (await call("/vehicle", null, u.cookie)).data.vehicle.id,
+    r.data.vehicle.id,
+  );
+  const changed = await call("/vehicle", { ...input, color: "crna" }, u.cookie);
+  assert.equal(changed.data.vehicle.id, r.data.vehicle.id);
+  assert.equal(changed.data.vehicle.color, "crna");
+  const other = await signup("Other", "other@example.test");
+  assert.equal((await call("/vehicle", null, other.cookie)).data.vehicle, null);
+  assert.equal((await call("/vehicle", input)).status, 401);
+});
+test("vehicle validation rejects unknown catalogue values and allows explicit manual fallback", async () => {
+  const u = await signup();
+  for (const patch of [
+    { makeId: "not-real" },
+    { model: "not-real" },
+    { color: "invisible" },
+    { model: "" },
+  ])
+    assert.equal(
+      (
+        await call(
+          "/vehicle",
+          { makeId: "volkswagen", model: "Golf", color: "siva", ...patch },
+          u.cookie,
+        )
+      ).status,
+      400,
+    );
+  const r = await call(
+    "/vehicle",
+    {
+      makeId: "other",
+      make: "Moja marka",
+      model: "Poseban model",
+      manualModel: true,
+      color: "plava",
+    },
+    u.cookie,
+  );
+  assert.equal(r.status, 200);
+  assert.equal(r.data.vehicle.make, "Moja marka");
+});
+test("saved vehicle is owner-authorized when publishing and ride retains its snapshot", async () => {
+  const driver = await signup("Amar", "amar@example.test"),
+    other = await signup();
+  const v = await call(
+    "/vehicle",
+    { makeId: "volkswagen", model: "Golf", color: "siva" },
+    driver.cookie,
+  );
+  const published = await call(
+    "/rides",
+    { ...ride(), vehicleId: v.data.vehicle?.id, car: "FORGED" },
+    driver.cookie,
+  );
+  assert.equal(published.status, 201);
+  assert.match(published.data.ride.car, /Volkswagen/i);
+  assert.equal(
+    (
+      await call(
+        "/rides",
+        { ...ride(), vehicleId: v.data.vehicle.id },
+        other.cookie,
+      )
+    ).status,
+    403,
+  );
+  await call(
+    "/vehicle",
+    { makeId: "volkswagen", model: "Golf", color: "crna" },
+    driver.cookie,
+  );
+  const r = await call("/rides/" + published.data.ride.id, null, other.cookie);
+  assert.equal(r.data.ride.car, published.data.ride.car);
+});

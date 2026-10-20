@@ -1,3 +1,4 @@
+import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
 import { places, getPlace, departureMs } from "./places.mjs";
 const encoder = new TextEncoder();
 const hex = (b) =>
@@ -406,6 +407,48 @@ export async function handleApi(request, env) {
           "usput_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
       });
     }
+    if (path === "/vehicle" && method === "GET") {
+      return json({
+        vehicle: vehicleView(
+          await db
+            .prepare("SELECT * FROM vehicles WHERE user_id=?")
+            .bind(user.id)
+            .first(),
+        ),
+      });
+    }
+    if (path === "/vehicle" && method === "POST") {
+      let v;
+      try {
+        v = validateVehicle(body);
+      } catch (e) {
+        fail(400, e.message);
+      }
+      await db
+        .prepare(
+          "INSERT INTO vehicles(id,user_id,make_id,make,model,color,manual_model,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET make_id=excluded.make_id,make=excluded.make,model=excluded.model,color=excluded.color,manual_model=excluded.manual_model,updated_at=excluded.updated_at",
+        )
+        .bind(
+          crypto.randomUUID(),
+          user.id,
+          v.makeId,
+          v.make,
+          v.model,
+          v.color,
+          v.manualModel ? 1 : 0,
+          Date.now(),
+          Date.now(),
+        )
+        .run();
+      return json({
+        vehicle: vehicleView(
+          await db
+            .prepare("SELECT * FROM vehicles WHERE user_id=?")
+            .bind(user.id)
+            .first(),
+        ),
+      });
+    }
     if (path === "/profile" && method === "POST") {
       const name = safeText(body.name, 60);
       if (name.length < 2) fail(400, "Unesi ime od najmanje dva znaka.");
@@ -416,11 +459,24 @@ export async function handleApi(request, env) {
       return json({ user: selfUser({ ...user, name }) });
     }
     if (path === "/rides" && method === "POST") {
+      let savedVehicle = null;
+      if (body.vehicleId !== undefined) {
+        if (typeof body.vehicleId !== "string")
+          fail(400, "Odaberi vozilo iz svog profila.");
+        savedVehicle = await db
+          .prepare("SELECT * FROM vehicles WHERE id=? AND user_id=?")
+          .bind(body.vehicleId, user.id)
+          .first();
+        if (!savedVehicle)
+          fail(403, "Odabrano vozilo ne pripada tvom profilu.");
+      }
       const from = safeText(body.from, 30),
         to = safeText(body.to, 30),
         date = safeText(body.date, 10),
         time = safeText(body.time, 5),
-        car = safeText(body.car, 80),
+        car = savedVehicle
+          ? vehicleLabel(savedVehicle)
+          : safeText(body.car, 80),
         note = safeText(body.note, 280),
         departure = departureMs(date, time);
       if (

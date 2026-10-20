@@ -2,6 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "usput-pulse",
   "workers_dev": true,
+  "keep_vars": true,
+  "vars": {
+    "GOOGLE_CLIENT_ID": "673712683395-pfegs6i0rk1chqqqol98hup5gekokkh4.apps.googleusercontent.com",
+  },
   "preview_urls": false,
   "main": "server/worker.mjs",
   "compatibility_date": "2026-10-20",

@@ -10,7 +10,7 @@ Implementacija je u [`app/`](app/README.md). Originalni projektni materijali i o
 - Odvojeni demo s izmišljenim profilima.
 - Glavni ekran putnika/vozača, objava i pretraga ponuda, detalji rute.
 - Zahtjev putnika → prihvatanje vozača → spremnost → završetak ili otkazivanje.
-- Moje vožnje i uređivanje imena profila.
+- Moje vožnje, profil i sačuvano vozilo s pretragom 640 marki/modela i izborom boje.
 - Trajna lokalna SQLite baza i isti API za Cloudflare Worker/D1.
 - Google OAuth tok je implementiran i testiran na granici protokola; stvarna Google prijava čeka OAuth podatke vlasnika. [Upute za povezivanje](app/GOOGLE-PRIJAVA.md).
 

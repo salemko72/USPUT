@@ -1,3 +1,4 @@
+import { VehicleManager, vehicleDescription } from "./VehicleManager";
 import { useState } from "react";
 import {
   Car,
@@ -9,7 +10,7 @@ import {
   Leaf,
   ArrowUpRight,
 } from "lucide-react";
-import type { User, Place, Search, Offer } from "./types";
+import type { User, Place, Search, Offer, Service, Vehicle } from "./types";
 import { dateLabel, today } from "./types";
 import { Avatar, Button, ErrorBox } from "./ui";
 export function SearchFields({
@@ -107,6 +108,7 @@ export function Home({
   onPublish,
   onProfile,
   demo,
+  service,
 }: {
   user: User;
   places: Place[];
@@ -116,10 +118,12 @@ export function Home({
   onPublish: (o: Offer) => Promise<void>;
   onProfile: () => void;
   demo: boolean;
+  service: Service;
 }) {
   const [role, setRole] = useState<"passenger" | "driver">("passenger"),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [vehicle, setVehicle] = useState<Vehicle | null>(null);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -131,12 +135,17 @@ export function Home({
       onSearch();
       return;
     }
+    if (!vehicle) {
+      setError("Dodaj svoje vozilo prije objave ponude.");
+      return;
+    }
     const f = new FormData(e.currentTarget);
     setBusy(true);
     try {
       await onPublish({
         ...query,
-        car: String(f.get("car")),
+        car: vehicleDescription(vehicle),
+        vehicleId: vehicle.id,
         note: String(f.get("note")),
       });
     } catch (e) {
@@ -214,19 +223,11 @@ export function Home({
             <SearchFields value={query} onChange={setQuery} places={places} />
             {role === "driver" && (
               <div className="offer-fields">
-                <label className="field-label">
-                  Vozilo i boja
-                  <div className="input-wrap">
-                    <Car size={18} />
-                    <input
-                      name="car"
-                      placeholder="npr. VW Golf · sivi"
-                      minLength={3}
-                      maxLength={80}
-                      required
-                    />
-                  </div>
-                </label>
+                <VehicleManager
+                  service={service}
+                  onChange={setVehicle}
+                  compact
+                />
                 <label className="field-label">
                   Kratka napomena <span className="optional">opcionalno</span>
                   <textarea

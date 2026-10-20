@@ -9,3 +9,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_seat ON bookings(ride_id) WHERE status IN 
 CREATE INDEX IF NOT EXISTS rides_search ON rides(date,from_id,to_id,status);
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires);
 CREATE INDEX IF NOT EXISTS bookings_passenger ON bookings(passenger_id);
+CREATE TABLE IF NOT EXISTS vehicles (
+ id TEXT PRIMARY KEY,
+ user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+ make_id TEXT NOT NULL,
+ make TEXT NOT NULL,
+ model TEXT NOT NULL,
+ color TEXT NOT NULL,
+ manual_model INTEGER NOT NULL DEFAULT 0,
+ created_at INTEGER NOT NULL,
+ updated_at INTEGER NOT NULL
+);

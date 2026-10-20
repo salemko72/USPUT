@@ -1,4 +1,4 @@
-import type { User, Ride, Booking, Service, Place } from "./types";
+import type { User, Ride, Booking, Service, Vehicle, Place } from "./types";
 import { tomorrow } from "./types";
 export const demoUser: User = {
   id: "demo-lejla",
@@ -78,7 +78,13 @@ const places: Place[] = [
     lng: 18.4189,
   },
 ];
-type State = { user: User; rides: Ride[]; bookings: Booking[]; day: string };
+type State = {
+  vehicle?: Vehicle | null;
+  user: User;
+  rides: Ride[];
+  bookings: Booking[];
+  day: string;
+};
 function initial(): State {
   return {
     user: demoUser,
@@ -130,6 +136,16 @@ async function result<T>(value: T) {
 }
 export const getDemoUser = () => state.user;
 export const demoService: Service = {
+  vehicle: () => result(state.vehicle || null),
+  saveVehicle: async (v) => {
+    state.vehicle = {
+      ...v,
+      id: state.vehicle?.id || crypto.randomUUID(),
+      make: v.make || "Druga marka",
+    };
+    persist();
+    return result(state.vehicle);
+  },
   places: () => result(places),
   search: (q) =>
     result(

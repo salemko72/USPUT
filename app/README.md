@@ -73,3 +73,13 @@ Podrazumijevano se prikazuje jasno označena skica. Dugme „Mapa” uključuje 
 ## Granice beta verzije
 
 Nije odobrena za organizaciju stvarnih vožnji. Prije stvarne alfe trebaju provjerena mjesta susreta, moderacija/prijave i podrška, završna privatnost/uslovi, lokalna pravna i osiguravajuća provjera. Obavijesti su trenutno osvježavanje otvorenog ekrana svakih 15 sekundi, ne push/SMS. Nema naplate, automatske lokacije, proizvoljnog geokodiranja, oporavka lozinke mailom ili javnog obećanja sigurnosti.
+
+## Katalog i sačuvano vozilo
+
+Profil i tok vozača imaju pretraživanje marke/modela, boju i ručni unos. Jedno vozilo po profilu. Model se briše kada promijeniš marku; nova ponuda koristi vozilo vlasnika i trajno čuva opis iz trenutka objave. Kasnija promjena vozila ne mijenja postojeći dogovor. Tablice i fotografije nisu dio ove dorade.
+
+Katalog je build-time snapshot `@meterapp/vehicle-db@2.19.1`, putnička vozila i MPV: 640 marki, 20.576 različitih naziva modela. Nije obećanje potpunog globalnog pokrića, zato postoji ručni unos. Nema vanjskog API poziva, API ključa ili troška po upitu. Paket je samo dev dependency, ne šalje se cijeli browseru. Izvori i licence su u `public/vehicle-catalog-notices.txt`. Osvježavanje: `npm run catalog:build`, zatim pregled diff-a i testovi; server i public snapshot moraju biti isti.
+
+D1 migracija `0002_vehicles.sql` je aditivna i primjenjuje se prije objave novog Workera. Lokalni Node runner kreira tabelu pri sljedećem startu. Novi browser testovi: `python tests/vehicle-browser.py` i `python tests/catalog-fallback-browser.py`. Backend suite sada ima 21 test.
+
+Google Client ID je usklađen u wrangler vars; `keep_vars: true` čuva dashboard varijable pri objavama. Client secret ostaje isključivo šifrovani Worker binding, nikad u ovom repozitoriju. Metapodaci potvrđuju konfiguraciju; stvarnu Google prijavu još mora potvrditi testni korisnik kroz preglednik.
