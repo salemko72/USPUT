@@ -1,7 +1,7 @@
 import { t, locale } from "./i18n";
 import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
-import { today } from "./types";
+import { today, dateLabel } from "./types";
 
 const iso = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -85,7 +85,7 @@ export function DatePicker({
         }}
       >
         <CalendarDays size={18} />
-        <span>{display(value)}</span>
+        <span>{dateLabel(value)}</span>
       </button>
       {open && (
         <div

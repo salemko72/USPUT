@@ -10,9 +10,14 @@ with sync_playwright() as p:
         assert response.ok,response.text()
         page.goto(base)
         trigger=page.get_by_role('button',name=re.compile('Datum polaska:'))
+        expect(trigger).to_have_text('Sutra')
         trigger.click(position={'x':8,'y':12})
         calendar=page.get_by_role('dialog',name='Odaberi datum polaska')
         expect(calendar).to_be_visible()
+        current=page.evaluate("new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Sarajevo'}).format(new Date())")
+        calendar.get_by_role('button',name='.'.join(reversed(current.split('-'))),exact=True).click()
+        expect(trigger).to_have_text('Danas')
+        trigger.click()
         assert calendar.locator('.calendar-weekdays span').all_text_contents()==['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
         assert calendar.locator('button[aria-pressed="true"]').count()==1
         assert calendar.locator('.calendar-grid button:disabled').count()>0

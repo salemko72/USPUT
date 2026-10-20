@@ -1,4 +1,4 @@
-import { t, locale } from "./i18n";
+import { t } from "./i18n";
 export type VehicleInput = {
   makeId: string;
   make?: string;
@@ -71,11 +71,9 @@ export type Service = {
   profile: (name: string) => Promise<User>;
 };
 export const tomorrow = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Sarajevo",
-  }).format(d);
+  const d = new Date(today() + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
 };
 export const today = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Sarajevo" }).format(
@@ -92,7 +90,4 @@ export const dateLabel = (date: string) =>
     ? t("Danas")
     : date === tomorrow()
       ? t("Sutra")
-      : new Intl.DateTimeFormat(locale(), {
-          day: "numeric",
-          month: "short",
-        }).format(new Date(date + "T12:00:00"));
+      : date.split("-").reverse().join(".");
