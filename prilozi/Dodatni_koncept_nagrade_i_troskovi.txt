@@ -1,0 +1,193 @@
+USPUT
+
+Koncept nagrađivanja i dobrovoljnog dijeljenja troškova
+
+1. Osnovna ideja
+
+USPUT je platforma koja povezuje ljude koji već putuju u istom smjeru, prvenstveno na svakodnevnim relacijama kuća–posao.
+
+Osnovna vrijednost USPUT-a nije prodaja prijevoza, nego olakšavanje dogovora između ljudi koji mogu dijeliti istu vožnju.
+
+U tom smislu potrebno je jasno razdvojiti dvije potpuno različite stvari:
+
+nagrađivanje i društvena vrijednost unutar USPUT zajednice
+eventualno dobrovoljno dijeljenje stvarnih troškova između vozača i putnika
+USPUT ne mora biti posrednik u drugoj tački.
+
+
+
+2. Nagrađivanje unutar USPUT-a
+
+USPUT treba razvijati osjećaj da korisnik svojim ponašanjem doprinosi zajednici.
+
+Vozač koji redovno nekoga poveze ne treba nužno dobiti novac. Njegova vrijednost može biti prepoznata kroz sistem zahvalnosti, reputacije i simboličnih nagrada.
+
+Cilj nagrađivanja nije stvaranje takmičenja niti pritiska da korisnik mora stalno nuditi vožnje.
+
+Cilj je:
+
+prepoznati korisnike koji doprinose zajednici.
+
+Mogući elementi
+
+Korisnik može dobijati:
+
+zahvalnice nakon realizovane vožnje
+zvjezdice ili jednostavne bodove zahvalnosti
+bedževe za određene vrste doprinosa
+oznake poput „Pouzdan vozač“, „Često pomaže“, „USPUT prijatelj“
+broj realizovanih vožnji
+broj ljudi kojima je pomogao
+eventualno posebne statusne nivoe.
+Ovi elementi trebaju biti prvenstveno društveni i reputacijski, a ne finansijski.
+
+Posebno treba izbjeći sistem koji korisniku stvara osjećaj duga:
+
+„Danas nisam vozio, pa moram sutra voziti.“
+
+USPUT treba ostati dobrovoljna zajednica.
+
+
+
+3. Nagrade ne smiju postati prikrivena novčana naknada
+
+U početnoj fazi preporučuje se da nagrade budu virtualne i simbolične.
+
+Primjeri:
+
+bedževi
+zahvalnice
+statusi
+posebne oznake profila
+humoristični elementi ili maskota
+eventualno kasnije pogodnosti kod partnera.
+Tek kada se potvrdi da koncept funkcioniše, moguće je razmotriti stvarne pogodnosti kroz partnerski model:
+
+kafa
+popust u restoranu
+popust kod lokalnih trgovaca
+ulaznice
+pogodnosti kod partnera.
+Takve pogodnosti ne bi trebale predstavljati plaćanje za konkretnu vožnju, nego nagradu za doprinos zajednici.
+
+
+
+4. Dobrovoljno dijeljenje troškova
+
+USPUT ne mora imati ugrađenu naplatu vožnje.
+
+Ako vozač i putnik nakon dogovora žele međusobno podijeliti dio stvarnih troškova vožnje, to može biti njihov privatni dogovor, bez potrebe da USPUT zna iznos, obračunava ga ili provodi plaćanje.
+
+USPUT u tom slučaju:
+
+ne određuje cijenu vožnje
+ne prikazuje cijenu po kilometru
+ne obračunava gorivo
+ne naplaćuje proviziju na iznos koji eventualno razmijene vozač i putnik
+ne obrađuje njihovu međusobnu uplatu
+ne garantuje niti posreduje u njihovom finansijskom dogovoru.
+Drugim riječima:
+
+USPUT povezuje ljude.
+Šta će se nakon toga dogovoriti oko eventualnog dijeljenja troškova ostaje između njih.
+
+
+
+5. Zašto je ovo važno za koncept
+
+Ovakav model omogućava da USPUT ostane prvenstveno platforma za povezivanje ljudi, a ne platforma za prodaju prijevoza.
+
+Vozač ne dobija posao od USPUT-a.
+
+USPUT mu ne prodaje putnika.
+
+USPUT ne određuje cijenu njegovog mjesta u automobilu.
+
+Vozač jednostavno kaže:
+
+„Svakog radnog dana idem ovom rutom. Imam slobodno mjesto.“
+
+Putnik kaže:
+
+„I meni odgovara ta ruta i vrijeme.“
+
+USPUT im pomaže da se pronađu, dogovore i pouzdano realizuju vožnju.
+
+
+
+6. Inspiracija postojećim modelima
+
+Ovakva razlika između platforme i samog dijeljenja troškova postoji i kod velikih carpooling platformi.
+
+BlaBlaCar u svojim trenutno važećim uslovima za BiH definiše „Doprinos troškovima“ kao iznos koji vozač traži, a putnik prihvata kao doprinos troškovima zajedničke vožnje. Istovremeno izričito navodi da vozač ne smije ostvarivati korist i da doprinos treba biti ograničen na stvarne troškove vožnje. (BlaBlaCar)
+
+BlaBlaCar također ima mogućnost naplate vlastite naknade za korištenje platforme, što je odvojeno od samog doprinosa troškovima vožnje. (BlaBlaCar)
+
+To je važna potvrda koncepta za USPUT:
+
+trošak zajedničke vožnje i prihod platforme ne moraju biti ista stvar.
+
+USPUT može eventualno jednog dana imati vlastiti poslovni model, a da pritom uopće ne naplaćuje niti posreduje novac između vozača i putnika.
+
+
+
+7. Mogući budući poslovni model USPUT-a
+
+U početnoj fazi preporučuje se potpuno besplatno korištenje.
+
+Tek nakon što se potvrdi da ljudi zaista koriste USPUT i da se vožnje ponavljaju, mogu se razmatrati izvori prihoda platforme.
+
+Potencijalni izvori:
+
+USPUT+
+
+Dobrovoljna mjesečna pretplata za napredne funkcije.
+
+Poslovni korisnici
+
+Kompanije mogu plaćati korištenje USPUT-a kao alata za organizaciju dolaska zaposlenika na posao.
+
+Partneri
+
+Kompanije mogu ponuditi pogodnosti korisnicima USPUT-a.
+
+Sponzorstva
+
+Brendovi mogu podržati lokalnu USPUT zajednicu.
+
+Premium funkcije
+
+Određene napredne funkcije mogu biti dostupne uz pretplatu.
+
+Ni jedan od ovih modela ne zahtijeva da USPUT uzima procenat od eventualnog privatnog dijeljenja troškova između vozača i putnika.
+
+
+
+8. Važno pravilo za razvoj proizvoda
+
+U aplikaciji ne treba prerano uvoditi novac.
+
+Prva verzija treba odgovoriti na mnogo jednostavnije pitanje:
+
+Hoće li ljudi zaista svakodnevno koristiti USPUT da pronađu osobu s kojom mogu dijeliti vožnju?
+
+Ako je odgovor pozitivan, tek tada ima smisla testirati za šta su korisnici spremni platiti.
+
+Monetizacija platforme treba biti posljedica stvarne vrijednosti koju USPUT stvara, a ne razlog zbog kojeg se proizvod gradi.
+
+
+
+9. Predložena principijelna formulacija
+
+USPUT ne prodaje prijevoz.
+
+USPUT omogućava ljudima da se pronađu, dogovore i dijele svakodnevne vožnje.
+
+Vozač sam određuje kada, gdje i pod kojim uslovima nudi slobodno mjesto. Putnik slobodno prihvata ili odbija ponudu.
+
+Ako vozač i putnik žele međusobno dogovoriti podjelu stvarnih troškova vožnje, to je njihov privatni dogovor i USPUT u njega ne mora biti uključen.
+
+USPUT svoju vrijednost gradi kroz kvalitet povezivanja, pouzdanost zajednice, jednostavnost korištenja i sistem zahvalnosti i reputacije.
+
+Nagrada za doprinos zajednici i eventualno privatno dijeljenje troškova nisu ista stvar i trebaju ostati konceptualno potpuno odvojeni.
+

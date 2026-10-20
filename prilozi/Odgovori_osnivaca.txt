@@ -1,0 +1,199 @@
+USPUT — odgovori za sljedeću fazu planiranja
+Izvoz: 2026-09-30 16:12:18
+
+1. Smjer i prvi korisnici
+
+Koji je glavni cilj prve probe?
+Još ne znam — razradimo zajedno
+
+Gdje prvo tražimo alfa testere?
+Sarajevo
+
+Koga prvo pokušavamo okupiti?
+Zaposlene sa sličnim radnim vremenom
+
+Koje vožnje ulaze u prvu probu?
+Odlazak i povratak, kao dva odvojena dogovora
+
+Šta nam je važnije ako moramo birati?
+Vozač sam bira između ove dvije varijante
+
+2. Ponuda vozaču
+
+Koje motive prvo testiramo s vozačima?
+Društvo tokom puta
+
+Koje skretanje nudimo kao početnu postavku?
+Bez skretanja s uobičajene rute
+
+Koliko putnika organizujemo po vožnji u prvoj probi?
+Jednog putnika
+
+Kako vozač bira saputnika?
+Dobije najviše tri prijedloga pa bira
+
+Kako tretiramo već poznate saputnike?
+Omogući obostrani izbor omiljenih saputnika
+
+Koliko hoda prvo nudimo putniku?
+Putnik obavezno sam bira oba ograničenja
+
+3. Zvjezdice i humor
+
+Koje virtuelne nagrade želiš?
+Još ne znam — razradimo zajedno
+
+Za šta se skupljaju zvjezdice?
+Za vožnje, uz povremene posebne bedževe
+
+Ko vidi osvojene nagrade?
+Svi članovi zajednice
+
+Kakav ton želiš?
+Topao i nenametljiv
+
+Koje granice postavljamo humoru?
+Još ne znam — razradimo zajedno
+
+Koliko takmičenja želiš?
+Dobrovoljna rang-lista unutar zajednice
+
+Kada uvodimo stvarne pogodnosti?
+Prva proba samo s virtuelnim nagradama
+
+4. Dogovor i otkazivanje
+
+Kako zaključujemo sutrašnje dogovore?
+Nekoliko sati prije vožnje, zbog različitih smjena
+
+Koliko često vozač potvrđuje dostupnost?
+Svaku večer jednim dodirom
+
+Šta se dešava ako vozač ujutro otkaže?
+Putnik odmah dobija otkazivanje i sam pravi drugi plan
+
+Putnik nije spreman kada vozač stiže. Šta prikazujemo?
+Vozač može dobrovoljno stati, ali nema obavezu čekanja
+
+Kako reagujemo na ponovljena kasna otkazivanja / nedolaske?
+Upozorenje, zatim privremena pauza nakon pregleda
+
+Ako večer prije nema spoja, šta radimo?
+Nastavljamo tražiti do jutra
+
+5. Jutro i automatizacija
+
+Kako pokrećemo jutarnju vožnju?
+Automatsko prepoznavanje, uz ručno dugme kao rezervu
+
+Kada aplikacija smije koristiti lokaciju u pozadini?
+Samo tokom vremenskog prozora dogovorene vožnje
+
+Kako potvrđujemo da je putnik spreman?
+Blizina mjesta + putnik dodirne „Na mjestu sam“
+
+Kako bilježimo da je putnik ušao?
+Procjena zajedničkog kretanja, putnik potvrđuje ako je nejasno
+
+Ako lokacija ili dozvole ne rade, šta dopuštamo?
+Ručne statuse, uz oznaku da nema automatske procjene
+
+Šta putnik vidi nakon polaska vozača?
+Status i procijenjeno vrijeme dolaska
+
+Šta ako se ne mogu pronaći?
+Statusi i mogućnost poziva uz saglasnost korisnika
+
+6. Povjerenje i pravila
+
+Da li prvu verziju ograničavamo na punoljetne?
+Da, samo 18+
+
+Koja provjera je prihvatljiva za alfa testere?
+Potvrda telefona; Potvrda emaila
+
+Šta druga strana treba vidjeti prije prihvatanja?
+Ime i inicijal prezimena; Fotografiju lica; Broj realizovanih vožnji; Podatke o pouzdanosti uz broj vožnji; Virtuelne zahvalnice i titule; Osnovne podatke o vozilu; Pripadnost zajednici, ako je potvrđena
+
+Kako putnik prepoznaje automobil?
+Boja, model i registracija nakon potvrde dogovora
+
+Koje uslove vožnje korisnik može označiti?
+Bez pušenja; Prtljag; Kućni ljubimac samo uz dogovor; Tiha vožnja / razgovor je dobrodošao; Pristupačnost i pomoć pri ulasku
+
+Ko obrađuje prijave tokom probe?
+Još ne znam — razradimo zajedno
+
+Kako provjeravamo mjesta susreta i izlaska?
+Testeri predlažu, organizator provjerava prije korištenja
+
+7. Izgled i osjećaj
+
+Koji naziv nosimo u sljedeću fazu?
+Još ne znam — razradimo zajedno
+
+Koji vizuelni smjer ti je najbliži?
+Topla svijetla podloga i zelena, kao u elaboratu
+
+Želiš li mali prepoznatljiv lik / maskotu?
+Da, pojavljuje se uz zahvalnice i nagrade
+
+Koliko animacije želiš?
+Diskretno kroz aplikaciju, veselije kod nagrada
+
+Koji je jezik prve verzije?
+Neutralan B/H/S, latinica
+
+Na kojim uređajima mora raditi prva proba?
+Prvo prototip u pregledniku, zatim mobilna aplikacija
+
+8. Testeri i prva proba
+
+Gdje si spreman tražiti testere?
+Lični kontakti i preporuke
+
+Koliko želiš lično biti vidljiv?
+Mogu predstaviti ideju i razgovarati s testerima
+
+Koji početni obim ti djeluje izvedivo?
+5–10 ljudi za provjeru toka
+
+Prihvataš li ručno organizovanje prvih spojeva?
+Ne, želim da osnovno spajanje radi u aplikaciji
+
+Koliko bi trajala prva proba sa stvarnim vožnjama?
+Dvije radne sedmice
+
+Koji dokazi su ti najvažniji za nastavak?
+Vozači ponovo nude mjesto bez nagovaranja; Dogovorene vožnje se stvarno realizuju; Moguće je naći dovoljno spojeva na malom području
+
+9. Tvoje vrijeme i održivost
+
+Koliko svog vremena sedmično realno možeš izdvojiti?
+Do 3 sata
+
+Šta želiš lično raditi?
+Proizvod i odluke; Razgovore s korisnicima; Okupljanje testera; Razvoj i tehničke stvari; Operativno vođenje probe
+
+Koji okvirni budžet možeš razmotriti za istraživanje i prvu probu?
+Zasad samo vlastito vrijeme i besplatni alati
+
+Kada želiš prvi opipljiv rezultat?
+Bez roka, važnije je dobro postaviti osnovu
+
+Koje modele koristi za tebe želiš kasnije istražiti?
+Partneri finansiraju nagrade / sponzorstva; Dodatne plaćene mogućnosti za korisnike
+
+Koju granicu želiš sačuvati?
+Besplatno u početku, kasnije ostavljam otvoreno
+
+10. Sljedeći korak
+
+Šta prvo želiš dobiti iz ovih odgovora?
+Sažeta pravila proizvoda i plan po fazama
+
+Šta te trenutno najviše brine?
+Zašto bi vozači ovo ponavljali; Pouzdanost jutarnje automatizacije
+
+Kako da postupim s pitanjima na koja odgovoriš „Još ne znam“?
+Ponudi dvije varijante s posljedicama
