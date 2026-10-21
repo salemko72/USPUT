@@ -48,6 +48,11 @@
   color: #d7f56a;
 }
 
+.request-accepted-symbol svg {
+  transform-origin: 45% 85%;
+  animation: driver-request-thumb 3.2s ease-in-out infinite;
+}
+
 .request-accepted-caption {
   white-space: pre;
   text-align: center;
@@ -84,8 +89,24 @@
   }
 }
 
+@keyframes driver-request-thumb {
+  0%,
+  12%,
+  45%,
+  100% {
+    transform: rotate(0) translateY(0);
+  }
+  22% {
+    transform: rotate(-9deg) translateY(-2px);
+  }
+  33% {
+    transform: rotate(4deg) translateY(-1px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .driver-request-avatar[data-request-state]::before {
+  .driver-request-avatar[data-request-state]::before,
+  .request-accepted-symbol svg {
     animation: none;
   }
 }

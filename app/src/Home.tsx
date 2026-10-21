@@ -8,7 +8,8 @@ import { StreetPicker } from "./StreetPicker";
 import { PlacePicker } from "./PlacePicker";
 import { t } from "./i18n";
 import { VehicleManager, vehicleDescription } from "./VehicleManager";
-import { useState } from "react";
+import { UpcomingRide } from "./UpcomingRide";
+import { useEffect, useRef, useState } from "react";
 import { DatePicker, TimePicker } from "./DatePicker";
 import {
   Car,
@@ -26,8 +27,9 @@ import type {
   Service,
   Vehicle,
   MeetingStop,
+  Ride,
 } from "./types";
-import { dateLabel, searchPlace, defaultSearch } from "./types";
+import { dateLabel, searchPlace, defaultSearch, tomorrow } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
 export function SearchFields({
   value,
@@ -147,6 +149,8 @@ export function Home({
   onProfile,
   demo,
   service,
+  repeatRide,
+  onRepeatConsumed,
 }: {
   user: User;
   places: Place[];
@@ -157,10 +161,17 @@ export function Home({
   onProfile: () => void;
   demo: boolean;
   service: Service;
+  repeatRide?: Ride;
+  onRepeatConsumed?: () => void;
 }) {
   const [role, setRole] = useState<"passenger" | "driver">("passenger"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
+    [seats, setSeats] = useState(1),
+    [note, setNote] = useState(""),
+    [costSharing, setCostSharing] = useState(false),
+    [repeatDraft, setRepeatDraft] = useState(false),
+    [draftStops, setDraftStops] = useState<MeetingStop[] | undefined>(),
     [vehicle, setVehicle] = useState<Vehicle | null>(null),
     [passengerFormOpen, setPassengerFormOpen] = useState(false),
     [stopsApproved, setStopsApproved] = useState(false),
@@ -179,6 +190,34 @@ export function Home({
       catalogSuggestions?: MeetingStop[];
       previewToken?: string;
     } | null>(null);
+  const consumedRepeat = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!repeatRide) {
+      consumedRepeat.current = undefined;
+      return;
+    }
+    if (consumedRepeat.current === repeatRide.id) return;
+    consumedRepeat.current = repeatRide.id;
+    setRole("driver");
+    setError("");
+    setPreview(null);
+    setStopsApproved(false);
+    setShareMeetingPoints(false);
+    setSeats(repeatRide.seats ?? 1);
+    setNote(repeatRide.note);
+    setCostSharing(Boolean(repeatRide.costSharing));
+    setDraftStops(repeatRide.meetingStops?.map((stop) => ({ ...stop })));
+    setRepeatDraft(true);
+    setQuery({
+      from: repeatRide.from.id,
+      to: repeatRide.to.id,
+      fromLocation: JSON.stringify(repeatRide.from),
+      toLocation: JSON.stringify(repeatRide.to),
+      date: tomorrow(),
+      time: repeatRide.time,
+    });
+    onRepeatConsumed?.();
+  }, [repeatRide, onRepeatConsumed, setQuery]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -222,6 +261,7 @@ export function Home({
         vehicleId: vehicle.id,
         note: String(f.get("note")),
         costSharing: f.get("costSharing") === "on",
+        seats,
       };
       {
         const result = await api<{
@@ -236,7 +276,10 @@ export function Home({
           meetingStops: MeetingStop[];
           catalogSuggestions?: MeetingStop[];
           previewToken?: string;
-        }>("/routes/preview", offer);
+        }>("/routes/preview", {
+          ...offer,
+          ...(draftStops ? { meetingStops: draftStops } : {}),
+        });
         setStopsApproved(false);
         setShareMeetingPoints(false);
         setPreview({ ...result, offer });
@@ -249,6 +292,7 @@ export function Home({
   }
   return (
     <div className="home-page">
+      <UpcomingRide service={service} user={user} />
       {preview && (
         <Modal
           title={t("Je li ovo ruta kojom stvarno voziš?")}
@@ -280,6 +324,7 @@ export function Home({
             suggestions={preview.catalogSuggestions}
             onChange={(meetingStops) => {
               setPreview({ ...preview, meetingStops, previewToken: undefined });
+              if (repeatDraft) setDraftStops(meetingStops);
               setStopsApproved(false);
             }}
           />
@@ -293,10 +338,17 @@ export function Home({
           <Button
             variant="outline"
             busy={busy}
-            disabled={preview.meetingStops.some(
-              (p) =>
-                p.name.trim().length < 2 || /^Predložena tačka/.test(p.name),
-            )}
+            disabled={
+              preview.meetingStops.some(
+                (p) =>
+                  !Number.isFinite(p.lat) ||
+                  !Number.isFinite(p.lng) ||
+                  Math.abs(p.lat) > 90 ||
+                  Math.abs(p.lng) > 180,
+              ) ||
+              new Set(preview.meetingStops.map((p) => `${p.lat},${p.lng}`))
+                .size !== preview.meetingStops.length
+            }
             onClick={async () => {
               setBusy(true);
               setError("");
@@ -360,6 +412,8 @@ export function Home({
                   shareMeetingPoints,
                 });
                 setPreview(null);
+                setDraftStops(undefined);
+                setRepeatDraft(false);
               } catch (e) {
                 setError((e as Error).message);
               } finally {
@@ -431,6 +485,11 @@ export function Home({
               {t(" Nudim vožnju ")}
             </button>
           </div>
+          {role === "driver" && repeatDraft && (
+            <p className="repeat-draft-note" role="status">
+              {t("Provjeri datum i mjesta susreta, pa objavi novu vožnju.")}
+            </p>
+          )}
           <div className="search-title">
             <h2>
               {role === "passenger"
@@ -440,7 +499,7 @@ export function Home({
             <p>
               {role === "passenger"
                 ? t("Tvoj svakodnevni put, s nekim novim.")
-                : t("Tvoja ruta. Tvoje vrijeme. Jedan saputnik.")}
+                : t("Tvoja ruta. Tvoje vrijeme. Tvoji saputnici.")}
             </p>
           </div>
           {role === "passenger" && (
@@ -517,18 +576,41 @@ export function Home({
                     onChange={setVehicle}
                     compact
                   />
+                  <label className="passenger-seats">
+                    {t("Slobodna mjesta za putnike")}
+                    <select
+                      name="seats"
+                      aria-label={t("Slobodna mjesta za putnike")}
+                      value={seats}
+                      onChange={(e) => setSeats(Number(e.target.value))}
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map((count) => (
+                        <option key={count} value={count}>
+                          {count}
+                        </option>
+                      ))}
+                    </select>
+                    <small>{t("Vozač se ne računa u ovaj broj.")}</small>
+                  </label>
                   <label className="field-label">
                     {t(" Kratka napomena ")}
                     <span className="optional">{t("opcionalno")}</span>
                     <textarea
                       name="note"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
                       placeholder={t("Bez pušenja, malo muzike…")}
                       maxLength={280}
                       rows={2}
                     />
                   </label>
                   <label className="cost-sharing-choice">
-                    <input type="checkbox" name="costSharing" />
+                    <input
+                      type="checkbox"
+                      name="costSharing"
+                      checked={costSharing}
+                      onChange={(e) => setCostSharing(e.target.checked)}
+                    />
                     <span>
                       <strong>{t("Očekujem dijeljenje troškova")}</strong>
                       <small>
@@ -540,7 +622,9 @@ export function Home({
                   </label>
                   <div className="soft-note">
                     <Leaf size={17} />
-                    {t(" Jedno mjesto. Jasan dogovor. Bez obaveze skretanja. ")}
+                    {t(
+                      "Slobodna mjesta. Jasan dogovor. Bez obaveze skretanja.",
+                    )}
                   </div>
                 </div>
               )}

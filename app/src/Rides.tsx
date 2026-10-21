@@ -61,6 +61,22 @@ const pickupTime = (value: number) =>
     minute: "2-digit",
     hourCycle: "h23",
   }).format(value);
+const availableSeats = (ride: Ride) =>
+  ride.seatsAvailable ?? (ride.status === "open" ? (ride.seats ?? 1) : 0);
+const seatsLabel = (count: number) =>
+  t(
+    count === 1
+      ? "{count} slobodno mjesto"
+      : count >= 2 && count <= 4
+        ? "{count} slobodna mjesta"
+        : "{count} slobodnih mjesta",
+    { count },
+  );
+const seatsSummary = (ride: Ride) =>
+  t("{available} od {capacity} mjesta slobodno", {
+    available: availableSeats(ride),
+    capacity: ride.seats ?? 1,
+  });
 function MatchSummary({ match }: { match: RouteMatch }) {
   return (
     <div className="route-match-summary">
@@ -141,7 +157,7 @@ export function RideCard({
           </span>
           <span>
             <UserRound size={14} />
-            {t(" 1 mjesto ")}
+            {seatsLabel(availableSeats(ride))}
           </span>
         </div>
         <button
@@ -353,10 +369,15 @@ export function RideDetails({
       if (alive) setMatchBusy(false);
     });
     const interval = setInterval(() => load().catch(() => {}), 15000);
+    const refresh = () => load().catch(() => {});
+    window.addEventListener("focus", refresh);
+    window.addEventListener("usput:booking-changed", refresh);
     return () => {
       alive = false;
       loadVersion.current++;
       clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("usput:booking-changed", refresh);
     };
   }, [load]);
   async function action(fn: () => Promise<unknown>, message: string) {
@@ -364,6 +385,7 @@ export function RideDetails({
     setError("");
     try {
       await fn();
+      window.dispatchEvent(new Event("usput:booking-changed"));
       await load();
       onToast(message);
     } catch (e) {
@@ -619,7 +641,7 @@ export function RideDetails({
               </span>
               <span>
                 <UserRound size={16} />
-                {t("1 mjesto ")}
+                {seatsSummary(ride)}
               </span>
               <span>
                 <Leaf size={16} />
@@ -651,7 +673,11 @@ export function RideDetails({
           <ErrorBox error={error} />
           {own ? (
             <section className="action-card driver-actions">
-              <span className="eyebrow">{t(statusText[ride.status])}</span>
+              <span className="eyebrow">
+                {["open", "matched"].includes(ride.status)
+                  ? seatsSummary(ride)
+                  : t(statusText[ride.status])}
+              </span>
               <h2>
                 {ride.status === "open"
                   ? t("Nekome ćeš biti usput.")
@@ -697,6 +723,10 @@ export function RideDetails({
                       <Button
                         variant="lime"
                         busy={busy}
+                        disabled={
+                          availableSeats(ride) < 1 ||
+                          !["open", "matched"].includes(ride.status)
+                        }
                         onClick={() =>
                           action(
                             () => service.booking(b.id, "accept"),
@@ -871,6 +901,7 @@ export function RideDetails({
                 disabled={
                   matchBusy ||
                   ride.status !== "open" ||
+                  availableSeats(ride) < 1 ||
                   (!!ride.meetingStops && (!selectedQuery || !ride.match))
                 }
                 onClick={() =>
@@ -882,7 +913,9 @@ export function RideDetails({
               >
                 {t(" Pošalji zahtjev ")}
               </Button>
-              <small>{t("Jedan putnik · povratak se dogovara posebno")}</small>
+              <small>
+                {t("Jedan zahtjev po putniku · povratak se dogovara posebno")}
+              </small>
             </section>
           )}
         </div>
@@ -926,11 +959,13 @@ export function Trips({
   user,
   onRide,
   onHome,
+  onRepeat,
 }: {
   service: Service;
   user: User;
   onRide: (id: string) => void;
   onHome: () => void;
+  onRepeat?: (ride: Ride) => void;
 }) {
   const [data, setData] = useState<MyRides | null>(null),
     [tab, setTab] = useState<"passenger" | "driver">("passenger"),
@@ -946,7 +981,13 @@ export function Trips({
   useEffect(() => {
     load();
     const i = setInterval(load, 15000);
-    return () => clearInterval(i);
+    window.addEventListener("focus", load);
+    window.addEventListener("usput:booking-changed", load);
+    return () => {
+      clearInterval(i);
+      window.removeEventListener("focus", load);
+      window.removeEventListener("usput:booking-changed", load);
+    };
   }, [load]);
   const bookings =
       data?.bookings.filter((b) => b.passenger.id === user.id) || [],
@@ -1048,33 +1089,45 @@ export function Trips({
                 (b) => b.ride.id === r.id && b.status === "pending",
               ).length || 0;
             return (
-              <button
-                className="trip-card"
-                key={r.id}
-                onClick={() => onRide(r.id)}
-              >
-                <div className="trip-card-top">
-                  <span className={"status status-" + r.status}>
-                    {t(statusText[r.status])}
-                  </span>
-                  {requests > 0 && (
-                    <span className="count-pill">
-                      {requests}
-                      {t(" na čekanju")}
+              <article className="trip-card offered-trip" key={r.id}>
+                <button
+                  className="trip-card-main-action"
+                  onClick={() => onRide(r.id)}
+                >
+                  <div className="trip-card-top">
+                    <span className={"status status-" + r.status}>
+                      {t(statusText[r.status])}
                     </span>
-                  )}
-                  <ArrowUpRight size={20} />
-                </div>
-                <h2>
-                  {dateLabel(r.date)} <span>{r.time}</span>
-                </h2>
-                <RouteLine from={r.from.name} to={r.to.name} />
-                <div className="trip-person">
-                  <Car size={21} />
-                  <span>{r.car}</span>
-                  <span className="small-pill">{t("Ti voziš")}</span>
-                </div>
-              </button>
+                    {requests > 0 && (
+                      <span className="count-pill">
+                        {requests}
+                        {t(" na čekanju")}
+                      </span>
+                    )}
+                    <ArrowUpRight size={20} />
+                  </div>
+                  <h2>
+                    {dateLabel(r.date)} <span>{r.time}</span>
+                  </h2>
+                  <RouteLine from={r.from.name} to={r.to.name} />
+                  <p className="fine-print">{seatsSummary(r)}</p>
+                  <div className="trip-person">
+                    <Car size={21} />
+                    <span>{r.car}</span>
+                    <span className="small-pill">{t("Ti voziš")}</span>
+                  </div>
+                </button>
+                {onRepeat && ["completed", "cancelled"].includes(r.status) && (
+                  <button
+                    className="repeat-ride-button"
+                    type="button"
+                    onClick={() => onRepeat(r)}
+                  >
+                    <RefreshCw size={17} aria-hidden="true" />
+                    {t("Ponovi vožnju")}
+                  </button>
+                )}
+              </article>
             );
           })}
         </div>

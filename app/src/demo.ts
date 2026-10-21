@@ -102,6 +102,8 @@ function initial(): State {
       time,
       departure: Date.parse(tomorrow() + "T" + time + ":00+02:00"),
       car,
+      seats: 1,
+      seatsAvailable: 1,
       note:
         i === 0
           ? "Bez pušenja. Malo muzike i dobar početak dana."
@@ -187,6 +189,8 @@ export const demoService: Service = {
       departure: Date.parse(q.date + "T" + q.time + ":00+02:00"),
       car: q.car,
       note: q.note,
+      seats: q.seats ?? 1,
+      seatsAvailable: q.seats ?? 1,
       costSharing: q.costSharing === true,
       status: "open",
       driver: state.user,

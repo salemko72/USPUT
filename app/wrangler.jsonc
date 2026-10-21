@@ -4,6 +4,7 @@
   "workers_dev": true,
   "keep_vars": true,
   "vars": {
+    "VAPID_PUBLIC_KEY": "BGpVK7mg9ofGymyo6I3W1CqSo-Q--_ehZEzwIuOnVSNP6vXHk_mPfPiZshuGqQ4gQuXkb0lWm3nuVL0qqp1BICI",
     "OSRM_URL": "https://routing.openstreetmap.de/routed-car/",
     "OSRM_FOOT_URL": "https://routing.openstreetmap.de/routed-foot/",
     "GEOCODER_URL": "https://nominatim.openstreetmap.org/",
@@ -17,7 +18,7 @@
       "jurisdiction": "eu",
     },
   ],
-  "triggers": { "crons": ["0 3 * * *"] },
+  "triggers": { "crons": ["0 3 * * *", "* * * * *"] },
   "main": "server/worker.mjs",
   "compatibility_date": "2026-10-20",
   "assets": {

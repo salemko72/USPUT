@@ -32,6 +32,8 @@ export function MeetingStopsEditor({
     [mapReady, setMapReady] = useState(false);
   function patch(i: number, change: Partial<MeetingStop>) {
     const next = { ...stops[i], ...change };
+    if (change.name !== undefined && change.name !== stops[i].name)
+      delete next.automaticName;
     if (
       (["lat", "lng", "name", "city", "approach", "side"] as const).some(
         (key) => next[key] !== stops[i][key],
@@ -119,8 +121,9 @@ export function MeetingStopsEditor({
           <>
             <div className="meeting-stop-fields">
               <label>
-                {t("Naziv mjesta susreta")}
+                {t("Naziv mjesta susreta (opcionalno)")}
                 <input
+                  aria-label={t("Naziv mjesta susreta")}
                   value={p.name}
                   maxLength={100}
                   onChange={(e) => patch(i, { name: e.target.value })}
@@ -251,7 +254,10 @@ export function MeetingStopsEditor({
         {row(stops[stops.length - 1], stops.length - 1)}
       </ol>
       <small className="meeting-endpoint-hint">
-        {t("Polazište i odredište mijenjaš u prethodnom koraku.")}
+        {t("Polazište i odredište mijenjaš u prethodnom koraku.")}{" "}
+        {t(
+          "Naziv nije obavezan. Neimenovane tačke dobiju redni broj i ne predlažu se gradskoj bazi.",
+        )}
       </small>
       <details className="meeting-catalog-picker">
         <summary>{t("Odaberi postojeće mjesto iz gradske baze")}</summary>

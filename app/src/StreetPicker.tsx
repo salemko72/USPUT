@@ -116,13 +116,37 @@ export function StreetPicker({
     setResults(null);
     setError("");
     setBusy(false);
+    setSelected(null);
   }, [scope.city, scope.lat, scope.lng]);
   useEffect(() => {
+    requestId.current++;
+    setResults(null);
+    setError("");
+    setBusy(false);
     if (value) setQuery(value.name);
     else if (!editing.current) setQuery("");
     editing.current = false;
   }, [value?.id, value?.name]);
+  function selectPin(place: Place, manuallyPlaced = false) {
+    requestId.current++;
+    setResults(null);
+    setError("");
+    setBusy(false);
+    setManual(manuallyPlaced);
+    setMoved(false);
+    setReady(false);
+    setSelected(place);
+  }
   async function search() {
+    if (
+      value?.id.startsWith("pin_") &&
+      Number.isFinite(value.lat) &&
+      Number.isFinite(value.lng) &&
+      query.trim() === value.name.trim()
+    ) {
+      selectPin(value);
+      return;
+    }
     const city =
       scope.city.trim() ||
       (query.includes(",") ? query.split(",").at(-1)!.trim() : "");
@@ -223,10 +247,7 @@ export function StreetPicker({
             lng: center[1],
             city: found?.[0] || scope.city || value?.city || "",
           };
-          setManual(true);
-          setMoved(false);
-          setReady(false);
-          setSelected(p);
+          selectPin(p, true);
         }}
       >
         {t("Postavi pin ručno na karti")}
@@ -242,10 +263,7 @@ export function StreetPicker({
         <button
           type="button"
           className="street-adjust"
-          onClick={() => {
-            setManual(false);
-            setSelected(value);
-          }}
+          onClick={() => selectPin(value)}
         >
           <Move size={13} />
           {t("Provjeri ili pomjeri pin")}
@@ -264,10 +282,7 @@ export function StreetPicker({
               type="button"
               role="listitem"
               key={p.id + ":" + i}
-              onClick={() => {
-                setSelected(p);
-                setResults(null);
-              }}
+              onClick={() => selectPin(p)}
             >
               <strong>{p.name}</strong>
               <small>{p.detail}</small>
@@ -304,6 +319,10 @@ export function StreetPicker({
           <Button
             disabled={manual && (!moved || !ready)}
             onClick={() => {
+              requestId.current++;
+              setResults(null);
+              setError("");
+              setBusy(false);
               onChange(selected);
               setQuery(selected.name);
               setSelected(null);

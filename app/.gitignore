@@ -8,3 +8,5 @@ test-results/
 .dev.vars
 
 *.tsbuildinfo
+__pycache__/
+*.pyc

@@ -64,6 +64,41 @@ Google OAuth koristi server-side razmjenu koda, PKCE i jednokratni state vezan z
 
 Anonimni demo ulaz je uklonjen. Za ulazak u aplikaciju potrebna je prijava/registracija; postojeća važeća sesija se obnavlja. Stara demo oznaka u localStorage ne daje pristup aplikaciji. Izvorni demo modul ostaje razvojni materijal i nije put za ulazak u objavljenu aplikaciju.
 
+## Potvrđene vožnje, obavijesti i ponavljanje
+
+Prihvaćen zahtjev ima globalni popup, animirani palac i pulsirajući zeleni prsten.
+Vlasnički D1 inbox i atomska oznaka prikaza sprečavaju ponavljanje po karticama;
+otkazani, završeni i istekli dogovori se ne prikazuju kao aktivne potvrde.
+Promjena računa u drugoj kartici osvježava identitet i uklanja stari nacrt.
+
+U profilu **Obavijesti → Uključi obavijesti** uključuje standardni Web Push.
+Za iPhone je potreban iOS16.4+ i dodavanje USPUT-a na početni ekran. Privatni
+VAPID ključ je Worker secret `VAPID_PRIVATE_JWK`, javni je `VAPID_PUBLIC_KEY`.
+Generator `node scripts/create-push-keys.mjs /tmp/usput-push-keys.json` zapisuje
+ključ u novu privatnu datoteku i ne ispisuje tajni ključ. Ne mijenjati postojeći
+ključ bez plana za ponovno prijavljivanje pretplata. Pretplate su vezane za
+sesiju i gase se odjavom/istekom. Poruke su šifrirane, a zaključani ekran nema
+adrese. Worker ponavlja privremeno neuspjele dostave najviše pet puta. Cron za
+dostavu radi svake minute; čišćenje ostaje dnevno. Mreža, postavke telefona i
+podrška preglednika utiču na pravovremenost dostave.
+
+Glavni ekran prikazuje **Na mjestu sam** uz sljedeći potvrđeni putnikov dogovor.
+Vozač pri objavi bira1–7 slobodnih putničkih mjesta. Svaki putnik rezerviše jedno;
+prihvatanje, spremnost, otkazivanje i završetak vode se posebno. Popunjena ili
+započeta vožnja zatvara prijem novih putnika. Postojeće ponude imaju jedno mjesto.
+Završena ponuda ostaje u historiji, a **Ponovi vožnju** otvara novi budući nacrt
+s istim redoslijedom tačaka; objava traži nov pregled i potvrdu trase.
+
+Naziv mjesta susreta je opcionalan: valjan pin dobija automatski broj. Takve
+neimenovane tačke se ne predlažu gradskoj bazi. Geokoder daje latinični prikaz
+novih i ranije keširanih prijedloga i strukturirani pokušaj za pune adrese.
+
+Provjere: `npm test`, `npm run build`, `python tests/notifications-browser.py --real-api`,
+`python tests/home-ready-capacity-browser.py` i `python tests/street-search-corrections-browser.py`.
+Push test provjerava stvarni Chromium service worker i ponašanje bez otvorenog
+prozora uz simuliranu dostavu; fizički telefon i stvarni push-provider nisu dio
+automatizovanog testa.
+
 ## Rute i mape
 
 Beta katalog ima 17 sarajevskih područja/orijentira/probnih mjesta; pretraga je po nazivu i podržava unos bez dijakritike. Bez cestovnog servisa traži isti polazak/izlazak, datum i vremenski prozor ±60 minuta. Jedno mjesto po ponudi. Vozač prihvata zahtjev; slanje zahtjeva nije potvrđena vožnja. SQL transakcije i jedinstveni indeks sprečavaju dva potvrđena putnika. Uz OSRM radi cestovno spajanje opisano niže. Procjena pješačkog puta i GPS izbor pina još nisu povezani. Nema GPS praćenja.

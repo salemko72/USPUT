@@ -26,6 +26,7 @@ export type Place = {
   lng: number;
 };
 export type MeetingStop = Place & {
+  automaticName?: boolean;
   stopId: string;
   travelSeconds?: number;
   catalogId?: string;
@@ -61,6 +62,8 @@ export type Ride = {
   departure: number;
   car: string;
   note: string;
+  seats: number;
+  seatsAvailable: number;
   costSharing?: boolean;
   meetingStops?: MeetingStop[];
   geometry?: number[][];
@@ -91,6 +94,7 @@ export type Search = {
 export type Offer = Search & {
   car: string;
   note: string;
+  seats?: number;
   vehicleId?: string;
   routeConfirmed?: boolean;
   meetingStops?: MeetingStop[];

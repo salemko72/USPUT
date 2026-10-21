@@ -40,6 +40,18 @@ for (const column of [
       .some((c) => c.name === column)
   )
     sqlite.exec(`ALTER TABLE rides ADD COLUMN ${column} TEXT`);
+if (
+  !sqlite
+    .prepare("PRAGMA table_info(rides)")
+    .all()
+    .some((c) => c.name === "seats")
+)
+  sqlite.exec(
+    "ALTER TABLE rides ADD COLUMN seats INTEGER NOT NULL DEFAULT 1 CHECK(seats BETWEEN 1 AND 7)",
+  );
+sqlite.exec(
+  "DROP INDEX IF EXISTS one_seat;CREATE INDEX IF NOT EXISTS bookings_ride_status ON bookings(ride_id,status)",
+);
 export const env = {
   DB: adaptSqlite(sqlite),
   PHOTOS: localPhotoStorage(resolve(data, "photos")),
@@ -61,6 +73,7 @@ const types = {
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
 };
 export const securityHeaders = {
   "X-Content-Type-Options": "nosniff",

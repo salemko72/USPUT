@@ -156,6 +156,9 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                 expect(page.locator('.driver-request-avatar[data-request-state="accepted"]')).to_be_visible()
                 expect(page.locator('.request-sent-indicator')).to_have_count(0)
                 expect(page.locator('.request-accepted-caption')).to_have_text('Zahtjev\nprihvaćen')
+                accepted_popup = page.get_by_role('dialog', name='Vaš zahtjev je prihvaćen', exact=True)
+                expect(accepted_popup).to_be_visible()
+                accepted_popup.get_by_role('button', name='Zatvori', exact=True).click()
                 expect(page.locator('.request-accepted-symbol svg.lucide-thumbs-up')).to_have_count(1)
                 expect(page.get_by_role('status', name='Zahtjev prihvaćen — vozač je potvrdio vožnju.')).to_be_visible()
                 assert ring_style()['border'] == 'rgb(215, 245, 106)'

@@ -23,12 +23,30 @@ export function normalizeMeetingStops(raw) {
   if (!Array.isArray(raw) || raw.length < 2 || raw.length > 10)
     throw new TypeError("Potvrdi između 2 i 10 mjesta ulaska i izlaska.");
   const stops = raw.map((p, i) => {
-    const point = normalizeLocation(p);
-    if (!point)
-      throw new TypeError("Svako mjesto susreta treba naziv i ispravan pin.");
+    if (
+      !p ||
+      typeof p !== "object" ||
+      Array.isArray(p) ||
+      (p.name != null && typeof p.name !== "string")
+    )
+      throw new TypeError("Svako mjesto susreta treba ispravan pin.");
+    const name = text(p.name, 160);
+    const automaticName =
+      name.length < 2 ||
+      /^Predložena tačka/.test(name) ||
+      p.automaticName === true;
+    const point = normalizeLocation({
+      ...p,
+      name:
+        name.length < 2 || /^Predložena tačka/.test(name)
+          ? `Mjesto susreta ${Math.max(1, i)}`
+          : name,
+    });
+    if (!point) throw new TypeError("Svako mjesto susreta treba ispravan pin.");
     return {
       ...point,
       stopId: `stop_${point.id}`,
+      ...(automaticName ? { automaticName: true } : {}),
       approach: text(p.approach),
       side: text(p.side, 40),
       ...(text(p.catalogId, 100) ? { catalogId: text(p.catalogId, 100) } : {}),

@@ -1,4 +1,9 @@
 import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
+import {
+  handleNotificationApi,
+  acceptanceNotificationStatements,
+  queuePushNotifications,
+} from "./notifications.mjs";
 import { demoDriverForRide } from "./demo-drivers.mjs";
 import {
   proposeMeetingStops,
@@ -157,6 +162,11 @@ const rideView = (r) => ({
   departure: r.departure,
   car: r.car,
   note: r.note,
+  seats: r.seats,
+  seatsAvailable:
+    r.status === "open" && r.departure > Date.now()
+      ? Math.max(0, r.seats - r.confirmed_count)
+      : 0,
   costSharing: r.cost_sharing === 1,
   geometry: r.route_json ? JSON.parse(r.route_json).coordinates : undefined,
   routeProvider: r.route_json ? JSON.parse(r.route_json).provider : undefined,
@@ -168,7 +178,7 @@ const rideView = (r) => ({
   createdAt: r.created_at,
 });
 const rideSelect =
-  "SELECT r.*,u.name AS driver_name FROM rides r JOIN users u ON u.id=r.driver_id";
+  "SELECT r.*,u.name AS driver_name,(SELECT COUNT(*) FROM bookings b WHERE b.ride_id=r.id AND b.status IN ('accepted','ready','completed')) AS confirmed_count FROM rides r JOIN users u ON u.id=r.driver_id";
 async function readRide(db, id) {
   return db
     .prepare(rideSelect + " WHERE r.id=?")
@@ -526,6 +536,18 @@ export async function handleApi(request, env) {
       return json({
         user: { ...selfUser(user, env), admin: isMeetingAdmin(user, env) },
       });
+    if (path.startsWith("/notifications") || path.startsWith("/push/")) {
+      if (method === "POST")
+        await rateLimit(db, "notifications:" + user.id, 120);
+      return handleNotificationApi(
+        path,
+        method,
+        body,
+        user,
+        env,
+        await hash(cookieValue(request, "usput_session") || ""),
+      );
+    }
     const savedResponse = await handleSavedSearchApi(
       path,
       method,
@@ -680,6 +702,9 @@ export async function handleApi(request, env) {
       });
     }
     if (path === "/rides" && method === "POST") {
+      const seats = body.seats === undefined ? 1 : body.seats;
+      if (!Number.isInteger(seats) || seats < 1 || seats > 7)
+        fail(400, "Odaberi između 1 i 7 slobodnih mjesta za putnike.");
       if (
         body.costSharing !== undefined &&
         typeof body.costSharing !== "boolean"
@@ -736,13 +761,6 @@ export async function handleApi(request, env) {
           fail(400, "Potvrdi između 2 i 10 mjesta ulaska i izlaska.");
         if (body.stopsConfirmed !== true || body.routeConfirmed !== true)
           fail(400, "Potvrdi mjesta na kojima možeš stati i konačnu trasu.");
-        if (
-          body.meetingStops.some((p) => /^Predložena tačka/.test(p.name || ""))
-        )
-          fail(
-            400,
-            "Imenuj svako mjesto susreta tako da ga putnik može prepoznati.",
-          );
         let preview;
         try {
           preview = await consumeMeetingPreview(
@@ -769,7 +787,9 @@ export async function handleApi(request, env) {
               "Odabrano mjesto iz baze se promijenilo. Odaberi ga ponovo.",
             );
           const registered =
-            body.shareMeetingPoints === true
+            body.shareMeetingPoints === true &&
+            !stop.automaticName &&
+            !/^Mjesto susreta \d+$/.test(stop.name)
               ? await registerMeetingPoint(env, user, stop)
               : linked;
           if (registered?.catalogId)
@@ -784,7 +804,7 @@ export async function handleApi(request, env) {
       const id = crypto.randomUUID();
       await db
         .prepare(
-          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,from_json,to_json,route_json,meeting_stops_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,seats,from_json,to_json,route_json,meeting_stops_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           id,
@@ -797,6 +817,7 @@ export async function handleApi(request, env) {
           car,
           note,
           body.costSharing === true ? 1 : 0,
+          seats,
           fromLocation ? JSON.stringify(fromLocation) : null,
           toLocation ? JSON.stringify(toLocation) : null,
           confirmedRoute ? JSON.stringify(confirmedRoute) : null,
@@ -1015,7 +1036,11 @@ export async function handleApi(request, env) {
       if (action === "request" && method === "POST") {
         if (r.driver_id === user.id)
           fail(400, "Ne možeš tražiti vlastitu vožnju.");
-        if (r.status !== "open" || r.departure <= Date.now())
+        if (
+          r.status !== "open" ||
+          r.departure <= Date.now() ||
+          r.confirmed_count >= r.seats
+        )
           fail(409, "Ova vožnja više nije dostupna.");
         if (
           r.meeting_stops_json &&
@@ -1071,7 +1096,7 @@ export async function handleApi(request, env) {
         const inserts = [
           db
             .prepare(
-              "INSERT INTO bookings(id,ride_id,passenger_id,status,created_at) SELECT ?,?,?,'pending',? WHERE EXISTS(SELECT 1 FROM rides WHERE id=? AND status='open' AND departure>?)",
+              "INSERT INTO bookings(id,ride_id,passenger_id,status,created_at) SELECT ?,?,?,'pending',? WHERE EXISTS(SELECT 1 FROM rides r WHERE r.id=? AND r.status='open' AND r.departure>? AND (SELECT COUNT(*) FROM bookings b WHERE b.ride_id=r.id AND b.status IN ('accepted','ready','completed'))<r.seats)",
             )
             .bind(id, r.id, user.id, Date.now(), r.id, Date.now()),
         ];
@@ -1091,7 +1116,7 @@ export async function handleApi(request, env) {
             booking: {
               id,
               status: "pending",
-              ride: rideView(r),
+              ride: rideView(await readRide(db, r.id)),
               passenger: publicUser(user),
               match: routeMatch,
             },
@@ -1135,21 +1160,23 @@ export async function handleApi(request, env) {
         const results = await db.batch([
           db
             .prepare(
-              "UPDATE bookings SET status='accepted' WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status='open' AND departure>?) AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status IN ('accepted','ready','completed'))",
+              "UPDATE bookings SET status='accepted' WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM rides r WHERE r.id=? AND r.status='open' AND r.departure>? AND (SELECT COUNT(*) FROM bookings b WHERE b.ride_id=r.id AND b.status IN ('accepted','ready','completed'))<r.seats)",
             )
-            .bind(b.id, b.ride_id, Date.now(), b.ride_id),
+            .bind(b.id, b.ride_id, Date.now()),
           db
             .prepare(
-              "UPDATE rides SET status='matched' WHERE id=? AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='accepted')",
+              "UPDATE rides SET status='matched' WHERE id=? AND status='open' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='accepted') AND (SELECT COUNT(*) FROM bookings WHERE ride_id=? AND status IN ('accepted','ready','completed'))>=seats",
             )
-            .bind(b.ride_id, b.id),
+            .bind(b.ride_id, b.id, b.ride_id),
           db
             .prepare(
-              "UPDATE bookings SET status='declined' WHERE ride_id=? AND id<>? AND status='pending' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='accepted')",
+              "UPDATE bookings SET status='declined' WHERE ride_id=? AND id<>? AND status='pending' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='accepted') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status='matched')",
             )
-            .bind(b.ride_id, b.id, b.id),
+            .bind(b.ride_id, b.id, b.id, b.ride_id),
+          ...acceptanceNotificationStatements(db, b),
         ]);
         if (!results[0].meta.changes) fail(409, "Mjesto je već zauzeto.");
+        await queuePushNotifications(env);
       } else if (action === "decline") {
         const r = await db
           .prepare(
@@ -1173,14 +1200,19 @@ export async function handleApi(request, env) {
         const results = await db.batch([
           db
             .prepare(
-              "UPDATE bookings SET status='completed' WHERE id=? AND status IN ('accepted','ready') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status='matched')",
+              "UPDATE bookings SET status='completed' WHERE id=? AND status IN ('accepted','ready') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status IN ('open','matched'))",
             )
             .bind(b.id, b.ride_id),
           db
             .prepare(
-              "UPDATE rides SET status='completed' WHERE id=? AND status='matched' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='completed')",
+              "UPDATE rides SET status=CASE WHEN EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status IN ('accepted','ready')) THEN 'matched' ELSE 'completed' END WHERE id=? AND status IN ('open','matched') AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='completed')",
             )
-            .bind(b.ride_id, b.id),
+            .bind(b.ride_id, b.ride_id, b.id),
+          db
+            .prepare(
+              "UPDATE bookings SET status='declined' WHERE ride_id=? AND status='pending' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='completed') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status IN ('matched','completed'))",
+            )
+            .bind(b.ride_id, b.id, b.ride_id),
         ]);
         if (!results[0].meta.changes) fail(409, "Vožnja više nije aktivna.");
       } else {
@@ -1194,9 +1226,14 @@ export async function handleApi(request, env) {
             .bind(b.id),
           db
             .prepare(
-              "UPDATE rides SET status='open' WHERE id=? AND status='matched' AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status IN ('accepted','ready','completed'))",
+              "UPDATE rides SET status='open' WHERE id=? AND status='matched' AND departure>? AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status='completed') AND (SELECT COUNT(*) FROM bookings WHERE ride_id=? AND status IN ('accepted','ready','completed'))<seats",
             )
-            .bind(b.ride_id, b.ride_id),
+            .bind(b.ride_id, Date.now(), b.ride_id, b.ride_id),
+          db
+            .prepare(
+              "UPDATE rides SET status='completed' WHERE id=? AND status='matched' AND EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status='completed') AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=? AND status IN ('accepted','ready'))",
+            )
+            .bind(b.ride_id, b.ride_id, b.ride_id),
         ]);
         if (!results[0].meta.changes) fail(409, "Dogovor više nije aktivan.");
       }

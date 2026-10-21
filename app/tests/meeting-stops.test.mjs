@@ -74,6 +74,30 @@ function fixture() {
   };
   return { sqlite, env };
 }
+test("a valid unnamed meeting pin gets an automatic label and remains preview-bound", async () => {
+  const { sqlite, env } = fixture();
+  try {
+    const from = point("Start", 0),
+      to = point("Finish", 0.03),
+      pin = point("", 0.015);
+    const raw = [from, pin, to];
+    const preview = await previewMeetingRoute(env, "driver", from, to, raw);
+    assert.equal(preview.meetingStops[1].name, "Mjesto susreta 1");
+    assert.equal(preview.meetingStops[1].automaticName, true);
+    assert.equal(preview.meetingStops[1].lng, 0.015);
+    const consumed = await consumeMeetingPreview(
+      env,
+      "driver",
+      preview.previewToken,
+      from,
+      to,
+      raw,
+    );
+    assert.equal(consumed.meetingStops[1].name, "Mjesto susreta 1");
+  } finally {
+    sqlite.close();
+  }
+});
 test("confirmed driver preview is owner-bound, expires and cannot publish edited points", async () => {
   const { sqlite, env } = fixture();
   const from = point("Start", 0),

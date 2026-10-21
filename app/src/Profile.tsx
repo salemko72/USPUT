@@ -2,6 +2,7 @@ import { t } from "./i18n";
 import { OwnPhoto } from "./Photos";
 import { vehicleDescription } from "./VehicleManager";
 import { VehicleManager } from "./VehicleManager";
+import { NotificationSettings } from "./Notifications";
 import { useState } from "react";
 import {
   LogOut,
@@ -160,6 +161,7 @@ export function Profile({
             </p>
             <span className="eyebrow">{t("BEZ NAPLATE. S RAZLOGOM.")}</span>
           </section>
+          <NotificationSettings />
           <button className="settings-row" onClick={() => setModal("privacy")}>
             <ShieldCheck size={22} />
             <span>

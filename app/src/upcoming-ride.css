@@ -1,0 +1,154 @@
+.upcoming-ride {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 250px);
+  align-items: center;
+  gap: 16px 28px;
+  padding: 20px 24px;
+  color: white;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 24px;
+}
+.upcoming-ride .eyebrow {
+  color: var(--lime);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.upcoming-ride h2 {
+  margin: 6px 0 4px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.upcoming-ride-driver {
+  margin: 0 0 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.upcoming-ride-pickup {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+.upcoming-ride-pickup > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--lime);
+}
+.upcoming-ride-pickup strong,
+.upcoming-ride-pickup span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.upcoming-ride-pickup strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+.upcoming-ride-pickup span {
+  margin-top: 3px;
+  color: #d9dfd0;
+  font-size: 12px;
+}
+.upcoming-ride-actions {
+  display: grid;
+  justify-items: stretch;
+  gap: 12px;
+}
+.upcoming-ride-actions > a {
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-underline-offset: 4px;
+}
+.upcoming-ride-ready {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  color: var(--lime);
+  border: 1px solid #d7f56a66;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.upcoming-ride > .error-box {
+  grid-column: 1 / -1;
+}
+.passenger-seats {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.passenger-seats select {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1px solid #dce5cb;
+  border-radius: 12px;
+  background: #eef3e3;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+.passenger-seats small {
+  color: #6d795e;
+  font-size: 11px;
+  font-weight: 400;
+}
+.repeat-draft-note {
+  padding: 12px 14px;
+  border: 1px solid #dce5cb;
+  border-radius: 12px;
+  background: #eef3e3;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.trip-card-main-action {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+}
+.repeat-ride-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 18px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+@media (max-width: 700px) {
+  .upcoming-ride {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin: 0 15px 18px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+  .upcoming-ride h2 {
+    font-size: 22px;
+  }
+  .upcoming-ride-actions {
+    gap: 10px;
+  }
+  .upcoming-ride-actions .button {
+    min-height: 52px;
+    padding: 12px 16px;
+  }
+}

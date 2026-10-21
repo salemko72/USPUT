@@ -48,15 +48,13 @@ async function call(
 // Synthetic provider: tests validate agreement logic, not real roads.
 async function routeFixture(url, options) {
   const points = JSON.parse(options.body).coordinates;
-  const segments = points
-    .slice(1)
-    .map((p, i) => ({
-      duration: 200,
-      distance: Math.hypot(
-        (p[0] - points[i][0]) * 80000,
-        (p[1] - points[i][1]) * 111195,
-      ),
-    }));
+  const segments = points.slice(1).map((p, i) => ({
+    duration: 200,
+    distance: Math.hypot(
+      (p[0] - points[i][0]) * 80000,
+      (p[1] - points[i][1]) * 111195,
+    ),
+  }));
   return Response.json({
     features: [
       {
@@ -133,6 +131,87 @@ function ride() {
     note: "Bez pušenja",
   };
 }
+test("accepted booking creates a global owner-only notification with one atomic popup claim", async () => {
+  const driver = await signup("Driver", "driver-notify@example.test"),
+    passenger = await signup();
+  const published = await publish(ride(), driver.cookie);
+  const requested = await requestRide(published.data.ride.id, passenger.cookie);
+  const id = requested.data.booking.id;
+  assert.equal(
+    (await call("/notifications", null, passenger.cookie)).data.notifications
+      .length,
+    0,
+  );
+  assert.equal(
+    (await call(`/bookings/${id}/accept`, {}, driver.cookie)).status,
+    200,
+  );
+  const inbox = await call("/notifications", null, passenger.cookie);
+  assert.equal(inbox.data.notifications.length, 1);
+  assert.equal(inbox.data.notifications[0].bookingId, id);
+  assert.equal(
+    (await call("/notifications/" + id, null, driver.cookie)).status,
+    404,
+  );
+  assert.equal(
+    (await call(`/notifications/${id}/seen`, {}, passenger.cookie)).data
+      .claimed,
+    true,
+  );
+  assert.equal(
+    (await call(`/notifications/${id}/seen`, {}, passenger.cookie)).data
+      .claimed,
+    false,
+  );
+  assert.equal(
+    (await call(`/bookings/${id}/cancel`, {}, passenger.cookie)).status,
+    200,
+  );
+  assert.equal(
+    (await call("/notifications/" + id, null, passenger.cookie)).status,
+    404,
+  );
+});
+test("driver can publish a confirmed unnamed pin without adding an anonymous catalogue candidate", async () => {
+  const driver = await signup("Driver", "driver-unnamed@example.test"),
+    offer = ride();
+  const from = getPlace(offer.from),
+    to = getPlace(offer.to);
+  const pin = {
+    name: "",
+    lat: (from.lat + to.lat) / 2,
+    lng: (from.lng + to.lng) / 2,
+    city: "Sarajevo",
+  };
+  const preview = await call(
+    "/routes/preview",
+    { ...offer, meetingStops: [from, pin, to] },
+    driver.cookie,
+  );
+  assert.equal(preview.status, 200, JSON.stringify(preview.data));
+  const published = await call(
+    "/rides",
+    {
+      ...offer,
+      meetingStops: preview.data.meetingStops,
+      previewToken: preview.data.previewToken,
+      stopsConfirmed: true,
+      routeConfirmed: true,
+      shareMeetingPoints: true,
+    },
+    driver.cookie,
+  );
+  assert.equal(published.status, 201, JSON.stringify(published.data));
+  assert.equal(published.data.ride.meetingStops[1].name, "Mjesto susreta 1");
+  assert.equal(
+    sqlite
+      .prepare(
+        "SELECT COUNT(*) AS n FROM meeting_points WHERE name LIKE 'Mjesto susreta %'",
+      )
+      .get().n,
+    0,
+  );
+});
 test("registration creates a session without exposing password and supports logout", async () => {
   const r = await signup();
   assert.equal(r.status, 201);
