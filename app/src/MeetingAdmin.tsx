@@ -12,7 +12,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { api, HttpError } from "./api";
-import { useLanguage } from "./i18n";
+import { useLanguage, t, locale } from "./i18n";
 import type { Place } from "./types";
 import { PinMap, StreetPicker } from "./StreetPicker";
 import { Button, ErrorBox, Modal } from "./ui";
@@ -72,7 +72,7 @@ function useCatalogText(): Translate {
     let result =
       language === "en"
         ? (translations as Record<string, string>)[source] || source
-        : source;
+        : t(source);
     for (const [key, value] of Object.entries(values))
       result = result.replaceAll("{" + key + "}", String(value));
     return result;
@@ -835,9 +835,9 @@ export function MeetingAdmin({
                     {point.feedback.lastAt && (
                       <p className="meeting-note">
                         {tr("Posljednja ocjena: {date}", {
-                          date: new Intl.DateTimeFormat(
-                            language === "en" ? "en-GB" : "bs-BA",
-                          ).format(point.feedback.lastAt),
+                          date: new Intl.DateTimeFormat(locale()).format(
+                            point.feedback.lastAt,
+                          ),
                         })}
                         <br />
                         {tr("Posljednjih 90 dana: {people} učesnika", {
@@ -943,10 +943,9 @@ export function MeetingAdmin({
                             tr("Glavno mjesto koje zadržava pin")}
                         </strong>
                         <small>
-                          {new Intl.DateTimeFormat(
-                            language === "en" ? "en-GB" : "bs-BA",
-                            { dateStyle: "medium" },
-                          ).format(merge.createdAt)}
+                          {new Intl.DateTimeFormat(locale(), {
+                            dateStyle: "medium",
+                          }).format(merge.createdAt)}
                         </small>
                       </span>
                       {merge.undoneAt ? (

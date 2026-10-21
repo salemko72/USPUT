@@ -132,6 +132,59 @@ test("pending booking never creates an accepted notification", async () => {
     0,
   );
 });
+test("language migration retains existing subscription and delivery identities", async () => {
+  await subscribe();
+  await record();
+  const before = sqlite
+    .prepare("SELECT id,user_id,session_id,language FROM push_subscriptions")
+    .all();
+  const deliveries = sqlite
+    .prepare("SELECT notification_id,subscription_id FROM push_deliveries")
+    .all();
+  sqlite.exec("ALTER TABLE push_subscriptions DROP COLUMN display_language");
+  sqlite.exec(
+    readFileSync(
+      new URL(
+        "../server/migrations/0013_push_display_language.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(
+    sqlite
+      .prepare("SELECT id,user_id,session_id,language FROM push_subscriptions")
+      .all(),
+    before,
+  );
+  assert.deepEqual(
+    sqlite
+      .prepare("SELECT notification_id,subscription_id FROM push_deliveries")
+      .all(),
+    deliveries,
+  );
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+test("four notification language preferences persist without replacing a device or dropping its delivery", async () => {
+  await subscribe();
+  await record();
+  const first = sqlite.prepare("SELECT id FROM push_subscriptions").get().id;
+  for (const language of ["hr", "sr-Latn", "en", "bhs"]) {
+    const result = await call("/push/subscribe", "POST", {
+      subscription: env.fixtureSubscription,
+      language,
+    });
+    assert.equal(result.status, 200);
+    const row = sqlite.prepare("SELECT * FROM push_subscriptions").get();
+    assert.equal(row.id, first);
+    assert.equal(row.display_language, language);
+    assert.equal(row.language, language === "en" ? "en" : "bhs");
+    assert.equal(
+      sqlite.prepare("SELECT COUNT(*) n FROM push_deliveries").get().n,
+      1,
+    );
+  }
+});
 test("notification detail, claim and listing are private to the authenticated passenger", async () => {
   await record();
   assert.equal(

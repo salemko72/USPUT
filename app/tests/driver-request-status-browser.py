@@ -167,7 +167,7 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                 check_layout()
                 page.screenshot(path=str(RESULTS / 'accepted-mobile.png'), full_page=True)
 
-                page.get_by_role('button', name='ENG', exact=True).click()
+                page.get_by_role('button', name='English', exact=True).click()
                 expect(page.locator('.request-accepted-caption')).to_have_text('Request\naccepted')
                 expect(page.get_by_role('status', name='Request accepted — the driver confirmed the ride.')).to_be_visible()
                 page.emulate_media(reduced_motion='reduce')
@@ -175,7 +175,7 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                 assert ring_style()['width'] != '0px'
                 assert ring_style()['content'] != 'none'
                 page.screenshot(path=str(RESULTS / 'accepted-reduced-motion-en.png'), full_page=True)
-                page.get_by_role('button', name='BHS', exact=True).click()
+                page.get_by_role('button', name='Bosanski', exact=True).click()
                 # Ready is still accepted, and action() must reload its actual booking.
                 page.get_by_role('button', name='Na mjestu sam', exact=True).click()
                 expect(page.get_by_role('heading', name='Vozač zna da si tu.', exact=True)).to_be_visible()
@@ -193,14 +193,14 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                     expect(page.locator('.request-sent-indicator')).to_be_visible()
                     assert ring_style()['animation'] == 'none'
                     assert ring_style()['width'] != '0px'
-                    page.get_by_role('button', name='ENG', exact=True).click()
+                    page.get_by_role('button', name='English', exact=True).click()
                     expect(page.locator('.request-sent-caption')).to_have_text('Request\nsent')
                     post(ctx, '/bookings/' + booking['id'] + '/' + action)
                     page.reload()
                     assert booking_for(other_ride)['status'] == end_state
                     expect(page.locator('.action-card')).to_contain_text('You have no confirmed ride.')
                     no_request_visuals()
-                    page.get_by_role('button', name='BHS', exact=True).click()
+                    page.get_by_role('button', name='Bosanski', exact=True).click()
 
                 # Seed the requested synthetic drivers only in this disposable DB.
                 # The manual control must call the real restricted API transition.

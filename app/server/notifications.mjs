@@ -122,7 +122,7 @@ export async function handleNotificationApi(
         .bind(id, user.id),
       db
         .prepare(
-          "INSERT INTO push_subscriptions(id,user_id,session_id,endpoint,p256dh,auth,language,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET user_id=excluded.user_id,session_id=excluded.session_id,p256dh=excluded.p256dh,auth=excluded.auth,language=excluded.language,updated_at=excluded.updated_at",
+          "INSERT INTO push_subscriptions(id,user_id,session_id,endpoint,p256dh,auth,language,created_at,updated_at,display_language) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET user_id=excluded.user_id,session_id=excluded.session_id,p256dh=excluded.p256dh,auth=excluded.auth,language=excluded.language,updated_at=excluded.updated_at,display_language=excluded.display_language",
         )
         .bind(
           id,
@@ -134,6 +134,9 @@ export async function handleNotificationApi(
           body.language === "en" ? "en" : "bhs",
           now,
           now,
+          ["bhs", "en", "hr", "sr-Latn"].includes(body.language)
+            ? body.language
+            : "bhs",
         ),
       db
         .prepare(
@@ -193,7 +196,7 @@ export async function deliverPushNotifications(env) {
   if (!pushConfigured(env)) return;
   const now = Date.now();
   const rows = await env.DB.prepare(
-    "SELECT d.*,s.endpoint,s.p256dh,s.auth,s.language,n.user_id,b.ride_id FROM push_deliveries d JOIN notifications n ON n.id=d.notification_id JOIN push_subscriptions s ON s.id=d.subscription_id AND s.user_id=n.user_id JOIN sessions ss ON ss.id=s.session_id AND ss.user_id=s.user_id JOIN bookings b ON b.id=n.booking_id JOIN rides r ON r.id=b.ride_id WHERE d.attempts<5 AND d.next_attempt<=? AND (d.state='pending' OR (d.state='sending' AND d.lease_until<=?)) AND n.created_at>? AND ss.expires>? AND b.passenger_id=n.user_id AND b.status IN ('accepted','ready') AND r.status IN ('open','matched') AND r.departure>? ORDER BY d.created_at LIMIT 5",
+    "SELECT d.*,s.endpoint,s.p256dh,s.auth,s.language,s.display_language,n.user_id,b.ride_id FROM push_deliveries d JOIN notifications n ON n.id=d.notification_id JOIN push_subscriptions s ON s.id=d.subscription_id AND s.user_id=n.user_id JOIN sessions ss ON ss.id=s.session_id AND ss.user_id=s.user_id JOIN bookings b ON b.id=n.booking_id JOIN rides r ON r.id=b.ride_id WHERE d.attempts<5 AND d.next_attempt<=? AND (d.state='pending' OR (d.state='sending' AND d.lease_until<=?)) AND n.created_at>? AND ss.expires>? AND b.passenger_id=n.user_id AND b.status IN ('accepted','ready') AND r.status IN ('open','matched') AND r.departure>? ORDER BY d.created_at LIMIT 5",
   )
     .bind(now, now, now - 86400000, now, now)
     .all();
@@ -214,7 +217,8 @@ export async function deliverPushNotifications(env) {
       .run();
     if (!claimed.meta.changes) continue;
     // Lock-screen copy intentionally contains neither names nor private pins.
-    const english = row.language === "en";
+    const language = row.display_language || row.language,
+      english = language === "en";
     let result;
     try {
       result = await sendWebPush(
@@ -226,9 +230,12 @@ export async function deliverPushNotifications(env) {
         {
           id: row.notification_id,
           type: "booking-accepted",
+          language,
           title: english
             ? "Your request was accepted"
-            : "Vaš zahtjev je prihvaćen",
+            : language === "sr-Latn"
+              ? "Vaš zahtev je prihvaćen"
+              : "Vaš zahtjev je prihvaćen",
           body: english
             ? "Open USPUT to view your ride."
             : "Otvori USPUT i pogledaj dogovorenu vožnju.",

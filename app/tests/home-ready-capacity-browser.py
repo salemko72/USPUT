@@ -18,6 +18,7 @@ from urllib.request import urlopen
 from zoneinfo import ZoneInfo
 
 from playwright.sync_api import expect, sync_playwright
+from map_fixture import install_vector_map
 
 
 APP = Path(__file__).resolve().parents[1]
@@ -73,6 +74,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 def account(name, email):
                     ctx = browser.new_context(viewport={'width': 390, 'height': 844})
                     ctx.route('**/*', serve_frontend)
+                    install_vector_map(ctx)
                     result = post(ctx, '/auth/register', {'name': name, 'email': email,
                         'password': 'fixture-password-123', 'city': 'Sarajevo',
                         'adult': True, 'terms': True})
@@ -176,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 assert page.url == original_url
                 expect(page.locator('.date-picker-trigger').first).to_have_text(selected_date)
                 expect(page.get_by_label('Najviše minuta hodanja', exact=True)).to_have_value('10')
-                expect(page.get_by_role('textbox', name='Polazište', exact=True)).to_have_value(points[0]['name'])
+                expect(page.get_by_role('combobox', name='Polazište', exact=True)).to_have_value(points[0]['name'])
                 page.get_by_role('button', name='Sačuvane pretrage', exact=True).click()
                 expect(page.locator('.saved-search-card')).to_have_count(1)
                 expect(page.locator('.date-picker-trigger').first).to_have_text(selected_date)
@@ -188,10 +190,10 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
                 page.set_viewport_size({'width': 390, 'height': 844})
                 page.screenshot(path=str(RESULTS / 'home-ready-mobile.png'), full_page=True)
-                page.get_by_role('button', name='ENG', exact=True).click()
+                page.get_by_role('button', name='English', exact=True).click()
                 expect(card).to_contain_text("The driver knows you're here.")
                 expect(card.get_by_role('link', name='View ride', exact=True)).to_be_visible()
-                page.get_by_role('button', name='BHS', exact=True).click()
+                page.get_by_role('button', name='Bosanski', exact=True).click()
 
                 # Ready is retained after refresh. A driver's passenger requests stay out.
                 page.reload()
@@ -237,14 +239,14 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 seats = d.get_by_label('Slobodna mjesta za putnike', exact=True)
                 expect(seats).to_have_value('1')
                 assert seats.locator('option').evaluate_all('(nodes) => nodes.map(n => n.value)') == [str(i) for i in range(1, 8)]
-                d.get_by_role('button', name='ENG', exact=True).click()
+                d.get_by_role('button', name='English', exact=True).click()
                 expect(d.get_by_label('Available passenger seats', exact=True)).to_have_value('1')
-                d.get_by_role('button', name='BHS', exact=True).click()
+                d.get_by_role('button', name='Bosanski', exact=True).click()
                 seats.select_option('3')
                 assert seats.evaluate('(e) => parseFloat(getComputedStyle(e).fontSize)') >= 16
 
                 def choose(page, label, text):
-                    page.get_by_role('textbox', name=label, exact=True).fill(text)
+                    page.get_by_role('combobox', name=label, exact=True).fill(text)
                     page.get_by_role('button', name='Pretraži adresu — ' + label, exact=True).click()
                     page.locator('.street-results button').first.click()
                     page.get_by_role('dialog', name='Potvrdi približnu lokaciju').get_by_role('button', name='Potvrdi ovaj pin', exact=True).click()
@@ -283,11 +285,11 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 other_page.get_by_role('button', name='Pronađi vožnju', exact=True).click()
                 result = other_page.locator('.ride-card').filter(has_text='2 slobodna mjesta')
                 expect(result).to_have_count(1)
-                other_page.get_by_role('button', name='ENG', exact=True).click()
+                other_page.get_by_role('button', name='English', exact=True).click()
                 expect(result).to_have_count(0)
                 result = other_page.locator('.ride-card').filter(has_text='2 seats available')
                 expect(result).to_have_count(1)
-                other_page.get_by_role('button', name='BHS', exact=True).click()
+                other_page.get_by_role('button', name='Bosanski', exact=True).click()
                 other_page.locator('.ride-card').filter(has_text='2 slobodna mjesta').get_by_role('button', name='Pogledaj vožnju', exact=True).click()
                 expect(other_page.locator('.ride-facts')).to_contain_text('2 od 3 mjesta slobodno')
                 other_page.get_by_role('button', name='Pošalji zahtjev', exact=True).click()
@@ -325,16 +327,16 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                     assert d.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
                 d.set_viewport_size({'width': 390, 'height': 844})
                 d.screenshot(path=str(RESULTS / 'completed-driver-history.png'), full_page=True)
-                d.get_by_role('button', name='ENG', exact=True).click()
+                d.get_by_role('button', name='English', exact=True).click()
                 expect(history.get_by_role('button', name='Offer this ride again', exact=True)).to_be_visible()
-                d.get_by_role('button', name='BHS', exact=True).click()
+                d.get_by_role('button', name='Bosanski', exact=True).click()
                 history.get_by_role('button', name='Ponovi vožnju', exact=True).click()
                 expect(d.get_by_label('Slobodna mjesta za putnike', exact=True)).to_have_value('3')
                 expect(d.locator('textarea[name=note]')).to_have_value(original['note'])
                 expect(d.locator('input[name=costSharing]')).to_be_checked()
                 expect(d.locator('.date-picker-trigger').first).to_contain_text('Sutra')
-                expect(d.get_by_role('textbox', name='Polazište', exact=True)).to_have_value(original['from']['name'])
-                expect(d.get_by_role('textbox', name='Odredište', exact=True)).to_have_value(original['to']['name'])
+                expect(d.get_by_role('combobox', name='Polazište', exact=True)).to_have_value(original['from']['name'])
+                expect(d.get_by_role('combobox', name='Odredište', exact=True)).to_have_value(original['to']['name'])
                 expect(d.locator('.saved-vehicle')).to_contain_text('Polo')
                 d.screenshot(path=str(RESULTS / 'repeat-future-driver-draft.png'), full_page=True)
                 before_count = len(driver.request.get(base + '/api/my-rides').json()['rides'])

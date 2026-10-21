@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.request import urlopen
 from zoneinfo import ZoneInfo
 from playwright.sync_api import sync_playwright, expect
+from map_fixture import install_vector_map
 
 APP = Path(__file__).resolve().parents[1]
 
@@ -35,6 +36,8 @@ class CommuteCorrections(unittest.TestCase):
         self.ctx=self.account('Tester')
         self.page=self.ctx.new_page();self.page.set_default_timeout(6000)
         self.errors=[];self.page.on('pageerror',lambda error:self.errors.append(str(error)))
+        self.map_levels=[]
+        install_vector_map(self.page,lambda url:self.map_levels.append(int(url.split('/fixture/')[1].split('/')[0])))
         self.page.route('**/tile.openstreetmap.org/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
     def tearDown(self):
         Path('/tmp/usput-corrections-results').mkdir(exist_ok=True)
@@ -70,7 +73,7 @@ class CommuteCorrections(unittest.TestCase):
         self.page.get_by_role('button',name='Objavi vožnju',exact=True).click()
         dialog=self.page.get_by_role('dialog',name='Je li ovo ruta kojom stvarno voziš?')
         expect(dialog).to_be_visible()
-        expect(dialog.locator('img.leaflet-tile-loaded').first).to_be_visible()
+        expect(dialog.locator('canvas.maplibregl-canvas').first).to_be_visible()
         return dialog
     def test_selected_tomorrow_survives_search_return_and_saved_route_load(self):
         driver=self.account('Driver')
@@ -131,20 +134,27 @@ class CommuteCorrections(unittest.TestCase):
         dialog=self.preview()
         map=dialog.locator('.leaflet-container-wrap')
         def level():
-            return map.evaluate("e=>Math.max(...Array.from(e.querySelectorAll('img.leaflet-tile-loaded')).map(i=>Number(new URL(i.src).pathname.split('/')[1])))")
+            return map.locator('path.leaflet-interactive').last.evaluate("e=>e.getBBox().width")
         before=level()
+        def wait_width(check, value):
+            self.page.wait_for_function("v=>{const p=Array.from(document.querySelectorAll('.leaflet-container-wrap path.leaflet-interactive')).at(-1);return p && "+check+"}",arg=value)
         dialog.get_by_role('button',name='Približi mapu',exact=True).click()
-        self.page.wait_for_function("v=>Array.from(document.querySelectorAll('.leaflet-container-wrap img.leaflet-tile-loaded')).some(i=>Number(new URL(i.src).pathname.split('/')[1])>v)",arg=before)
-        zoomed=level();self.assertGreater(zoomed,before)
+        wait_width("p.getBBox().width>v*1.5",before)
         self.page.wait_for_function("!document.querySelector('.leaflet-container-wrap.leaflet-zoom-anim')")
-        # Editing the name must not recreate the map and reset zoom/pan.
+        zoomed=level();self.assertGreater(zoomed,before)
+        # The same road overlay must preserve zoom when only the stop name changes.
         dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True).first.fill('Kod parkinga')
-        self.assertEqual(level(),zoomed)
-        map.scroll_into_view_if_needed()
-        map.hover()
+        self.assertAlmostEqual(level(),zoomed,delta=2)
+        map.scroll_into_view_if_needed();map.hover()
+        prior=max(self.map_levels)
         self.page.mouse.wheel(0,-500)
-        self.page.wait_for_function("v=>Array.from(document.querySelectorAll('.leaflet-container-wrap img.leaflet-tile-loaded')).some(i=>Number(new URL(i.src).pathname.split('/')[1])>v)",arg=zoomed)
+        # At high zoom the route SVG is clipped at viewport edges. Tile zoom
+        # records actual renderer movement even when the clipped width stops growing.
+        until=time.monotonic()+6
+        while max(self.map_levels)<=prior and time.monotonic()<until:self.page.wait_for_timeout(50)
+        self.assertGreater(max(self.map_levels),prior)
+        self.page.wait_for_function("!document.querySelector('.leaflet-container-wrap.leaflet-zoom-anim')")
         dialog.get_by_role('button',name='Prikaži cijelu trasu',exact=True).click()
-        self.page.wait_for_function("v=>Math.max(...Array.from(document.querySelectorAll('.leaflet-container-wrap img.leaflet-tile-loaded')).map(i=>Number(new URL(i.src).pathname.split('/')[1])))===v",arg=before)
+        wait_width("Math.abs(p.getBBox().width-v)<2",before)
 
 if __name__=='__main__': unittest.main(verbosity=2)

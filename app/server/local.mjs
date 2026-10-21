@@ -52,6 +52,16 @@ if (
 sqlite.exec(
   "DROP INDEX IF EXISTS one_seat;CREATE INDEX IF NOT EXISTS bookings_ride_status ON bookings(ride_id,status)",
 );
+// Upgrade existing local databases without rebuilding subscriptions.
+if (
+  !sqlite
+    .prepare("PRAGMA table_info(push_subscriptions)")
+    .all()
+    .some((c) => c.name === "display_language")
+)
+  sqlite.exec(
+    "ALTER TABLE push_subscriptions ADD COLUMN display_language TEXT NOT NULL DEFAULT '' CHECK(display_language IN ('','bhs','en','hr','sr-Latn'))",
+  );
 export const env = {
   DB: adaptSqlite(sqlite),
   PHOTOS: localPhotoStorage(resolve(data, "photos")),
@@ -59,6 +69,7 @@ export const env = {
   OSRM_FOOT_URL: process.env.OSRM_FOOT_URL,
   OPENROUTESERVICE_API_KEY: process.env.OPENROUTESERVICE_API_KEY,
   GEOCODER_URL: process.env.GEOCODER_URL,
+  PHOTON_URL: process.env.PHOTON_URL,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
@@ -81,7 +92,7 @@ export const securityHeaders = {
   "X-Frame-Options": "DENY",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https://tile.openstreetmap.org; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://tiles.openfreemap.org https://*.openfreemap.org https://assets.openfreemap.com; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 };
 const port = Number(process.env.PORT || 8787),
   host = process.env.HOST || "127.0.0.1";

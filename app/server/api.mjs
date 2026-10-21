@@ -21,6 +21,7 @@ import {
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
 import { corridorMatch } from "./corridor.mjs";
 import { geocode, locateCity } from "./geocoding.mjs";
+import { suggestStreets } from "./street-suggestions.mjs";
 import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
 import { places, getPlace, departureMs } from "./places.mjs";
@@ -681,6 +682,25 @@ export async function handleApi(request, env) {
       if (!scope || !scope.city)
         fail(503, "Grad nije prepoznat. Upiši grad ručno.");
       return json(scope);
+    }
+    if (path === "/locations/suggest" && method === "POST") {
+      await rateLimit(db, "autocomplete:" + user.id, 90);
+      let result;
+      try {
+        result = await suggestStreets(env, body.query, body.scope);
+      } catch (e) {
+        if (e instanceof TypeError) fail(400, e.message);
+        throw e;
+      }
+      if (result === null)
+        fail(
+          503,
+          "Prijedlozi ulica trenutno nisu dostupni. Pokušaj pretragu ili odaberi pin na karti.",
+        );
+      return json({
+        ...result,
+        attribution: "© OpenStreetMap contributors · Photon",
+      });
     }
     if (path === "/locations/search" && method === "POST") {
       await rateLimit(db, "geocode:" + user.id, 20);

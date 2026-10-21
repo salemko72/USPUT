@@ -1,4 +1,4 @@
-import { setLanguage, useLanguage } from "./i18n";
+import { languages, setLanguage, useLanguage } from "./i18n";
 export function LanguageSwitch() {
   const language = useLanguage();
   return (
@@ -7,22 +7,19 @@ export function LanguageSwitch() {
       role="group"
       aria-label={language === "en" ? "Language" : "Jezik"}
     >
-      <button
-        type="button"
-        lang="bs"
-        aria-pressed={language === "bhs"}
-        onClick={() => setLanguage("bhs")}
-      >
-        BHS
-      </button>
-      <button
-        type="button"
-        lang="en"
-        aria-pressed={language === "en"}
-        onClick={() => setLanguage("en")}
-      >
-        ENG
-      </button>
+      {languages.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          lang={item.id === "bhs" ? "bs" : item.id}
+          title={item.name}
+          aria-label={item.name}
+          aria-pressed={language === item.id}
+          onClick={() => setLanguage(item.id)}
+        >
+          {item.label}
+        </button>
+      ))}
     </div>
   );
 }

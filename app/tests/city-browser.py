@@ -12,7 +12,7 @@ with sync_playwright() as p:
  assert 'geolocation=()' in ctx.request.get(base).headers['permissions-policy']
  expect(page.get_by_role('button',name='Koristi moju lokaciju',exact=True)).to_have_count(0)
  page.get_by_label('Grad za pretragu ulica').fill('Sarajevo')
- page.get_by_role('textbox',name='Polazište',exact=True).fill('Put')
+ page.get_by_role('combobox',name='Polazište',exact=True).fill('Put')
  with page.expect_response('**/api/locations/search') as search:
   page.get_by_role('button',name='Pretraži adresu — Polazište',exact=True).click()
  assert search.value.request.post_data_json['scope']['city']=='Sarajevo';expect(page.locator('.street-results button')).to_have_count(1)
@@ -23,14 +23,14 @@ with sync_playwright() as p:
  # Old accounts and initial routes stay empty until the user enters a location.
  def old_account(route):
   response=route.fetch();data=response.json();data['user']['city']='';route.fulfill(response=response,json=data)
- page.route('**/api/auth/me',old_account);page.reload();page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('');expect(page.get_by_role('textbox',name='Polazište',exact=True)).to_have_value('');expect(page.get_by_role('textbox',name='Odredište',exact=True)).to_have_value('')
+ page.route('**/api/auth/me',old_account);page.reload();page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('');expect(page.get_by_role('combobox',name='Polazište',exact=True)).to_have_value('');expect(page.get_by_role('combobox',name='Odredište',exact=True)).to_have_value('')
  # A complete street + city can also be searched with an empty city field.
- page.get_by_label('Grad za pretragu ulica').fill('');page.get_by_role('textbox',name='Polazište',exact=True).fill('Put, Sarajevo')
+ page.get_by_label('Grad za pretragu ulica').fill('');page.get_by_role('combobox',name='Polazište',exact=True).fill('Put, Sarajevo')
  with page.expect_response('**/api/locations/search') as search:
   page.get_by_role('button',name='Pretraži adresu — Polazište',exact=True).click()
  assert search.value.request.post_data_json['scope']['city']=='Sarajevo';expect(page.locator('.street-results button')).to_have_count(1)
  page.get_by_label('Grad za pretragu ulica').fill('Zagreb')
- page.get_by_role('button',name='ENG',exact=True).click();expect(page.get_by_label('City for street searches')).to_have_value('Zagreb')
+ page.get_by_role('button',name='English',exact=True).click();expect(page.get_by_label('City for street searches')).to_have_value('Zagreb')
  for width in [320,390,768,1440]:
   page.set_viewport_size({'width':width,'height':1000});page.evaluate('document.fonts.ready');assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.evaluate('document.fonts.check(\'400 14px "Nunito Variable"\')')
  page.screenshot(path='test-results/city-nunito.png',full_page=True)

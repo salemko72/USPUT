@@ -1,4 +1,4 @@
-import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
+import { addBasemap } from "./map-style";
 import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "./types";
@@ -105,15 +105,15 @@ export function RouteMap({
           zoomControl: false,
           scrollWheelZoom: true,
           touchZoom: true,
+          minZoom: 2,
+          maxZoom: 20,
         });
         const layers = L.layerGroup().addTo(map),
           current = { map, L, layers };
-        const tiles = L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS);
-        let errors = 0;
-        tiles.on("tileerror", () => {
-          if (++errors > 3) setFailed(true);
+        const basemap = addBasemap(map, {
+          onReady: () => setFailed(false),
+          onError: () => setFailed(true),
         });
-        tiles.addTo(map);
         view.current = current;
         drawRoute(current, latest.current);
         const observer = new ResizeObserver(() =>
@@ -124,6 +124,7 @@ export function RouteMap({
         cleanup = () => {
           observer.disconnect();
           view.current = null;
+          basemap();
           map.remove();
         };
       })

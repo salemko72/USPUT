@@ -4341,7 +4341,8 @@ textarea::placeholder {
   padding: 12px;
   border-radius: 10px;
 }
-.street-results button:hover {
+.street-results button:hover,
+.street-results button[aria-selected="true"] {
   background: #edf4db;
 }
 .street-results small {

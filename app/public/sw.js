@@ -65,10 +65,15 @@ self.addEventListener("push", (event) => {
       const notification = await ownedNotification(payload.id);
       if (!notification) return;
       const english =
+        payload.language === "en" ||
         payload.title === "Your request has been accepted" ||
         payload.title === "Your request was accepted";
       await self.registration.showNotification(
-        english ? "Your request has been accepted" : "Vaš zahtjev je prihvaćen",
+        english
+          ? "Your request has been accepted"
+          : payload.language === "sr-Latn"
+            ? "Vaš zahtev je prihvaćen"
+            : "Vaš zahtjev je prihvaćen",
         {
           body: english
             ? "Open USPUT for your ride details."

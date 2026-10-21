@@ -3,6 +3,7 @@ import base64, json, os, socket, sqlite3, subprocess, tempfile, time
 from pathlib import Path
 from urllib.request import urlopen
 from playwright.sync_api import sync_playwright, expect
+from map_fixture import install_vector_map
 
 app = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as data:
@@ -29,6 +30,7 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                         'name':name,'email':email or name.lower()+'@example.test',
                         'password':'fixture-password-123','city':'Sarajevo','adult':True,'terms':True})
                     assert response.ok, response.text()
+                    install_vector_map(page)
                     page.route('**/tile.openstreetmap.org/**', lambda r:r.fulfill(content_type='image/svg+xml', body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
                     return ctx, page
                 editor, e = new('Editor','fixture-editor@example.test')
@@ -41,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                         'approach':'Fixture entrance','side':'parking','availability':'active'})
                     assert r.ok, r.text()
                 def choose(page, label, text):
-                    page.get_by_role('textbox', name=label, exact=True).fill(text)
+                    page.get_by_role('combobox', name=label, exact=True).fill(text)
                     page.get_by_role('button', name='Pretraži adresu — '+label, exact=True).click()
                     page.locator('.street-results button').first.click()
                     dialog = page.get_by_role('dialog',name='Potvrdi približnu lokaciju')
@@ -84,9 +86,9 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 s.get_by_role('button',name='Pogledaj vožnju').click()
                 expect(s.locator('.route-match-summary').first).to_contain_text('Fixture parking A')
                 expect(s.locator('.cost-sharing-yes')).to_have_text('DA')
-                s.get_by_role('button',name='ENG',exact=True).click()
+                s.get_by_role('button',name='English',exact=True).click()
                 expect(s.locator('.cost-sharing-yes')).to_have_text('YES')
-                s.get_by_role('button',name='BHS',exact=True).click()
+                s.get_by_role('button',name='Bosanski',exact=True).click()
                 s.get_by_role('button',name='Pošalji zahtjev',exact=True).click()
                 expect(s.get_by_role('heading',name='Zahtjev je poslan.',exact=True)).to_be_visible()
                 expect(s.locator('.request-sent-caption')).to_have_text('Zahtjev je\nposlan')
@@ -114,7 +116,7 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 s.get_by_role('button',name='Sačuvane pretrage',exact=True).click()
                 s.locator('.saved-search-remove').click(); expect(s.locator('.saved-search-card')).to_have_count(0)
                 for page in [d,s]: assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
-                s.get_by_role('button',name='ENG',exact=True).click()
+                s.get_by_role('button',name='English',exact=True).click()
                 expect(s.get_by_role('heading',name='Your everyday journey',exact=True)).to_be_visible()
                 assert not errors, errors
                 Path('/tmp/usput-meeting-flow-results').mkdir(exist_ok=True)

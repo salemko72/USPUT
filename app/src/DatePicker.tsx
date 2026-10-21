@@ -121,7 +121,7 @@ export function DatePicker({
             {[
               t("Pon"),
               t("Uto"),
-              t("Sri"),
+              locale().startsWith("sr") ? "Sre" : t("Sri"),
               t("Čet"),
               t("Pet"),
               t("Sub"),

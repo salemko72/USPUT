@@ -8,6 +8,7 @@
     "OSRM_URL": "https://routing.openstreetmap.de/routed-car/",
     "OSRM_FOOT_URL": "https://routing.openstreetmap.de/routed-foot/",
     "GEOCODER_URL": "https://nominatim.openstreetmap.org/",
+    "PHOTON_URL": "https://photon.komoot.io/",
     "GOOGLE_CLIENT_ID": "673712683395-pfegs6i0rk1chqqqol98hup5gekokkh4.apps.googleusercontent.com",
   },
   "preview_urls": false,

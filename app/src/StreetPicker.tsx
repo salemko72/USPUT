@@ -1,6 +1,6 @@
 import type { LocationScope } from "./LocationScope";
-import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
-import { useEffect, useRef, useState } from "react";
+import { addBasemap } from "./map-style";
+import { useEffect, useId, useRef, useState } from "react";
 import { MapPin, Search, Move } from "lucide-react";
 import type { Place } from "./types";
 import { api } from "./api";
@@ -28,10 +28,10 @@ export function PinMap({
     import("leaflet")
       .then((L) => {
         if (cancelled || !container.current) return;
-        const map = L.map(container.current).setView(
-            [point.lat, point.lng],
-            zoom,
-          ),
+        const map = L.map(container.current, {
+            minZoom: 2,
+            maxZoom: 20,
+          }).setView([point.lat, point.lng], zoom),
           marker = L.marker([point.lat, point.lng], {
             draggable: true,
             icon: L.divIcon({
@@ -41,10 +41,12 @@ export function PinMap({
               iconAnchor: [14, 28],
             }),
           }).addTo(map);
-        const tiles = L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS).addTo(map);
-        tiles.on("tileload", () => onReady?.(true));
-        tiles.on("tileerror", () => {
-          setFailed(true);
+        const basemap = addBasemap(map, {
+          onReady: () => {
+            setFailed(false);
+            onReady?.(true);
+          },
+          onError: () => setFailed(true),
         });
         const update = (lat: number, lng: number) => {
           const p = {
@@ -61,7 +63,15 @@ export function PinMap({
           const p = marker.getLatLng();
           update(p.lat, p.lng);
         });
-        dispose = () => map.remove();
+        const observer = new ResizeObserver(() =>
+          map.invalidateSize({ pan: false }),
+        );
+        observer.observe(container.current);
+        dispose = () => {
+          observer.disconnect();
+          basemap();
+          map.remove();
+        };
       })
       .catch(() => setFailed(true));
     return () => {
@@ -105,16 +115,40 @@ export function StreetPicker({
     [results, setResults] = useState<Place[] | null>(null),
     [selected, setSelected] = useState<Place | null>(null),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
+    [attribution, setAttribution] = useState(""),
+    [active, setActive] = useState(-1);
   const [manual, setManual] = useState(false),
     [moved, setMoved] = useState(false),
     [ready, setReady] = useState(false);
   const editing = useRef(false),
-    requestId = useRef(0);
+    requestId = useRef(0),
+    timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const listId = useId();
+  useEffect(() => {
+    if (
+      selected ||
+      !query.trim() ||
+      value?.name === query ||
+      scope.city.trim().length < 2
+    )
+      return;
+    timer.current = setTimeout(() => search(false), 650);
+    return () => clearTimeout(timer.current);
+  }, [query, scope.city, scope.lat, scope.lng, value?.name, selected !== null]);
+  useEffect(
+    () => () => {
+      requestId.current++;
+      clearTimeout(timer.current);
+    },
+    [],
+  );
   useEffect(() => {
     requestId.current++;
     setResults(null);
     setError("");
+    setNotice("");
     setBusy(false);
     setSelected(null);
   }, [scope.city, scope.lat, scope.lng]);
@@ -122,22 +156,27 @@ export function StreetPicker({
     requestId.current++;
     setResults(null);
     setError("");
+    setNotice("");
     setBusy(false);
     if (value) setQuery(value.name);
     else if (!editing.current) setQuery("");
     editing.current = false;
   }, [value?.id, value?.name]);
   function selectPin(place: Place, manuallyPlaced = false) {
+    clearTimeout(timer.current);
     requestId.current++;
     setResults(null);
     setError("");
+    setNotice("");
+    setActive(-1);
     setBusy(false);
     setManual(manuallyPlaced);
     setMoved(false);
     setReady(false);
     setSelected(place);
   }
-  async function search() {
+  async function search(explicit = true) {
+    clearTimeout(timer.current);
     if (
       value?.id.startsWith("pin_") &&
       Number.isFinite(value.lat) &&
@@ -157,16 +196,31 @@ export function StreetPicker({
     const ticket = ++requestId.current;
     setBusy(true);
     setError("");
+    setNotice("");
+    setActive(-1);
     setResults(null);
     try {
-      const r = await api<{ locations: Place[] }>("/locations/search", {
-        query,
-        scope: { ...scope, city },
-      });
+      const payload = { query, scope: { ...scope, city } };
+      let r: { locations: Place[]; fallback?: boolean; attribution?: string };
+      try {
+        r = await api<typeof r>("/locations/suggest", payload);
+      } catch (e) {
+        if (!explicit || query.trim().length < 3) throw e;
+        r = await api<typeof r>("/locations/search", payload);
+      }
+      if (explicit && !r.locations.length && query.trim().length >= 3)
+        r = await api<typeof r>("/locations/search", payload);
       if (ticket !== requestId.current) return;
       setResults(r.locations);
+      setAttribution(r.attribution || "© OpenStreetMap contributors");
+      if (r.fallback)
+        setNotice(
+          "Nema tačnog rezultata. Ovo su ulice s istim početnim slovima — odaberi odgovarajuću i provjeri pin.",
+        );
       if (!r.locations.length)
-        setError("Nismo pronašli ulicu. Dodaj približan broj i grad.");
+        setNotice(
+          "Još nema prijedloga. Probaj kraći naziv ili postavi pin na karti.",
+        );
     } catch (e) {
       if (ticket === requestId.current) setError((e as Error).message);
     } finally {
@@ -181,29 +235,66 @@ export function StreetPicker({
           <MapPin size={18} />
           <input
             aria-label={label}
+            autoComplete="street-address"
+            autoCapitalize="words"
+            spellCheck={false}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={!!results?.length}
+            aria-controls={results?.length ? listId : undefined}
+            aria-activedescendant={
+              active >= 0 ? listId + "-" + active : undefined
+            }
             value={query}
-            placeholder={t("Ulica, približan broj, grad")}
+            placeholder={t("Počni pisati ulicu")}
             onChange={(e) => {
               requestId.current++;
+              clearTimeout(timer.current);
               setBusy(false);
               setError("");
+              setNotice("");
+              setActive(-1);
               setQuery(e.target.value);
               editing.current = !!value;
               onChange(null);
               setResults(null);
             }}
             onKeyDown={(e) => {
+              if (
+                (e.key === "ArrowDown" || e.key === "ArrowUp") &&
+                results?.length
+              ) {
+                e.preventDefault();
+                setActive((i) =>
+                  i < 0
+                    ? e.key === "ArrowDown"
+                      ? 0
+                      : results.length - 1
+                    : (i + (e.key === "ArrowDown" ? 1 : results.length - 1)) %
+                      results.length,
+                );
+                return;
+              }
+              if (e.key === "Escape") {
+                clearTimeout(timer.current);
+                requestId.current++;
+                setResults(null);
+                setBusy(false);
+                setActive(-1);
+              }
               if (e.key === "Enter") {
                 e.preventDefault();
-                if (query.trim().length >= 3) search();
+                if (active >= 0 && results?.[active])
+                  selectPin(results[active]);
+                else if (query.trim().length >= 1) search();
               }
             }}
           />
           <button
             type="button"
             aria-label={t("Pretraži adresu") + " — " + label}
-            disabled={busy || query.trim().length < 3}
-            onClick={search}
+            disabled={busy || query.trim().length < 1}
+            onClick={() => search()}
           >
             <Search size={18} />
           </button>
@@ -212,7 +303,7 @@ export function StreetPicker({
       <button
         type="button"
         className="street-adjust"
-        disabled={query.trim().length < 3}
+        disabled={scope.city.trim().length < 2}
         onClick={() => {
           const centers: Record<string, [number, number]> = {
             beograd: [44.8125, 20.4612],
@@ -241,7 +332,10 @@ export function StreetPicker({
               ];
           const p: Place = {
             id: `pin_${center[0].toFixed(5)}_${center[1].toFixed(5)}`,
-            name: query.trim(),
+            name:
+              query.trim().length >= 2
+                ? query.trim()
+                : t("Pin na karti") + ", " + scope.city,
             detail: "Približna lokacija ručno označena na karti",
             lat: center[0],
             lng: center[1],
@@ -270,17 +364,25 @@ export function StreetPicker({
         </button>
       )}
       {busy && <p className="fine-print">{t("Tražimo adresu…")}</p>}
+      {notice && (
+        <p className="fine-print" role="status">
+          {t(notice)}
+        </p>
+      )}
       <ErrorBox error={error} />
       {results && (
         <div
           className="street-results"
-          role="list"
+          role="listbox"
+          id={listId}
           aria-label={t("Pronađene adrese")}
         >
           {results.map((p, i) => (
             <button
               type="button"
-              role="listitem"
+              role="option"
+              id={listId + "-" + i}
+              aria-selected={active === i}
               key={p.id + ":" + i}
               onClick={() => selectPin(p)}
             >
@@ -288,7 +390,7 @@ export function StreetPicker({
               <small>{p.detail}</small>
             </button>
           ))}
-          <small>© OpenStreetMap contributors · Nominatim</small>
+          {!!results.length && <small>{attribution}</small>}
         </div>
       )}
       {selected && (

@@ -1,10 +1,30 @@
 import { useSyncExternalStore } from "react";
 import english from "./locales/en.json";
-export type Language = "bhs" | "en";
+import croatian from "./locales/hr.json";
+import serbian from "./locales/sr-Latn.json";
+// Keep the legacy bhs storage value for existing Bosnian sessions.
+export type Language = "bhs" | "sr-Latn" | "hr" | "en";
+export const languages: {
+  id: Language;
+  label: string;
+  name: string;
+  locale: string;
+}[] = [
+  { id: "bhs", label: "BS", name: "Bosanski", locale: "bs-BA" },
+  {
+    id: "sr-Latn",
+    label: "SR",
+    name: "Srpski (latinica)",
+    locale: "sr-Latn-RS",
+  },
+  { id: "hr", label: "HR", name: "Hrvatski", locale: "hr-HR" },
+  { id: "en", label: "ENG", name: "English", locale: "en-GB" },
+];
 const key = "usput-language";
 function initial(): Language {
   try {
-    return localStorage.getItem(key) === "en" ? "en" : "bhs";
+    const saved = localStorage.getItem(key);
+    return languages.find((l) => l.id === saved)?.id || "bhs";
   } catch {
     return "bhs";
   }
@@ -13,11 +33,11 @@ let language: Language = initial();
 const listeners = new Set<() => void>();
 function apply() {
   if (typeof document !== "undefined")
-    document.documentElement.lang = language === "en" ? "en" : "bs";
+    document.documentElement.lang = language === "bhs" ? "bs" : language;
 }
 apply();
 export function setLanguage(next: Language) {
-  if (next !== "en" && next !== "bhs") return;
+  if (!languages.some((l) => l.id === next)) return;
   language = next;
   try {
     localStorage.setItem(key, next);
@@ -37,17 +57,25 @@ export function useLanguage() {
     () => "bhs" as Language,
   );
 }
-export const locale = () => (language === "en" ? "en-GB" : "bs-BA");
+export const locale = () => languages.find((l) => l.id === language)!.locale;
 export function t(
   source: string,
   values: Record<string, string | number> = {},
 ): string {
   const normalized = source.replace(/\s+/g, " ").trim();
-  const translated = Object.hasOwn(english, normalized)
-    ? (english as Record<string, string>)[normalized]
+  const dictionary: Record<string, string> =
+    language === "en"
+      ? english
+      : language === "hr"
+        ? croatian
+        : language === "sr-Latn"
+          ? serbian
+          : {};
+  const translated = Object.hasOwn(dictionary, normalized)
+    ? dictionary[normalized]
     : undefined;
   let result =
-    language === "en" && translated !== undefined
+    translated !== undefined
       ? (source.match(/^\s*/)?.[0] || "") +
         translated +
         (source.match(/\s*$/)?.[0] || "")

@@ -35,7 +35,7 @@ const latinAlphabet = {
   џ: "dž",
   ш: "š",
 };
-function latin(text) {
+export function latin(text) {
   if (typeof text !== "string") return text;
   return text.replace(/\p{L}+/gu, (word) => {
     const capitals = word === word.toUpperCase();
@@ -58,18 +58,25 @@ const withoutDiacritics = (text) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "dj")
     .replace(/Đ/g, "Dj");
-const fold = (s) =>
+export const fold = (s) =>
   withoutDiacritics(latin(s))
     .toLowerCase()
     .replace(/^grad /, "")
     .trim();
-function withoutCity(query, city) {
-  const requested = fold(city),
+export function canonicalCity(name) {
+  const normalized = fold(name).replace(/^city of /, "");
+  return { belgrade: "beograd", skopje: "skoplje" }[normalized] || normalized;
+}
+export function withoutCity(query, city) {
+  const requested = canonicalCity(city),
     parts = query.split(",").map((part) => part.trim());
-  if (fold(parts.at(-1)) === requested) return parts.slice(0, -1).join(", ");
+  if (parts.length > 1 && canonicalCity(parts[0]) === requested)
+    return parts.slice(1).join(", ");
+  if (canonicalCity(parts.at(-1)) === requested)
+    return parts.slice(0, -1).join(", ");
   const words = query.split(" ");
   for (let i = 0; i < words.length; i++) {
-    if (fold(words.slice(i).join(" ")) === requested)
+    if (canonicalCity(words.slice(i).join(" ")) === requested)
       return words.slice(0, i).join(" ");
   }
   return query;
@@ -132,7 +139,7 @@ export async function geocode(env, query, rawScope) {
       ? coordinates(scope)
       : null;
   const streetQuery = city ? withoutCity(q, city) : q,
-    scopedQuery = city && streetQuery === q ? q + ", " + city : q;
+    scopedQuery = city ? streetQuery + ", " + city : q;
   const key =
     "geocode-v3:" +
     env.GEOCODER_URL +
@@ -204,10 +211,10 @@ export async function geocode(env, query, rawScope) {
             if (!street || !locationCity) return null;
             // City metadata can identify a district/municipality rather than the
             // metropolitan city. Check its administrative parents as well.
-            const requested = fold(city || "");
+            const requested = canonicalCity(city || "");
             const cityMatches = (name) => {
               if (typeof name !== "string") return false;
-              const value = fold(name);
+              const value = canonicalCity(name);
               return (
                 value === requested ||
                 value.endsWith(" " + requested) ||

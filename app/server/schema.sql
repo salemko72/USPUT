@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
  p256dh TEXT NOT NULL,
  auth TEXT NOT NULL,
  language TEXT NOT NULL DEFAULT 'bhs' CHECK(language IN ('bhs','en')),
+ display_language TEXT NOT NULL DEFAULT '' CHECK(display_language IN ('','bhs','en','hr','sr-Latn')),
  created_at INTEGER NOT NULL,
  updated_at INTEGER NOT NULL
 );
