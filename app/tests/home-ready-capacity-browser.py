@@ -258,9 +258,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 d.get_by_role('button', name='Objavi vožnju', exact=True).click()
                 dialog = d.get_by_role('dialog', name='Je li ovo ruta kojom stvarno voziš?')
                 dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
-                with d.expect_response(lambda r: r.url.endswith('/api/routes/preview')) as recalculated:
-                    dialog.get_by_role('button', name='Proračunaj trasu s ovim tačkama', exact=True).click()
-                assert recalculated.value.ok, recalculated.value.text()
+                expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
                 dialog.locator('.stop-confirmation input').check()
                 with d.expect_response(lambda r: r.url.endswith('/api/rides') and r.request.method == 'POST') as published:
                     dialog.get_by_role('button', name='Vozim ovom trasom — objavi', exact=True).click()

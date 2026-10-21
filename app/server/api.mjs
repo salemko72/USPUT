@@ -636,7 +636,9 @@ export async function handleApi(request, env) {
       const from = normalizeLocation(body.fromLocation) || getPlace(body.from),
         to = normalizeLocation(body.toLocation) || getPlace(body.to);
       if (!from || !to) fail(400, "Potvrdi polazište i odredište.");
-      await rateLimit(db, "route-preview:" + user.id, 20);
+      // Automatic point/text edits need more headroom than manual calculation.
+      // Unchanged coordinates reuse the routing cache; the user budget remains bounded.
+      await rateLimit(db, "route-preview:" + user.id, 120);
       if (body.meetingStops) {
         try {
           return json(

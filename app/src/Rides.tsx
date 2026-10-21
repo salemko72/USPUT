@@ -2,6 +2,7 @@ import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
+import { RideVehiclePhoto } from "./RideVehiclePhoto";
 import { MeetingFeedback } from "./MeetingFeedback";
 import "./driver-request-status.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -495,7 +496,9 @@ export function RideDetails({
               </span>
               <div>
                 <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
-                <p>{displayVehicleLabel(ride.car)}</p>
+                {(!confirmed || own || inactive || finished) && (
+                  <p>{displayVehicleLabel(ride.car)}</p>
+                )}
               </div>
               {driverRequestState === "pending" && (
                 <span
@@ -533,6 +536,19 @@ export function RideDetails({
                 </span>
               )}
             </div>
+            {confirmed && !own && !inactive && !finished && (
+              <div className="ride-vehicle-recognition">
+                <RideVehiclePhoto
+                  ride={ride}
+                  viewerId={user.id}
+                  bookingStatus={booking?.status}
+                />
+                <div>
+                  <small>{t("Auto koji dolazi")}</small>
+                  <strong>{displayVehicleLabel(ride.car)}</strong>
+                </div>
+              </div>
+            )}
             <RouteLine from={ride.from.name} to={ride.to.name} />
             {ride.meetingStops && (
               <details className="published-meeting-stops">
@@ -668,6 +684,7 @@ export function RideDetails({
               ownDriver={own}
               vehicleLabel={ride.car}
               phase={booking?.status || requests.map((b) => b.status).join(",")}
+              showVehicle={false}
             />
           )}
           <ErrorBox error={error} />
@@ -1042,31 +1059,46 @@ export function Trips({
         bookings.length ? (
           <div className="trip-grid">
             {bookings.map((b) => (
-              <button
-                className="trip-card"
-                key={b.id}
-                onClick={() => onRide(b.ride.id)}
-              >
-                <div className="trip-card-top">
-                  <span className={"status status-" + b.status}>
-                    {t(statusText[b.status])}
-                  </span>
-                  <ArrowUpRight size={20} />
-                </div>
-                <h2>
-                  {dateLabel(b.ride.date)} <span>{b.ride.time}</span>
-                </h2>
-                <RouteLine from={b.ride.from.name} to={b.ride.to.name} />
+              <article className="trip-card passenger-trip" key={b.id}>
+                <button
+                  type="button"
+                  className="trip-card-main-action"
+                  onClick={() => onRide(b.ride.id)}
+                >
+                  <div className="trip-card-top">
+                    <span className={"status status-" + b.status}>
+                      {t(statusText[b.status])}
+                    </span>
+                    <ArrowUpRight size={20} />
+                  </div>
+                  <h2>
+                    {dateLabel(b.ride.date)} <span>{b.ride.time}</span>
+                  </h2>
+                  <RouteLine from={b.ride.from.name} to={b.ride.to.name} />
+                </button>
                 <div className="trip-person">
-                  <Avatar
-                    userId={b.ride.driver.id}
-                    size="small"
-                    name={b.ride.driver.name}
+                  <button
+                    type="button"
+                    className="trip-driver"
+                    onClick={() => onRide(b.ride.id)}
+                  >
+                    <Avatar
+                      userId={b.ride.driver.id}
+                      size="small"
+                      name={b.ride.driver.name}
+                    />
+                    <span>
+                      <strong>{b.ride.driver.name}</strong>
+                      <small>{displayVehicleLabel(b.ride.car)}</small>
+                    </span>
+                  </button>
+                  <RideVehiclePhoto
+                    ride={b.ride}
+                    viewerId={user.id}
+                    bookingStatus={b.status}
                   />
-                  <span>{b.ride.driver.name}</span>
-                  <Car size={18} />
                 </div>
-              </button>
+              </article>
             ))}
           </div>
         ) : (

@@ -68,7 +68,6 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 dialog.get_by_text('Odaberi postojeće mjesto iz gradske baze',exact=True).click()
                 dialog.get_by_role('button',name='Fixture parking A Fixture entrance · parking',exact=True).click()
                 dialog.get_by_role('button',name='Fixture parking B Fixture entrance · parking',exact=True).click()
-                dialog.get_by_role('button',name='Proračunaj trasu s ovim tačkama',exact=True).click()
                 checkbox = dialog.locator('.stop-confirmation input')
                 expect(checkbox).to_be_enabled(); checkbox.check(); publish.click()
                 expect(d.get_by_role('heading',name='Tvoja vožnja.',exact=True)).to_be_visible()

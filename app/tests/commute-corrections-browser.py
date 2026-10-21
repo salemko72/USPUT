@@ -1,10 +1,11 @@
 """Date carry-over and driver/map regressions against an isolated local API.
 The street fixture and tile grid are synthetic; production accounts are never used.
 """
-import json, os, re, socket, subprocess, tempfile, time, unittest, uuid
+import json, mimetypes, os, re, socket, subprocess, tempfile, time, unittest, uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.request import urlopen
+from urllib.parse import unquote, urlparse
 from zoneinfo import ZoneInfo
 from playwright.sync_api import sync_playwright, expect
 from map_fixture import install_vector_map
@@ -37,6 +38,15 @@ class CommuteCorrections(unittest.TestCase):
         self.ctx=self.account('Tester')
         self.page=self.ctx.new_page();self.page.set_default_timeout(6000)
         self.errors=[];self.page.on('pageerror',lambda error:self.errors.append(error.stack))
+        if os.environ.get('USPUT_TEST_ASSETS_DIR'):
+            assets=Path(os.environ['USPUT_TEST_ASSETS_DIR']).resolve()
+            def serve_assets(route):
+                path=unquote(urlparse(route.request.url).path)
+                if path.startswith('/api/'):return route.continue_()
+                asset=(assets/path.lstrip('/')).resolve()
+                if not asset.is_relative_to(assets) or not asset.is_file():asset=assets/'index.html'
+                route.fulfill(path=str(asset),content_type=mimetypes.guess_type(asset)[0] or 'application/octet-stream')
+            self.page.route(self.base+'/**',serve_assets)
         self.map_levels=[]
         install_vector_map(self.page,lambda url:self.map_levels.append(int(url.split('/fixture/')[1].split('/')[0])))
         self.page.route('**/tile.openstreetmap.org/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
@@ -76,6 +86,7 @@ class CommuteCorrections(unittest.TestCase):
         expect(dialog).to_be_visible()
         expect(dialog.locator('canvas.maplibregl-canvas').first).to_be_visible()
         if edit:dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
+        expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
         return dialog
     def test_selected_tomorrow_survives_search_return_and_saved_route_load(self):
         driver=self.account('Driver')
@@ -145,7 +156,9 @@ class CommuteCorrections(unittest.TestCase):
         self.page.wait_for_function("!document.querySelector('.leaflet-container-wrap.leaflet-zoom-anim')")
         zoomed=level();self.assertGreater(zoomed,before)
         # The same road overlay must preserve zoom when only the stop name changes.
-        dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True).first.fill('Kod parkinga')
+        with self.page.expect_response(lambda r:r.url.endswith('/api/routes/preview')):
+            dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True).first.fill('Kod parkinga')
+        expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
         self.assertAlmostEqual(level(),zoomed,delta=2)
         map.scroll_into_view_if_needed();map.hover(position={'x':190,'y':145})
         prior=max(self.map_levels)

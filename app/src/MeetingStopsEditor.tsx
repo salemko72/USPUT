@@ -266,7 +266,7 @@ export function MeetingStopsEditor({
             <strong>{t("Mjesta iz baze u blizini trase")}</strong>
             <p>
               {t(
-                "Odaberi samo mjesta na kojima zaista možeš stati. Zatim ponovo proračunaj trasu.",
+                "Odaberi samo mjesta na kojima zaista možeš stati. Ruta se automatski preračunava.",
               )}
             </p>
             {suggestions.map(result)}

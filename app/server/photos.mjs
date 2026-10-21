@@ -169,7 +169,7 @@ async function ownPhotos(db, owner) {
 async function acceptedRide(db, rideId, userId) {
   return db
     .prepare(
-      "SELECT r.*,b.passenger_id FROM rides r JOIN bookings b ON b.ride_id=r.id WHERE r.id=? AND r.status='matched' AND b.status IN ('accepted','ready') AND r.departure>? AND (r.driver_id=? OR b.passenger_id=?)",
+      "SELECT r.*,b.passenger_id FROM rides r JOIN bookings b ON b.ride_id=r.id WHERE r.id=? AND r.status IN ('open','matched') AND b.status IN ('accepted','ready') AND r.departure>? AND (r.driver_id=? OR b.passenger_id=?)",
     )
     .bind(rideId, Date.now() - 86400000, userId, userId)
     .first();
@@ -179,7 +179,7 @@ async function allowedPeer(db, photo, userId) {
   const rows = (
     await db
       .prepare(
-        "SELECT r.*,b.passenger_id FROM rides r JOIN bookings b ON b.ride_id=r.id WHERE r.status='matched' AND b.status IN ('accepted','ready') AND r.departure>? AND ((r.driver_id=? AND b.passenger_id=?) OR (r.driver_id=? AND b.passenger_id=?))",
+        "SELECT r.*,b.passenger_id FROM rides r JOIN bookings b ON b.ride_id=r.id WHERE r.status IN ('open','matched') AND b.status IN ('accepted','ready') AND r.departure>? AND ((r.driver_id=? AND b.passenger_id=?) OR (r.driver_id=? AND b.passenger_id=?))",
       )
       .bind(
         Date.now() - 86400000,

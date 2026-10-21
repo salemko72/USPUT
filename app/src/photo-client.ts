@@ -235,8 +235,11 @@ export async function removePhoto(kind: PhotoKind, demo: boolean) {
   delete p[kind];
   localStorage.setItem(DEMO_KEY, JSON.stringify(p));
 }
-export async function getRidePhotos(id: string): Promise<RidePhotos> {
-  return json("/photos/ride/" + id);
+export async function getRidePhotos(
+  id: string,
+  signal?: AbortSignal,
+): Promise<RidePhotos> {
+  return json("/photos/ride/" + id, { signal });
 }
 export function getDemoRidePhotos(
   driver: boolean,

@@ -1,0 +1,126 @@
+.ride-vehicle-thumb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 2px solid #e5ebd9;
+  border-radius: 50%;
+  background: #f5f6f0;
+  color: var(--ink);
+}
+button.ride-vehicle-thumb:hover,
+button.ride-vehicle-thumb:focus-visible {
+  border-color: #9bbb4b;
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+}
+.ride-vehicle-thumb img {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.ride-vehicle-thumb.is-empty {
+  color: #6f7b63;
+  border-style: dashed;
+}
+.vehicle-thumb-zoom {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--lime);
+}
+.trip-person > .ride-vehicle-thumb {
+  margin-left: auto;
+}
+.trip-driver {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+.trip-driver > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.trip-driver strong,
+.trip-driver small {
+  display: block;
+}
+.trip-driver strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+.trip-driver small {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #768169;
+}
+.ride-vehicle-recognition {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 18px 0;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+}
+.ride-vehicle-recognition > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ride-vehicle-recognition small,
+.ride-vehicle-recognition strong {
+  display: block;
+}
+.ride-vehicle-recognition small {
+  margin-bottom: 4px;
+  font-size: 10px;
+  color: #768169;
+}
+.ride-vehicle-recognition strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+.vehicle-photo-caption {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+.upcoming-ride-driver {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.upcoming-ride-driver > div {
+  min-width: 0;
+}
+.upcoming-ride-driver > div > span,
+.upcoming-ride-driver > div > strong {
+  display: block;
+}
+.upcoming-ride-driver strong {
+  margin-top: 4px;
+  color: #d9dfd0;
+  font-size: 12px;
+  font-weight: 800;
+}

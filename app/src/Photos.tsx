@@ -275,12 +275,14 @@ export function ConnectionPhotos({
   ownDriver,
   vehicleLabel,
   phase,
+  showVehicle = true,
 }: {
   rideId: string;
   demo: boolean;
   ownDriver: boolean;
   vehicleLabel: string;
   phase: string;
+  showVehicle?: boolean;
 }) {
   const [photos, setPhotos] = useState<RidePhotos | null>(null),
     [zoom, setZoom] = useState<PhotoMeta | null>(null);
@@ -337,7 +339,8 @@ export function ConnectionPhotos({
           </p>
         </div>
       </div>
-      {!ownDriver &&
+      {showVehicle &&
+        !ownDriver &&
         (photos.vehicle ? (
           <button
             className="recognition-car"

@@ -131,6 +131,55 @@ function ride() {
     note: "Bez pušenja",
   };
 }
+test("automatic route edits have room for repeated previews within a bounded user budget", async () => {
+  let providerCalls = 0;
+  env.ROUTING_FETCH = (...args) => {
+    providerCalls++;
+    return routeFixture(...args);
+  };
+  const driver = await signup("Driver", "auto-preview-budget@example.test");
+  const offer = ride();
+  const stops = [getPlace(offer.from), getPlace(offer.to)];
+  for (let edit = 0; edit < 30; edit++) {
+    const result = await call(
+      "/routes/preview",
+      {
+        ...offer,
+        meetingStops: stops.map((point, index) => ({
+          ...point,
+          name: `${point.name} ${edit + index}`,
+        })),
+      },
+      driver.cookie,
+    );
+    assert.equal(
+      result.status,
+      200,
+      `Edit ${edit + 1}: ${JSON.stringify(result.data)}`,
+    );
+    assert.ok(result.data.previewToken);
+  }
+  const bucket = sqlite
+    .prepare("SELECT id FROM rate_limits WHERE count=30")
+    .get();
+  assert.ok(bucket);
+  assert.equal(
+    providerCalls,
+    1,
+    "Text edits must reuse the cached route geometry",
+  );
+  sqlite.prepare("UPDATE rate_limits SET count=120 WHERE id=?").run(bucket.id);
+  assert.equal(
+    (
+      await call(
+        "/routes/preview",
+        { ...offer, meetingStops: stops },
+        driver.cookie,
+      )
+    ).status,
+    429,
+  );
+});
 test("accepted booking creates a global owner-only notification with one atomic popup claim", async () => {
   const driver = await signup("Driver", "driver-notify@example.test"),
     passenger = await signup();
@@ -866,6 +915,76 @@ test("photo access starts only after driver acceptance and is revoked on cancell
   await call(`/bookings/${b.data.booking.id}/cancel`, {}, passenger.cookie);
   assert.equal(
     (await imageGet(photo.data.photo.id, passenger.cookie)).status,
+    404,
+  );
+});
+test("multi-seat photo access follows each accepted passenger while the offer remains open", async () => {
+  env.PHOTOS = photoStore();
+  const driver = await signup("Driver", "photo-driver@example.test"),
+    first = await signup("First", "photo-first@example.test"),
+    second = await signup("Second", "photo-second@example.test"),
+    pending = await signup("Pending", "photo-pending@example.test"),
+    outsider = await signup("Other", "photo-other@example.test");
+  const vehicle = await call(
+    "/vehicle",
+    {
+      makeId: "volkswagen",
+      model: "Golf",
+      color: "crvena",
+    },
+    driver.cookie,
+  );
+  const photo = await upload("vehicle", driver.cookie, webpFixture(800, 600));
+  const offer = await publish(
+    { ...ride(), seats: 3, vehicleId: vehicle.data.vehicle.id },
+    driver.cookie,
+  );
+  const id = offer.data.ride.id;
+  const a = await requestRide(id, first.cookie),
+    b = await requestRide(id, second.cookie);
+  await requestRide(id, pending.cookie);
+  await call(`/bookings/${a.data.booking.id}/accept`, {}, driver.cookie);
+  await call(`/bookings/${b.data.booking.id}/accept`, {}, driver.cookie);
+  assert.equal(
+    sqlite.prepare("SELECT status FROM rides WHERE id=?").get(id).status,
+    "open",
+  );
+  for (const owner of [driver, first, second]) {
+    const result = await call(`/photos/ride/${id}`, null, owner.cookie);
+    assert.equal(result.status, 200);
+    assert.equal(result.data.vehicle.id, photo.data.photo.id);
+    assert.equal(
+      (await imageGet(photo.data.photo.id, owner.cookie)).status,
+      200,
+    );
+  }
+  for (const denied of [pending, outsider]) {
+    assert.equal(
+      (await call(`/photos/ride/${id}`, null, denied.cookie)).status,
+      404,
+    );
+    assert.equal(
+      (await imageGet(photo.data.photo.id, denied.cookie)).status,
+      404,
+    );
+  }
+  await call(`/bookings/${a.data.booking.id}/cancel`, {}, first.cookie);
+  assert.equal(
+    (await call(`/photos/ride/${id}`, null, first.cookie)).status,
+    404,
+  );
+  assert.equal((await imageGet(photo.data.photo.id, first.cookie)).status, 404);
+  assert.equal(
+    (await imageGet(photo.data.photo.id, second.cookie)).status,
+    200,
+  );
+  await call(`/bookings/${b.data.booking.id}/complete`, {}, driver.cookie);
+  assert.equal(
+    (await call(`/photos/ride/${id}`, null, second.cookie)).status,
+    404,
+  );
+  assert.equal(
+    (await imageGet(photo.data.photo.id, second.cookie)).status,
     404,
   );
 });

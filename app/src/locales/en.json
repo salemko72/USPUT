@@ -828,5 +828,9 @@
   "Uredi mjesta susreta": "Edit meeting points",
   "Više mape": "More map",
   "Pregledaj i potvrdi rutu": "Review and confirm route",
-  "Dodatne postavke": "More settings"
+  "Dodatne postavke": "More settings",
+  "Auto koji dolazi": "Car to look for",
+  "Fotografija automobila nije dostupna.": "Car photo is not available.",
+  "Odaberi samo mjesta na kojima zaista možeš stati. Ruta se automatski preračunava.": "Choose only places where you can actually stop. The route recalculates automatically.",
+  "Preračunavam trasu kroz odabrana mjesta susreta…": "Recalculating the route through your meeting points…"
 }

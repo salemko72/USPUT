@@ -4,6 +4,8 @@ import { t } from "./i18n";
 import { dateLabel } from "./types";
 import type { Booking, Service, User } from "./types";
 import { Button, ErrorBox } from "./ui";
+import { RideVehiclePhoto } from "./RideVehiclePhoto";
+import { displayVehicleLabel } from "./VehicleManager";
 import "./upcoming-ride.css";
 
 export function UpcomingRide({
@@ -109,9 +111,19 @@ export function UpcomingRide({
         <h2 id={headingId}>
           {ready ? t("Vozač zna da si tu.") : t("Javi da si na mjestu.")}
         </h2>
-        <p className="upcoming-ride-driver">
-          {t("Vozač: {name}", { name: upcoming.ride.driver.name })}
-        </p>
+        <div className="upcoming-ride-driver">
+          <RideVehiclePhoto
+            ride={upcoming.ride}
+            viewerId={user.id}
+            bookingStatus={upcoming.status}
+          />
+          <div>
+            <span>
+              {t("Vozač: {name}", { name: upcoming.ride.driver.name })}
+            </span>
+            <strong>{displayVehicleLabel(upcoming.ride.car)}</strong>
+          </div>
+        </div>
         <div className="upcoming-ride-pickup">
           <MapPin size={18} aria-hidden="true" />
           <div>
