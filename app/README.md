@@ -114,6 +114,17 @@ Na zahtjev vlasnika dodan je `Kerim (demo)`, izmišljeni profil bez lozinke i mo
 
 Reproduktivni SQL generator: `node scripts/seed-kerim.mjs /tmp/kerim.sql`. Generiše narednih godinu dana od sutra, koristi DST-aware `departureMs` i stabilne ID-eve; ponovno pokretanje ne duplira ponude niti resetuje postojeće dogovore. Generator nije javni API i ne mijenja ograničenje obične objave na 90 dana. SQL primjenjivati samo na izričito odabranu testnu beta bazu.
 
+Senad i Vesna imaju dodatne izmišljene ponude od 22.10.2026. do 21.10.2027, svaki dan u 07:30 po vremenu Sarajeva:
+
+- **Senad (demo)**: Aleja lipa → Obala Kulina bana, bijela Škoda Kamiq, preko demo tačke Skenderija.
+- **Vesna (demo)**: Ante Babića → Obala Kulina bana, zlatni MINI Cooper, preko demo tačaka Nedžarići, Čengić Vila i Skenderija.
+
+Generator `node scripts/seed-demo-drivers.mjs /tmp/usput-demo.sql [YYYY-MM-DD]` pravi SQL bez izvršavanja; datum je opcionalni današnji Sarajevo datum. Ulični pinovi su provjereni preko OSM/Nominatim, a trase i vremena između imenovanih tačaka preko cestovnog servisa. `ensureDemoMeetingStops` dopunjava samo otvorene demo ponude bez postojeće rezervacije. Testne tačke nemaju javni catalogue ID i ne pune gradsku bazu niti povratne ocjene. Približan pin ne potvrđuje da se tu smije stati.
+
+Prijavljeni putnik koji je poslao zahtjev na jednu od ove tri demo ponude vidi **„Simuliraj prihvatanje“**. `POST /api/bookings/:id/simulate-accept` provjerava vlasnika zahtjeva i tačan spoj unaprijed zadanog vozača/ID-a ponude; oznaka u opisu nije dovoljna. Koristi istu atomsku potvrdu jednog mjesta kao vozačevo prihvatanje i odbija ostale zahtjeve. Nema automatskog prihvatanja ni simulacije stvarnih ponuda. Prihvaćenu demo vožnju putnik može otkazati uobičajenim dugmetom da ponovo oslobodi mjesto.
+
+Prsten oko slike i statusni kvadrat prate stvarno stanje rezervacije: čekanje rotira, prihvaćen/spreman zahtjev dobija zeleni puls i palac gore. Otkazani, odbijeni i završeni dogovori nemaju taj status. BHS/ENG i smanjene animacije su podržani. Provjere: `npm test` i, nakon builda, `python tests/driver-request-status-browser.py`; browser koristi privremenu lokalnu bazu i sintetički servis ruta, bez produkcijskih naloga.
+
 ## Dijeljenje troškova
 
 Pri objavi vozač može uključiti „Očekujem dijeljenje troškova”. Checkbox je podrazumijevano isključen; postojeće ponude, uključujući Kerimove testne vožnje, imaju `false`. API prihvata samo boolean i čuva flag uz ponudu (`rides.cost_sharing`, migracija `0005_cost_sharing.sql`). Putnik vidi Da/Ne na kartici i detaljima u BHS/ENG. Dogovor o iznosu i načinu podjele je izvan aplikacije; USPUT ovim dodatkom ne obračunava i ne provodi plaćanje. Globalne tvrdnje da su sve vožnje besplatne uklonjene su iz interfejsa.

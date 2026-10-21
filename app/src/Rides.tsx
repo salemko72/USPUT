@@ -3,11 +3,13 @@ import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
 import { MeetingFeedback } from "./MeetingFeedback";
+import "./driver-request-status.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Clock3,
   Mail,
+  ThumbsUp,
   Car,
   UserRound,
   MapPin,
@@ -385,6 +387,14 @@ export function RideDetails({
       ride.status === "cancelled" ||
       booking?.status === "cancelled" ||
       booking?.status === "declined";
+  const driverRequestState =
+    !own && !inactive && !finished
+      ? booking?.status === "pending"
+        ? "pending"
+        : confirmed
+          ? "accepted"
+          : undefined
+      : undefined;
   const agreed =
     booking?.match ||
     (own
@@ -455,29 +465,47 @@ export function RideDetails({
         <div className="details-info">
           <section className="driver-card">
             <div className="driver-heading">
-              <Avatar userId={ride.driver.id} name={ride.driver.name} />
+              <span
+                className="driver-request-avatar"
+                data-request-state={driverRequestState}
+              >
+                <Avatar userId={ride.driver.id} name={ride.driver.name} />
+              </span>
               <div>
                 <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
                 <p>{displayVehicleLabel(ride.car)}</p>
               </div>
-              {!own &&
-                booking?.status === "pending" &&
-                !inactive &&
-                !finished && (
-                  <span
-                    className="request-sent-indicator"
-                    role="status"
-                    aria-label={t("Zahtjev poslan — čeka se odgovor vozača.")}
-                  >
-                    <span className="request-sent-symbol" aria-hidden="true">
-                      <Mail size={22} strokeWidth={2} />
-                    </span>
-                    <span className="request-sent-caption" aria-hidden="true">
-                      {t("Zahtjev je\nposlan")}
-                    </span>
+              {driverRequestState === "pending" && (
+                <span
+                  className="request-sent-indicator"
+                  role="status"
+                  aria-label={t("Zahtjev poslan — čeka se odgovor vozača.")}
+                >
+                  <span className="request-sent-symbol" aria-hidden="true">
+                    <Mail size={22} strokeWidth={2} />
                   </span>
-                )}
-              {(confirmed || finished) && (
+                  <span className="request-sent-caption" aria-hidden="true">
+                    {t("Zahtjev je\nposlan")}
+                  </span>
+                </span>
+              )}
+              {driverRequestState === "accepted" && (
+                <span
+                  className="request-accepted-indicator"
+                  role="status"
+                  aria-label={t(
+                    "Zahtjev prihvaćen — vozač je potvrdio vožnju.",
+                  )}
+                >
+                  <span className="request-accepted-symbol" aria-hidden="true">
+                    <ThumbsUp size={22} strokeWidth={2} />
+                  </span>
+                  <span className="request-accepted-caption" aria-hidden="true">
+                    {t("Zahtjev\nprihvaćen")}
+                  </span>
+                </span>
+              )}
+              {own && finished && (
                 <span className="confirmed-icon">
                   <Check size={24} />
                 </span>
@@ -798,20 +826,25 @@ export function RideDetails({
                   " Čekamo potvrdu vozača. Ovo još nije dogovorena vožnja — imaj rezervni plan. ",
                 )}
               </p>
-              {demo && (
+              {(demo || ride.demo) && (
                 <div className="demo-simulation">
                   <span>{t("DEMO · ISPROBAJ SLJEDEĆI KORAK")}</span>
+                  <p>{t("Samo demo vožnja — izmišljeni vozač.")}</p>
                   <Button
                     variant="lime"
                     busy={busy}
                     onClick={() =>
                       action(
-                        () => service.booking(booking.id, "accept"),
+                        () =>
+                          service.booking(
+                            booking.id,
+                            ride.demo ? "simulate-accept" : "accept",
+                          ),
                         t("Demo: vozač je potvrdio zahtjev."),
                       )
                     }
                   >
-                    {t(" Simuliraj potvrdu vozača ")}
+                    {t(" Simuliraj prihvatanje ")}
                   </Button>
                 </div>
               )}

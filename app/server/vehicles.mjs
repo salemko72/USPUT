@@ -4,6 +4,7 @@ export const colors = [
   { id: "bijela", name: "Bijela", hex: "#fafafa" },
   { id: "siva", name: "Siva", hex: "#858b8b" },
   { id: "srebrna", name: "Srebrna", hex: "#c8cdd0" },
+  { id: "zlatna", name: "Zlatna", hex: "#c5a45b" },
   { id: "plava", name: "Plava", hex: "#3f6ca3" },
   { id: "crvena", name: "Crvena", hex: "#b94743" },
   { id: "zelena", name: "Zelena", hex: "#4e755b" },

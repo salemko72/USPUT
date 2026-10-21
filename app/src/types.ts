@@ -50,6 +50,7 @@ export type RouteMatch = {
   score: number;
 };
 export type Ride = {
+  demo?: boolean;
   routingUnavailable?: boolean;
   match?: RouteMatch | null;
   id: string;

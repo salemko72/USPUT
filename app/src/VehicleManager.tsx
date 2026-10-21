@@ -19,6 +19,7 @@ const colors = [
   ["bijela", "Bijela", "#fafafa"],
   ["siva", "Siva", "#858b8b"],
   ["srebrna", "Srebrna", "#c8cdd0"],
+  ["zlatna", "Zlatna", "#c5a45b"],
   ["plava", "Plava", "#3f6ca3"],
   ["crvena", "Crvena", "#b94743"],
   ["zelena", "Zelena", "#4e755b"],

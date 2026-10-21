@@ -1,0 +1,91 @@
+.driver-request-avatar {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  isolation: isolate;
+}
+
+.driver-request-avatar[data-request-state]::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 3px solid #d7f56a;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.driver-request-avatar[data-request-state="pending"]::before {
+  border-top-color: #151815;
+  border-right-color: #151815;
+  animation: driver-request-wait 1.8s linear infinite;
+}
+
+.driver-request-avatar[data-request-state="accepted"]::before {
+  animation: driver-request-accepted 2.8s ease-in-out infinite;
+}
+
+.driver-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+.request-accepted-indicator {
+  margin-left: auto;
+  flex: 0 0 62px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.request-accepted-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  background: #151815;
+  color: #d7f56a;
+}
+
+.request-accepted-caption {
+  white-space: pre;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #151815;
+}
+
+/* The avatar carries the waiting motion; keep the sent tile clear and still. */
+.driver-heading .request-sent-symbol::before {
+  display: none;
+}
+
+.driver-heading .request-sent-symbol svg {
+  animation: none;
+}
+
+@keyframes driver-request-wait {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes driver-request-accepted {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 #d7f56a60;
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 5px #d7f56a15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-request-avatar[data-request-state]::before {
+    animation: none;
+  }
+}

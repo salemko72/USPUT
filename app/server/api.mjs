@@ -1,4 +1,5 @@
 import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
+import { demoDriverForRide } from "./demo-drivers.mjs";
 import {
   proposeMeetingStops,
   previewMeetingRoute,
@@ -148,6 +149,7 @@ async function linkGoogle(db, user, subject, retireLegacyCredentials = false) {
 }
 const rideView = (r) => ({
   id: r.id,
+  demo: !!demoDriverForRide(r),
   from: r.from_json ? JSON.parse(r.from_json) : getPlace(r.from_id),
   to: r.to_json ? JSON.parse(r.to_json) : getPlace(r.to_id),
   date: r.date,
@@ -1099,16 +1101,27 @@ export async function handleApi(request, env) {
       }
     }
     const bm = path.match(
-      /^\/bookings\/([^/]+)\/(accept|decline|ready|complete|cancel)$/,
+      /^\/bookings\/([^/]+)\/(accept|simulate-accept|decline|ready|complete|cancel)$/,
     );
     if (bm && method === "POST") {
       const b = await readBooking(db, bm[1]);
       if (!b) fail(404, "Dogovor nije pronađen.");
-      const action = bm[2],
+      const simulation = bm[2] === "simulate-accept",
+        action = simulation ? "accept" : bm[2],
         isDriver = b.driver_id === user.id,
         isPassenger = b.passenger_id === user.id;
       if (!isDriver && !isPassenger) fail(403, "Ovaj dogovor nije tvoj.");
-      if (["accept", "decline", "complete"].includes(action) && !isDriver)
+      if (
+        simulation &&
+        (!isPassenger ||
+          !demoDriverForRide({ id: b.ride_id, driver_id: b.driver_id }))
+      )
+        fail(403, "Simulacija je dostupna samo putniku te demo vožnje.");
+      if (
+        ["accept", "decline", "complete"].includes(action) &&
+        !isDriver &&
+        !simulation
+      )
         fail(403, "Ovu radnju potvrđuje vozač.");
       if (action === "ready" && !isPassenger)
         fail(403, "Spremnost potvrđuje putnik.");
