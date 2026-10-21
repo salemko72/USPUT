@@ -51,6 +51,10 @@ test("walking limit uses foot route time, not only a straight radius; reverse se
       from: point("a", 0, 0),
       to: point("b", 0.03, 0),
       departure: Date.now() + 86400000,
+      meetingStops: [
+        { ...point("pickup", 0.01, 0), stopId: "pickup", travelSeconds: 200 },
+        { ...point("exit", 0.02, 0), stopId: "exit", travelSeconds: 400 },
+      ],
       route: { coordinates: road, duration: 600, distance: 3335 },
     };
   env.ROUTING_FETCH = async (input) => {
@@ -86,7 +90,13 @@ test("walking limit uses foot route time, not only a straight radius; reverse se
   assert.ok(match && !match.unavailable);
   assert.equal(match.walkToMinutes, 7);
   assert.equal(match.walkingLimit, 10);
-  assert.equal(await corridorMatch(env, ride, end, start, wanted, 15), null);
+  assert.equal(
+    await corridorMatch(env, ride, end, start, wanted, 15, {
+      pickupStopId: "exit",
+      dropoffStopId: "pickup",
+    }),
+    null,
+  );
   sqlite.close();
 });
 test("confirmed street location validates coordinates and derives its ID instead of trusting client identifier", () => {

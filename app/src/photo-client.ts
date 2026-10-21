@@ -12,6 +12,16 @@ export type OwnPhotos = {
   vehicle: PhotoMeta | null;
   available: boolean;
 };
+const ownAvatarListeners = new Set<() => void>();
+export function subscribeToOwnAvatarChanges(listener: () => void): () => void {
+  ownAvatarListeners.add(listener);
+  return () => {
+    ownAvatarListeners.delete(listener);
+  };
+}
+function notifyOwnAvatarChange(kind: PhotoKind) {
+  if (kind === "avatar") for (const listener of ownAvatarListeners) listener();
+}
 export type RidePhotos = {
   driverAvatar: PhotoMeta | null;
   passengerAvatar: PhotoMeta | null;
@@ -173,14 +183,17 @@ export async function savePhoto(
   demo: boolean,
   vehicleLabel = "",
 ): Promise<PhotoMeta> {
-  if (!demo)
-    return (
+  if (!demo) {
+    const photo = (
       await json<{ photo: PhotoMeta }>("/photos/" + kind, {
         method: "POST",
         headers: { "Content-Type": "image/webp" },
         body: blob,
       })
     ).photo;
+    notifyOwnAvatarChange(kind);
+    return photo;
+  }
   const url = await new Promise<string>((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
@@ -215,6 +228,7 @@ export async function removePhoto(kind: PhotoKind, demo: boolean) {
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
+    notifyOwnAvatarChange(kind);
     return;
   }
   const p = demoLoad();

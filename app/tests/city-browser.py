@@ -8,7 +8,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='Krenimo zajedno',exact=True).click();page.get_by_role('button',name='Napravi račun',exact=True).click()
  page.get_by_label('Tvoje ime',exact=True).fill('City Test');page.get_by_label('Email adresa',exact=True).fill(str(time.time_ns())+'@example.test');page.get_by_label('Lozinka',exact=True).fill('testna-lozinka-123');page.locator('input[name="adult"]').check();page.locator('input[name="terms"]').check()
  page.get_by_role('button',name='Napravi račun',exact=True).click();expect(page.get_by_label('Grad ili mjesto',exact=True)).to_be_visible()
- page.get_by_label('Grad ili mjesto',exact=True).fill('Zagreb');page.get_by_role('button',name='Napravi račun',exact=True).click();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('Zagreb')
+ page.get_by_label('Grad ili mjesto',exact=True).fill('Zagreb');page.get_by_role('button',name='Napravi račun',exact=True).click();page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('Zagreb')
  assert 'geolocation=()' in ctx.request.get(base).headers['permissions-policy']
  expect(page.get_by_role('button',name='Koristi moju lokaciju',exact=True)).to_have_count(0)
  page.get_by_label('Grad za pretragu ulica').fill('Sarajevo')
@@ -23,7 +23,7 @@ with sync_playwright() as p:
  # Old accounts and initial routes stay empty until the user enters a location.
  def old_account(route):
   response=route.fetch();data=response.json();data['user']['city']='';route.fulfill(response=response,json=data)
- page.route('**/api/auth/me',old_account);page.reload();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('');expect(page.get_by_role('textbox',name='Polazište',exact=True)).to_have_value('');expect(page.get_by_role('textbox',name='Odredište',exact=True)).to_have_value('')
+ page.route('**/api/auth/me',old_account);page.reload();page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click();expect(page.get_by_label('Grad za pretragu ulica')).to_have_value('');expect(page.get_by_role('textbox',name='Polazište',exact=True)).to_have_value('');expect(page.get_by_role('textbox',name='Odredište',exact=True)).to_have_value('')
  # A complete street + city can also be searched with an empty city field.
  page.get_by_label('Grad za pretragu ulica').fill('');page.get_by_role('textbox',name='Polazište',exact=True).fill('Put, Sarajevo')
  with page.expect_response('**/api/locations/search') as search:

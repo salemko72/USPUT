@@ -2,7 +2,8 @@ import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
-import { useCallback, useEffect, useState } from "react";
+import { MeetingFeedback } from "./MeetingFeedback";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Clock3,
@@ -63,13 +64,13 @@ function MatchSummary({ match }: { match: RouteMatch }) {
     <div className="route-match-summary">
       <strong>
         {t(" Susret: ")}
-        {t(match.pickup.name)}
+        {match.pickup.name}
         {t(" · oko ")}
         {pickupTime(match.pickupAt)}
       </strong>
       <span>
         {t("Izlazak: ")}
-        {t(match.dropoff.name)}
+        {match.dropoff.name}
       </span>
       <span>
         {t(" Vozaču +")}
@@ -109,7 +110,7 @@ export function RideCard({
     <article className={`ride-card ${selected ? "selected" : ""}`}>
       {selected && <span className="ride-tag">{t("Tvoj smjer")}</span>}
       <div className="ride-card-main">
-        <Avatar name={ride.driver.name} />
+        <Avatar userId={ride.driver.id} name={ride.driver.name} />
         <div className="ride-person">
           <strong>{ride.driver.name}</strong>
           <span className="ride-time">
@@ -313,6 +314,16 @@ export function RideDetails({
   onTrips: () => void;
   onToast: (s: string) => void;
 }) {
+  const [stopSelection, setStopSelection] = useState<{
+    pickupStopId?: string;
+    dropoffStopId?: string;
+  }>({});
+  const selectedQuery = useMemo(
+    () => (query ? { ...query, ...stopSelection } : undefined),
+    [query, stopSelection],
+  );
+  const loadVersion = useRef(0);
+  const [matchBusy, setMatchBusy] = useState(false);
   const [ride, setRide] = useState<Ride | null>(null),
     [booking, setBooking] = useState<Booking | undefined>(),
     [requests, setRequests] = useState<Booking[]>([]),
@@ -320,21 +331,29 @@ export function RideDetails({
     [busy, setBusy] = useState(false),
     [cancel, setCancel] = useState(false);
   const load = useCallback(async () => {
-    const [r, m] = await Promise.all([service.ride(id, query), service.mine()]);
+    const version = ++loadVersion.current;
+    const [r, m] = await Promise.all([
+      service.ride(id, selectedQuery),
+      service.mine(),
+    ]);
+    if (version !== loadVersion.current) return;
     setRide(r);
     setBooking(
       m.bookings.find((b) => b.ride.id === id && b.passenger.id === user.id),
     );
     setRequests(m.bookings.filter((b) => b.ride.id === id));
-  }, [id, service, user.id, query?.from, query?.to, query?.date, query?.time]);
+    setMatchBusy(false);
+  }, [id, service, user.id, selectedQuery]);
   useEffect(() => {
     let alive = true;
     load().catch((e) => {
       if (alive) setError(e.message);
+      if (alive) setMatchBusy(false);
     });
     const interval = setInterval(() => load().catch(() => {}), 15000);
     return () => {
       alive = false;
+      loadVersion.current++;
       clearInterval(interval);
     };
   }, [load]);
@@ -414,6 +433,7 @@ export function RideDetails({
             to={dropoff}
             geometry={agreed?.geometry || ride.geometry}
             provider={agreed?.provider || ride.routeProvider}
+            stops={ride.meetingStops}
             large
           />
           <div className="meeting-label">
@@ -421,7 +441,7 @@ export function RideDetails({
             <div>
               <span>{t("MJESTO SUSRETA")}</span>
               <strong>{pickup.name}</strong>
-              <p>{t(pickup.detail)}</p>
+              <p>{pickup.detail}</p>
             </div>
           </div>
           <p className="fine-print">
@@ -435,7 +455,7 @@ export function RideDetails({
         <div className="details-info">
           <section className="driver-card">
             <div className="driver-heading">
-              <Avatar name={ride.driver.name} />
+              <Avatar userId={ride.driver.id} name={ride.driver.name} />
               <div>
                 <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
                 <p>{displayVehicleLabel(ride.car)}</p>
@@ -464,6 +484,104 @@ export function RideDetails({
               )}
             </div>
             <RouteLine from={ride.from.name} to={ride.to.name} />
+            {ride.meetingStops && (
+              <details className="published-meeting-stops">
+                <summary>{t("Vozačeva mjesta ulaska i izlaska")}</summary>
+                <ol>
+                  {ride.meetingStops.map((p) => (
+                    <li key={p.stopId}>
+                      <strong>{p.name}</strong>
+                      {p.approach && <small>{p.approach}</small>}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+            {!own &&
+              !booking &&
+              selectedQuery &&
+              ride.meetingStops &&
+              ride.meetingStops.length >= 2 && (
+                <div className="meeting-stop-choices">
+                  <label>
+                    {t("Gdje ulaziš?")}
+                    <select
+                      value={
+                        stopSelection.pickupStopId ||
+                        agreed?.pickup.stopId ||
+                        ""
+                      }
+                      onChange={(e) => {
+                        setMatchBusy(true);
+                        setRide((current) =>
+                          current ? { ...current, match: null } : current,
+                        );
+                        setStopSelection({
+                          ...stopSelection,
+                          pickupStopId: e.target.value,
+                        });
+                      }}
+                    >
+                      <option value="">
+                        {t("Najbliža odgovarajuća tačka")}
+                      </option>
+                      {ride.meetingStops.slice(0, -1).map((p) => (
+                        <option key={p.stopId} value={p.stopId}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    {t("Gdje izlaziš?")}
+                    <select
+                      value={
+                        stopSelection.dropoffStopId ||
+                        agreed?.dropoff.stopId ||
+                        ""
+                      }
+                      onChange={(e) => {
+                        setMatchBusy(true);
+                        setRide((current) =>
+                          current ? { ...current, match: null } : current,
+                        );
+                        setStopSelection({
+                          ...stopSelection,
+                          dropoffStopId: e.target.value,
+                        });
+                      }}
+                    >
+                      <option value="">
+                        {t("Najbliža odgovarajuća tačka")}
+                      </option>
+                      {ride.meetingStops.slice(1).map((p) => (
+                        <option key={p.stopId} value={p.stopId}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p>
+                    {t(
+                      "Vozač staje na svojim potvrđenim tačkama. Tvoj polazni pin služi za računanje hodanja.",
+                    )}
+                  </p>
+                  {matchBusy && (
+                    <p role="status">
+                      {t("Provjeravamo hodanje do odabranih tačaka…")}
+                    </p>
+                  )}
+                  {!matchBusy && !ride.match && (
+                    <ErrorBox
+                      error={t(
+                        ride.routingUnavailable
+                          ? "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu."
+                          : "Odabrane tačke ne uklapaju se u vrijeme ili dozvoljeno hodanje. Promijeni izbor ili pretragu.",
+                      )}
+                    />
+                  )}
+                </div>
+              )}
             {agreed && <MatchSummary match={agreed} />}
             <div className="ride-facts">
               <span>
@@ -482,6 +600,13 @@ export function RideDetails({
             </div>
             {ride.note && <p className="driver-note">“{ride.note}”</p>}
           </section>
+          {booking?.status === "completed" && (
+            <MeetingFeedback key={booking.id} booking={booking} />
+          )}
+          {own &&
+            requests
+              .filter((b) => b.status === "completed")
+              .map((b) => <MeetingFeedback key={b.id} booking={b} />)}
           {(confirmed ||
             (own &&
               requests.some((b) =>
@@ -516,7 +641,11 @@ export function RideDetails({
               {requests.map((b) => (
                 <div className="request-row" key={b.id}>
                   <div>
-                    <Avatar name={b.passenger.name} size="small" />
+                    <Avatar
+                      userId={b.passenger.id}
+                      name={b.passenger.name}
+                      size="small"
+                    />
                     <span>
                       <strong>{b.passenger.name}</strong>
                       <small>{t(statusText[b.status])}</small>
@@ -706,10 +835,14 @@ export function RideDetails({
               <Button
                 variant="lime"
                 busy={busy}
-                disabled={ride.status !== "open"}
+                disabled={
+                  matchBusy ||
+                  ride.status !== "open" ||
+                  (!!ride.meetingStops && (!selectedQuery || !ride.match))
+                }
                 onClick={() =>
                   action(async () => {
-                    await service.request(ride.id, query);
+                    await service.request(ride.id, selectedQuery);
                   }, t("Zahtjev je poslan vozaču."))
                 }
                 arrow
@@ -851,7 +984,11 @@ export function Trips({
                 </h2>
                 <RouteLine from={b.ride.from.name} to={b.ride.to.name} />
                 <div className="trip-person">
-                  <Avatar size="small" name={b.ride.driver.name} />
+                  <Avatar
+                    userId={b.ride.driver.id}
+                    size="small"
+                    name={b.ride.driver.name}
+                  />
                   <span>{b.ride.driver.name}</span>
                   <Car size={18} />
                 </div>

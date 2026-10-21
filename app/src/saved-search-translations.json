@@ -1,0 +1,16 @@
+{
+  "Tvoje svakodnevne pretrage": "Your everyday searches",
+  "Tvoj svakodnevni put": "Your everyday journey",
+  "Pretrage se automatski čuvaju. Odaberi rutu za danas.": "Searches are saved automatically. Choose a route for today.",
+  "Nova vožnja": "New ride",
+  "Odaberi drugu rutu": "Choose another route",
+  "Učitaj pretragu {from} — {to}": "Load search {from} — {to}",
+  "Ukloni pretragu {from} — {to}": "Remove search {from} — {to}",
+  "{minutes} min hoda": "{minutes} min walk",
+  "Za danas": "For today",
+  "Učitavanje sačuvanih pretraga…": "Loading saved searches…",
+  "Sačuvane pretrage trenutno nisu dostupne. Pokušaj ponovo.": "Saved searches are currently unavailable. Try again.",
+  "Potvrdi različito polazište i odredište, vrijeme i 5, 10 ili 15 minuta hodanja.": "Confirm different starting and ending points, a time and 5, 10 or 15 minutes of walking.",
+  "Sačuvana pretraga nije pronađena.": "Saved search was not found.",
+  "Metoda nije dozvoljena.": "Method is not allowed."
+}

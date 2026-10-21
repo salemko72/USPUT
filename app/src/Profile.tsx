@@ -77,7 +77,7 @@ export function Profile({
       <div className="profile-layout">
         <section className="profile-card">
           <div className="profile-identity">
-            <Avatar name={user.name} size="large" />
+            <Avatar userId={user.id} name={user.name} size="large" />
             <div>
               <h2>{user.name}</h2>
               <span className="small-pill">
@@ -230,6 +230,11 @@ export function Profile({
               <p>
                 {t(
                   "Za pretragu adresa šaljemo unesenu ulicu i grad geokoderu. Za putanje šaljemo koordinate servisu za cestovno i pješačko rutiranje, bez tvog imena ili emaila. Objavljena ponuda prikazuje približne lokacije koje potvrdiš.",
+                )}
+              </p>
+              <p>
+                {t(
+                  "Sačuvane pretrage i tvoji polazni pinovi su privatni. Saputnik dobija dogovorena mjesta ulaska i izlaska. Mjesta u zajedničkoj gradskoj bazi postaju javna samo ako ih predložiš toj bazi; urednik odlučuje o aktivaciji.",
                 )}
               </p>
               <p>

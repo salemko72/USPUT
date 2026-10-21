@@ -4,18 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import type { Place } from "./types";
 import { Layers, MapPin } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+const emptyStops: Place[] = [];
 export function RouteMap({
   from,
   to,
   large = false,
   geometry,
   provider,
+  stops = emptyStops,
 }: {
   from: Place;
   to: Place;
   large?: boolean;
   geometry?: number[][];
   provider?: string;
+  stops?: Place[];
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false);
@@ -52,6 +55,19 @@ export function RouteMap({
             fillColor: "#d7f56a",
             fillOpacity: 1,
           }).addTo(map);
+        stops.forEach((p, i) => {
+          const label = document.createElement("span");
+          label.textContent = `${i + 1}. ${p.name}`;
+          L.circleMarker([p.lat, p.lng], {
+            radius: 6,
+            weight: 2,
+            color: "#151815",
+            fillColor: "#d7f56a",
+            fillOpacity: 1,
+          })
+            .addTo(map)
+            .bindTooltip(label);
+        });
         const line: [number, number][] = geometry?.length
           ? geometry.map((p) => [p[1], p[0]])
           : points;
@@ -71,7 +87,7 @@ export function RouteMap({
       cancelled = true;
       cleanup();
     };
-  }, [live, from.id, to.id]);
+  }, [live, from.id, to.id, geometry, stops]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
       <svg

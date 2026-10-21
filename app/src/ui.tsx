@@ -12,7 +12,9 @@ import {
   Check,
   MapPin,
 } from "lucide-react";
+import { useState } from "react";
 import type { ReactNode } from "react";
+import { useCurrentUserPhoto } from "./AvatarPhotoContext";
 export function Brand({ light = false }: { light?: boolean }) {
   return (
     <span className={"brand " + (light ? "light" : "")}>
@@ -58,21 +60,40 @@ export function Button({
 }
 export function Avatar({
   name,
+  userId,
   size = "normal",
 }: {
   name: string;
+  userId?: string;
   size?: "normal" | "large" | "small";
 }) {
+  const photo = useCurrentUserPhoto(userId);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   return (
     <span
       aria-hidden="true"
       className={`avatar ${size} tone-${name.charCodeAt(0) % 4}`}
     >
-      {name
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")}
+      {photo && photo.url !== failedUrl ? (
+        <img
+          key={photo.id}
+          src={photo.url}
+          alt=""
+          onError={() => setFailedUrl(photo.url)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            borderRadius: "inherit",
+          }}
+        />
+      ) : (
+        name
+          .split(" ")
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join("")
+      )}
     </span>
   );
 }

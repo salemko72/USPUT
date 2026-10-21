@@ -11,6 +11,7 @@ export type User = {
   id: string;
   name: string;
   city?: string;
+  admin?: boolean;
   email?: string;
   provider?: string;
 };
@@ -24,9 +25,17 @@ export type Place = {
   lat: number;
   lng: number;
 };
+export type MeetingStop = Place & {
+  stopId: string;
+  travelSeconds?: number;
+  catalogId?: string;
+  approach?: string;
+  side?: string;
+};
 export type RouteMatch = {
-  pickup: Place;
-  dropoff: Place;
+  pickup: Place & { stopId?: string; catalogId?: string };
+  dropoff: Place & { stopId?: string; catalogId?: string };
+  fixedMeetingPoints?: boolean;
   pickupAt: number;
   extraMinutes: number;
   rideMinutes: number;
@@ -41,6 +50,7 @@ export type RouteMatch = {
   score: number;
 };
 export type Ride = {
+  routingUnavailable?: boolean;
   match?: RouteMatch | null;
   id: string;
   from: Place;
@@ -51,6 +61,7 @@ export type Ride = {
   car: string;
   note: string;
   costSharing?: boolean;
+  meetingStops?: MeetingStop[];
   geometry?: number[][];
   routeProvider?: string;
   status: "open" | "matched" | "cancelled" | "completed";
@@ -73,12 +84,18 @@ export type Search = {
   fromLocation?: string;
   toLocation?: string;
   walkMinutes?: string;
+  pickupStopId?: string;
+  dropoffStopId?: string;
 };
 export type Offer = Search & {
   car: string;
   note: string;
   vehicleId?: string;
   routeConfirmed?: boolean;
+  meetingStops?: MeetingStop[];
+  previewToken?: string;
+  stopsConfirmed?: boolean;
+  shareMeetingPoints?: boolean;
   costSharing?: boolean;
 };
 export type MyRides = { rides: Ride[]; bookings: Booking[] };

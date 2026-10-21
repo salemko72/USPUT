@@ -1,18 +1,4 @@
-from playwright.sync_api import sync_playwright,expect
-import os,time
-base=os.environ.get('USPUT_TEST_URL','http://127.0.0.1:8796')
-with sync_playwright() as p:
- browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium')
- def new(name):
-  ctx=browser.new_context(viewport={'width':390,'height':844});page=ctx.new_page();page.set_default_timeout(20000)
-  r=ctx.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':name,'email':name+str(time.time_ns())+'@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True});assert r.ok,r.text()
-  # A test grid replaces external tiles; this verifies controls, not real map availability.
-  page.route('**/tile.openstreetmap.org/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eef0e5"/><path d="M0 128H256M128 0V256" stroke="#fff" stroke-width="14"/></svg>'))
-  return ctx,page
- def choose(page,label,query):
-  page.get_by_role('textbox',name=label,exact=True).fill(query);page.get_by_role('button',name='Pretraži adresu — '+label,exact=True).click();page.locator('.street-results button').first.click();expect(page.get_by_role('dialog',name='Potvrdi približnu lokaciju')).to_be_visible();page.get_by_role('button',name='Potvrdi ovaj pin',exact=True).click();expect(page.get_by_role('button',name='Provjeri ili pomjeri pin',exact=True)).to_have_count(1 if label=='Polazište' else 2)
- manual_ctx,manual=new('ManualPin');manual.goto(base);manual.get_by_role('textbox',name='Polazište',exact=True).fill('Ilica 50, Zagreb');manual.get_by_role('button',name='Postavi pin ručno na karti',exact=True).first.click();confirm=manual.get_by_role('button',name='Potvrdi ovaj pin',exact=True);expect(confirm).to_be_disabled();manual.locator('.street-pin-map').click(position={'x':170,'y':160});expect(confirm).to_be_enabled();confirm.click();expect(manual.get_by_role('textbox',name='Polazište',exact=True)).to_have_value('Ilica 50, Zagreb');manual_ctx.close()
- driver,d=new('StreetDriver');r=driver.request.post(base+'/api/vehicle',headers={'Origin':base},data={'makeId':'other','make':'Volkswagen','model':'Golf 5','color':'crvena','manualModel':True});assert r.ok
- d.goto(base);d.get_by_role('button',name='Nudim vožnju',exact=True).click();choose(d,'Polazište','Safvet-bega Bašagića 1, Sarajevo');choose(d,'Odredište','Butmirska cesta 30, Ilidža');d.get_by_role('button',name='Objavi vožnju',exact=True).click();expect(d.get_by_role('dialog',name='Je li ovo ruta kojom stvarno voziš?')).to_be_visible();d.get_by_role('button',name='Vozim ovom trasom — objavi',exact=True).click();expect(d.get_by_role('heading',name='Tvoja vožnja.',exact=True)).to_be_visible()
- passenger,s=new('StreetPassenger');s.goto(base);choose(s,'Polazište','Marijin Dvor 10, Sarajevo');choose(s,'Odredište','Nedžarići 20, Sarajevo');s.get_by_label('Najviše minuta hodanja',exact=True).select_option('5');s.get_by_role('button',name='Pronađi vožnju',exact=True).click();expect(s.get_by_role('button',name='Pogledaj vožnju')).to_have_count(1);expect(s.get_by_text('Hodanje do susreta',exact=False)).to_be_visible();s.get_by_role('button',name='Pogledaj vožnju').click();s.get_by_role('button',name='Pošalji zahtjev',exact=True).click();expect(s.get_by_role('heading',name='Zahtjev je poslan.',exact=True)).to_be_visible();d.reload();d.get_by_role('button',name='Prihvati',exact=True).click();s.reload();expect(s.get_by_role('heading',name='Dogovoreno.',exact=True)).to_be_visible();assert s.evaluate('document.documentElement.scrollWidth<=innerWidth');s.screenshot(path='test-results/mobile-street-corridor.png',full_page=True)
- browser.close();print('PASS fixture street search, pin confirmation, driver route preview/publish, intermediate street segment, walking choice, bilateral acceptance and persistence')
+"""Street routing now uses the confirmed meeting-point integration flow."""
+from pathlib import Path
+import runpy
+runpy.run_path(str(Path(__file__).with_name("meeting-flow-browser.py")), run_name="__main__")

@@ -27,7 +27,12 @@ if (
     .some((c) => c.name === "city")
 )
   sqlite.exec("ALTER TABLE users ADD COLUMN city TEXT NOT NULL DEFAULT ''");
-for (const column of ["from_json", "to_json", "route_json"])
+for (const column of [
+  "from_json",
+  "to_json",
+  "route_json",
+  "meeting_stops_json",
+])
   if (
     !sqlite
       .prepare("PRAGMA table_info(rides)")
@@ -42,6 +47,7 @@ export const env = {
   OSRM_FOOT_URL: process.env.OSRM_FOOT_URL,
   OPENROUTESERVICE_API_KEY: process.env.OPENROUTESERVICE_API_KEY,
   GEOCODER_URL: process.env.GEOCODER_URL,
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 };

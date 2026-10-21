@@ -4,13 +4,20 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { handleApi } from "../server/api.mjs";
 import { adaptSqlite } from "../server/db.mjs";
+import { getPlace } from "../server/places.mjs";
+import { normalizeLocation } from "../server/route-provider.mjs";
 let sqlite, env;
 beforeEach(() => {
   sqlite = new DatabaseSync(":memory:");
   sqlite.exec(
     readFileSync(new URL("../server/schema.sql", import.meta.url), "utf8"),
   );
-  env = { DB: adaptSqlite(sqlite), secureCookies: false };
+  env = {
+    DB: adaptSqlite(sqlite),
+    secureCookies: false,
+    OPENROUTESERVICE_API_KEY: "fixture-only",
+    ROUTING_FETCH: routeFixture,
+  };
 });
 afterEach(() => sqlite.close());
 async function call(
@@ -37,6 +44,73 @@ async function call(
     data: await r.json(),
     cookie: r.headers.get("set-cookie")?.split(";")[0],
   };
+}
+// Synthetic provider: tests validate agreement logic, not real roads.
+async function routeFixture(url, options) {
+  const points = JSON.parse(options.body).coordinates;
+  const segments = points
+    .slice(1)
+    .map((p, i) => ({
+      duration: 200,
+      distance: Math.hypot(
+        (p[0] - points[i][0]) * 80000,
+        (p[1] - points[i][1]) * 111195,
+      ),
+    }));
+  return Response.json({
+    features: [
+      {
+        geometry: { coordinates: points },
+        properties: {
+          summary: {
+            duration: segments.length * 200,
+            distance: segments.reduce((n, l) => n + l.distance, 0),
+          },
+          segments,
+          way_points: points.map((_, i) => i),
+        },
+      },
+    ],
+  });
+}
+async function publish(offer, cookie, points) {
+  const stops = points || [
+    normalizeLocation(offer.fromLocation) || getPlace(offer.from),
+    normalizeLocation(offer.toLocation) || getPlace(offer.to),
+  ];
+  const preview = await call(
+    "/routes/preview",
+    { ...offer, meetingStops: stops },
+    cookie,
+  );
+  assert.equal(preview.status, 200, JSON.stringify(preview.data));
+  return call(
+    "/rides",
+    {
+      ...offer,
+      meetingStops: preview.data.meetingStops,
+      previewToken: preview.data.previewToken,
+      stopsConfirmed: true,
+      routeConfirmed: true,
+    },
+    cookie,
+  );
+}
+async function requestRide(id, cookie) {
+  const r = sqlite.prepare("SELECT * FROM rides WHERE id=?").get(id);
+  return call(
+    `/rides/${id}/request`,
+    {
+      search: {
+        from: r.from_id,
+        to: r.to_id,
+        date: r.date,
+        time: r.time,
+        walkMinutes: "5",
+      },
+    },
+    cookie,
+  );
 }
 async function signup(name = "Lejla", email = "lejla@example.test") {
   return call("/auth/register", {
@@ -129,7 +203,7 @@ test("driver publishes and passenger requests; only driver can confirm; one seat
   const a = await signup("Amar", "amar@example.test"),
     b = await signup(),
     c = await signup("Sara", "sara@example.test");
-  const r = await call("/rides", ride(), a.cookie);
+  const r = await publish(ride(), a.cookie);
   assert.equal(r.status, 201);
   const id = r.data.ride.id;
   const found = await call(
@@ -139,11 +213,11 @@ test("driver publishes and passenger requests; only driver can confirm; one seat
   );
   assert.equal(found.data.rides.length, 1);
   assert.equal(found.data.rides[0].driver.email, undefined);
-  assert.equal((await call(`/rides/${id}/request`, {}, a.cookie)).status, 400);
-  const request = await call(`/rides/${id}/request`, {}, b.cookie);
+  assert.equal((await requestRide(id, a.cookie)).status, 400);
+  const request = await requestRide(id, b.cookie);
   assert.equal(request.status, 201);
-  assert.equal((await call(`/rides/${id}/request`, {}, b.cookie)).status, 409);
-  const second = await call(`/rides/${id}/request`, {}, c.cookie);
+  assert.equal((await requestRide(id, b.cookie)).status, 409);
+  const second = await requestRide(id, c.cookie);
   assert.equal(second.status, 201);
   assert.equal(
     (await call(`/bookings/${request.data.booking.id}/accept`, {}, b.cookie))
@@ -197,7 +271,7 @@ test("invalid or past routes rejected; cancellation makes requests unavailable",
       (await call("/rides", { ...ride(), ...patch }, a.cookie)).status,
       400,
     );
-  const r = await call("/rides", ride(), a.cookie);
+  const r = await publish(ride(), a.cookie);
   assert.equal(
     (await call(`/rides/${r.data.ride.id}/cancel`, {}, b.cookie)).status,
     403,
@@ -206,10 +280,7 @@ test("invalid or past routes rejected; cancellation makes requests unavailable",
     (await call(`/rides/${r.data.ride.id}/cancel`, {}, a.cookie)).status,
     200,
   );
-  assert.equal(
-    (await call(`/rides/${r.data.ride.id}/request`, {}, b.cookie)).status,
-    409,
-  );
+  assert.equal((await requestRide(r.data.ride.id, b.cookie)).status, 409);
 });
 test("private details require login; unavailable Google auth returns explicit configuration status", async () => {
   assert.equal((await call("/my-rides")).status, 401);
@@ -235,12 +306,8 @@ test("concurrent SQLite batches each commit without transaction overlap", async 
 async function acceptedBooking() {
   const driver = await signup("Amar", "amar@example.test"),
     passenger = await signup();
-  const r = await call("/rides", ride(), driver.cookie);
-  const b = await call(
-    `/rides/${r.data.ride.id}/request`,
-    {},
-    passenger.cookie,
-  );
+  const r = await publish(ride(), driver.cookie);
+  const b = await requestRide(r.data.ride.id, passenger.cookie);
   await call(`/bookings/${b.data.booking.id}/accept`, {}, driver.cookie);
   return { driver, passenger, ride: r.data.ride, booking: b.data.booking };
 }
@@ -302,10 +369,10 @@ test("simultaneous passenger acceptances result in exactly one confirmed seat", 
   const driver = await signup("Amar", "amar@example.test"),
     a = await signup(),
     b = await signup("Sara", "sara@example.test");
-  const r = await call("/rides", ride(), driver.cookie);
+  const r = await publish(ride(), driver.cookie);
   const requests = await Promise.all([
-    call(`/rides/${r.data.ride.id}/request`, {}, a.cookie),
-    call(`/rides/${r.data.ride.id}/request`, {}, b.cookie),
+    requestRide(r.data.ride.id, a.cookie),
+    requestRide(r.data.ride.id, b.cookie),
   ]);
   const accepted = await Promise.all(
     requests.map((q) =>
@@ -600,8 +667,7 @@ test("saved vehicle is owner-authorized when publishing and ride retains its sna
     { makeId: "volkswagen", model: "Golf", color: "siva" },
     driver.cookie,
   );
-  const published = await call(
-    "/rides",
+  const published = await publish(
     { ...ride(), vehicleId: v.data.vehicle?.id, car: "FORGED" },
     driver.cookie,
   );
@@ -706,12 +772,8 @@ test("photo access starts only after driver acceptance and is revoked on cancell
     passenger = await signup(),
     other = await signup("Other", "other@example.test");
   const photo = await upload("avatar", driver.cookie);
-  const r = await call("/rides", ride(), driver.cookie);
-  const b = await call(
-    `/rides/${r.data.ride.id}/request`,
-    {},
-    passenger.cookie,
-  );
+  const r = await publish(ride(), driver.cookie);
+  const b = await requestRide(r.data.ride.id, passenger.cookie);
   assert.equal(
     (await imageGet(photo.data.photo.id, passenger.cookie)).status,
     404,
@@ -765,16 +827,11 @@ test("vehicle photo is not shared for a different saved vehicle description", as
   );
   const p = await upload("vehicle", driver.cookie, webpFixture(800, 600));
   assert.equal(p.status, 201);
-  const r = await call(
-    "/rides",
+  const r = await publish(
     { ...ride(), vehicleId: v.data.vehicle.id },
     driver.cookie,
   );
-  const b = await call(
-    `/rides/${r.data.ride.id}/request`,
-    {},
-    passenger.cookie,
-  );
+  const b = await requestRide(r.data.ride.id, passenger.cookie);
   await call(`/bookings/${b.data.booking.id}/accept`, {}, driver.cookie);
   assert.equal((await imageGet(p.data.photo.id, passenger.cookie)).status, 200);
   await call(
@@ -831,40 +888,22 @@ test("cleanup claims stale pending upload before deleting so it cannot become ac
   assert.equal(env.PHOTOS.files.size, 0);
 });
 
-test("road search finds an intermediate pickup and saves the same agreement for both users", async () => {
-  const { places } = await import("../server/places.mjs");
-  let requests = 0;
-  env.OSRM_URL = "https://routing.example.test/";
-  env.ROUTING_FETCH = async () => {
-    requests++;
-    return new Response(
-      JSON.stringify({
-        code: "Ok",
-        sources: places.map(() => ({ distance: 1 })),
-        destinations: places.map(() => ({ distance: 1 })),
-        durations: places.map((_, i) =>
-          places.map((_, j) => Math.abs(i - j) * 120),
-        ),
-      }),
-    );
-  };
+test("confirmed stops find an intermediate segment and save the same private agreement for both users", async () => {
   const driver = await signup("Driver", "road-driver@example.test"),
     passenger = await signup();
   const offer = { ...ride(), from: "ilidza", to: "centar" };
-  const published = await call("/rides", offer, driver.cookie);
+  const published = await publish(
+    offer,
+    driver.cookie,
+    ["ilidza", "otoka", "marijin", "centar"].map(getPlace),
+  );
   assert.equal(published.status, 201);
-  // Earlier unrelated offers must not truncate away the compatible route.
-  for (let i = 0; i < 205; i++)
-    sqlite
-      .prepare(
-        "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,created_at) SELECT ?,driver_id,'centar','ilidza',date,'05:00',departure-7200000,car,note,created_at FROM rides WHERE id=?",
-      )
-      .run("unrelated-" + i, published.data.ride.id);
   const search = {
     from: "otoka",
     to: "marijin",
     date: offer.date,
     time: offer.time,
+    walkMinutes: "5",
   };
   const results = await call(
     "/rides?" + new URLSearchParams(search),
@@ -873,8 +912,9 @@ test("road search finds an intermediate pickup and saves the same agreement for 
   );
   assert.equal(results.data.rides.length, 1);
   const match = results.data.rides[0].match;
-  assert.equal(match.pickup.id, "otoka");
-  assert.equal(match.dropoff.id, "marijin");
+  assert.equal(match.pickup.name, getPlace("otoka").name);
+  assert.equal(match.dropoff.name, getPlace("marijin").name);
+  assert.equal(match.fixedMeetingPoints, true);
   assert.equal(match.extraMinutes, 0);
   const booking = await call(
     "/rides/" + published.data.ride.id + "/request",
@@ -886,20 +926,32 @@ test("road search finds an intermediate pickup and saves the same agreement for 
     const mine = await call("/my-rides", null, cookie);
     assert.deepEqual(mine.data.bookings[0].match, match);
   }
-  assert.equal(requests, 1, "search and booking reuse the cached road matrix");
+  // Published points and booked snapshots are independent of later previews.
+  await call(
+    "/routes/preview",
+    { ...offer, meetingStops: [getPlace("ilidza"), getPlace("centar")] },
+    driver.cookie,
+  );
+  const mine = await call("/my-rides", null, passenger.cookie);
+  assert.deepEqual(mine.data.bookings[0].match, match);
 });
 
-test("routing failure falls back to exact locations and refuses an unconfirmed intermediate pickup", async () => {
-  env.OSRM_URL = "https://routing.example.test/";
+test("legacy exact listing needs no provider and refuses an unconfirmed intermediate pickup", async () => {
+  const driver = await signup("Driver", "offline-driver@example.test"),
+    passenger = await signup();
+  const offer = ride(),
+    published = await publish(offer, driver.cookie);
+  // A pre-existing offer has no stored stopping points. New offers cannot do this.
+  sqlite
+    .prepare(
+      "UPDATE rides SET meeting_stops_json=NULL,route_json=NULL WHERE id=?",
+    )
+    .run(published.data.ride.id);
   let requests = 0;
   env.ROUTING_FETCH = async () => {
     requests++;
     throw Error("offline");
   };
-  const driver = await signup("Driver", "offline-driver@example.test"),
-    passenger = await signup();
-  const offer = ride(),
-    published = await call("/rides", offer, driver.cookie);
   const results = await call(
     "/rides?" + new URLSearchParams(offer),
     null,
@@ -913,7 +965,7 @@ test("routing failure falls back to exact locations and refuses an unconfirmed i
     passenger.cookie,
   );
   assert.equal(rejected.status, 409);
-  assert.equal(requests, 1, "outage is negatively cached");
+  assert.equal(requests, 0);
 });
 
 test("cost-sharing flag defaults to false, persists true and rejects non-booleans", async () => {
@@ -924,7 +976,7 @@ test("cost-sharing flag defaults to false, persists true and rejects non-boolean
       ...ride(),
       ...(value === undefined ? {} : { costSharing: value }),
     };
-    const result = await call("/rides", offer, driver.cookie);
+    const result = await publish(offer, driver.cookie);
     assert.equal(result.status, 201);
     assert.equal(result.data.ride.costSharing, value === true);
     const detail = await call(
@@ -979,11 +1031,15 @@ test("street coordinates require route confirmation and corridor agreement persi
   const preview = await call("/routes/preview", input, driver.cookie);
   assert.equal(preview.status, 200);
   assert.equal(preview.data.route.coordinates.length, 2);
-  const published = await call(
-    "/rides",
-    { ...input, routeConfirmed: true },
-    driver.cookie,
+  assert.equal(
+    (await call("/rides", { ...input, routeConfirmed: true }, driver.cookie))
+      .status,
+    400,
   );
+  const published = await publish(input, driver.cookie, [
+    { name: "Public pickup", lat: 0, lng: 0.01 },
+    { name: "Public exit", lat: 0, lng: 0.02 },
+  ]);
   assert.equal(published.status, 201);
   assert.equal(published.data.ride.from.name, "Example Street 1, Test City");
   const search = {
@@ -1057,7 +1113,16 @@ test("corridor outage is explicit, retains a whole-trip exact offer, and does no
   const driver = await signup("Driver", "outage-corridor@example.test"),
     passenger = await signup();
   const offer = ride();
-  await call("/rides", offer, driver.cookie);
+  const published = await publish(offer, driver.cookie);
+  sqlite
+    .prepare(
+      "UPDATE rides SET meeting_stops_json=NULL,route_json=NULL WHERE id=?",
+    )
+    .run(published.data.ride.id);
+  sqlite.prepare("DELETE FROM routing_cache").run();
+  env.ROUTING_FETCH = async () => {
+    throw Error("offline");
+  };
   const exact = await call(
     "/rides/search",
     { ...offer, walkMinutes: "5" },
@@ -1073,6 +1138,60 @@ test("corridor outage is explicit, retains a whole-trip exact offer, and does no
   );
   assert.equal(intermediate.data.routingUnavailable, true);
   assert.equal(intermediate.data.rides.length, 0);
+});
+
+test("all new offers require confirmed, owner-bound stopping points and malformed stops fail with 400", async () => {
+  const driver = await signup("Driver", "preview-driver@example.test"),
+    other = await signup();
+  const offer = ride();
+  assert.equal((await call("/rides", offer, driver.cookie)).status, 400);
+  for (const meetingStops of [{}, [null, null], [], "invalid"]) {
+    assert.equal(
+      (
+        await call(
+          "/rides",
+          {
+            ...offer,
+            meetingStops,
+            stopsConfirmed: true,
+            routeConfirmed: true,
+          },
+          driver.cookie,
+        )
+      ).status,
+      400,
+    );
+  }
+  const preview = await call(
+    "/routes/preview",
+    { ...offer, meetingStops: [getPlace(offer.from), getPlace(offer.to)] },
+    driver.cookie,
+  );
+  assert.equal(preview.status, 200);
+  const confirmed = {
+    ...offer,
+    meetingStops: preview.data.meetingStops,
+    previewToken: preview.data.previewToken,
+    stopsConfirmed: true,
+    routeConfirmed: true,
+  };
+  assert.equal((await call("/rides", confirmed, other.cookie)).status, 400);
+  assert.equal(
+    (
+      await call(
+        "/rides",
+        {
+          ...confirmed,
+          meetingStops: preview.data.meetingStops.map((p, i) =>
+            i ? p : { ...p, name: "Changed" },
+          ),
+        },
+        driver.cookie,
+      )
+    ).status,
+    400,
+  );
+  assert.equal((await call("/rides", confirmed, driver.cookie)).status, 201);
 });
 
 test("routing health never persists a provider exception containing credentials", async () => {

@@ -9,8 +9,9 @@ with sync_playwright() as p:
         response=page.request.post(base+'/api/auth/register',data={'name':'Calendar Test','email':f'calendar-{time.time_ns()}@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True},headers={'Origin':base})
         assert response.ok,response.text()
         page.goto(base)
+        page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click()
         trigger=page.get_by_role('button',name=re.compile('Datum polaska:'))
-        expect(trigger).to_have_text('Sutra')
+        expect(trigger).to_have_text('Danas')
         trigger.click(position={'x':8,'y':12})
         calendar=page.get_by_role('dialog',name='Odaberi datum polaska')
         expect(calendar).to_be_visible()
@@ -20,7 +21,7 @@ with sync_playwright() as p:
         trigger.click()
         assert calendar.locator('.calendar-weekdays span').all_text_contents()==['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
         assert calendar.locator('button[aria-pressed="true"]').count()==1
-        assert calendar.locator('.calendar-grid button:disabled').count()>0
+        assert calendar.locator('.calendar-grid button:disabled').count()==int(current.split('-')[2])-1
         page.get_by_role('button',name='Sljedeći mjesec').click()
         choice=calendar.locator('.calendar-grid button:not(:disabled)').first
         selected=choice.get_attribute('aria-label');choice.click()

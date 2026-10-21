@@ -1,3 +1,6 @@
+import { MeetingStopsEditor } from "./MeetingStopsEditor";
+import { SavedSearches } from "./SavedSearches";
+import { savePassengerSearch } from "./saved-searches";
 import { LocationScopeControl, type LocationScope } from "./LocationScope";
 import { api } from "./api";
 import { RouteMap } from "./Map";
@@ -15,8 +18,16 @@ import {
   Leaf,
   ArrowUpRight,
 } from "lucide-react";
-import type { User, Place, Search, Offer, Service, Vehicle } from "./types";
-import { dateLabel, searchPlace } from "./types";
+import type {
+  User,
+  Place,
+  Search,
+  Offer,
+  Service,
+  Vehicle,
+  MeetingStop,
+} from "./types";
+import { dateLabel, searchPlace, defaultSearch, today } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
 export function SearchFields({
   value,
@@ -151,6 +162,9 @@ export function Home({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [vehicle, setVehicle] = useState<Vehicle | null>(null),
+    [passengerFormOpen, setPassengerFormOpen] = useState(false),
+    [stopsApproved, setStopsApproved] = useState(false),
+    [shareMeetingPoints, setShareMeetingPoints] = useState(false),
     [preview, setPreview] = useState<{
       offer: Offer;
       route: {
@@ -161,6 +175,9 @@ export function Home({
       };
       from: Place;
       to: Place;
+      meetingStops: MeetingStop[];
+      catalogSuggestions?: MeetingStop[];
+      previewToken?: string;
     } | null>(null);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -181,7 +198,15 @@ export function Home({
         setError("Odaberi koliko minuta si spreman hodati.");
         return;
       }
-      onSearch();
+      setBusy(true);
+      try {
+        await savePassengerSearch(query);
+        onSearch();
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     if (!vehicle) {
@@ -198,7 +223,7 @@ export function Home({
         note: String(f.get("note")),
         costSharing: f.get("costSharing") === "on",
       };
-      if (query.fromLocation || query.toLocation) {
+      {
         const result = await api<{
           route: {
             coordinates: number[][];
@@ -208,9 +233,14 @@ export function Home({
           };
           from: Place;
           to: Place;
+          meetingStops: MeetingStop[];
+          catalogSuggestions?: MeetingStop[];
+          previewToken?: string;
         }>("/routes/preview", offer);
+        setStopsApproved(false);
+        setShareMeetingPoints(false);
         setPreview({ ...result, offer });
-      } else await onPublish(offer);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -231,6 +261,7 @@ export function Home({
             to={preview.to}
             geometry={preview.route.coordinates}
             provider={preview.route.provider}
+            stops={preview.meetingStops}
             large
           />
           <p>
@@ -242,14 +273,92 @@ export function Home({
               "Ako ova trasa nije tvoj put, nemoj je potvrditi. Vrati se i promijeni polazište ili odredište.",
             )}
           </p>
-          <ErrorBox error={error} />
+          <MeetingStopsEditor
+            stops={preview.meetingStops}
+            city={preview.from.city || user.city || ""}
+            route={preview.route.coordinates}
+            suggestions={preview.catalogSuggestions}
+            onChange={(meetingStops) => {
+              setPreview({ ...preview, meetingStops, previewToken: undefined });
+              setStopsApproved(false);
+            }}
+          />
+          {!preview.previewToken && (
+            <p className="meeting-route-outdated">
+              {t(
+                "Proračunaj konačnu trasu kroz odabrana mjesta susreta prije objave.",
+              )}
+            </p>
+          )}
           <Button
+            variant="outline"
             busy={busy}
+            disabled={preview.meetingStops.some(
+              (p) =>
+                p.name.trim().length < 2 || /^Predložena tačka/.test(p.name),
+            )}
             onClick={async () => {
               setBusy(true);
               setError("");
               try {
-                await onPublish({ ...preview.offer, routeConfirmed: true });
+                const result = await api<
+                  Omit<NonNullable<typeof preview>, "offer">
+                >("/routes/preview", {
+                  ...preview.offer,
+                  meetingStops: preview.meetingStops,
+                });
+                setPreview({ ...result, offer: preview.offer });
+                setStopsApproved(false);
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t("Proračunaj trasu s ovim tačkama")}
+          </Button>
+          <label className="stop-confirmation">
+            <input
+              type="checkbox"
+              checked={stopsApproved}
+              disabled={!preview.previewToken}
+              onChange={(e) => setStopsApproved(e.target.checked)}
+            />
+            <span>
+              {t(
+                "Potvrđujem da ovdje mogu stati, primiti i ostaviti putnika. Ovo je trasa kojom ću voziti.",
+              )}
+            </span>
+          </label>
+          <label className="community-contribution">
+            <input
+              type="checkbox"
+              checked={shareMeetingPoints}
+              onChange={(e) => setShareMeetingPoints(e.target.checked)}
+            />
+            <span>
+              {t(
+                "Predloži ova javna mjesta zajedničkoj gradskoj bazi. Ne dijeli privatne kućne adrese.",
+              )}
+            </span>
+          </label>
+          <ErrorBox error={error} />
+          <Button
+            busy={busy}
+            disabled={!preview.previewToken || !stopsApproved}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                await onPublish({
+                  ...preview.offer,
+                  routeConfirmed: true,
+                  stopsConfirmed: true,
+                  previewToken: preview.previewToken,
+                  meetingStops: preview.meetingStops,
+                  shareMeetingPoints,
+                });
                 setPreview(null);
               } catch (e) {
                 setError((e as Error).message);
@@ -274,7 +383,7 @@ export function Home({
             aria-label={t("Otvori profil")}
             onClick={onProfile}
           >
-            <Avatar name={user.name} size="small" />
+            <Avatar userId={user.id} name={user.name} size="small" />
           </button>
         </div>
         <h1>
@@ -341,78 +450,106 @@ export function Home({
               )}
             </p>
           )}
-          <form onSubmit={submit}>
-            <SearchFields
-              value={query}
-              onChange={setQuery}
-              places={places}
-              defaultCity={
-                user.city || searchPlace(query, "from", places)?.city || ""
-              }
+          {role === "passenger" && !passengerFormOpen && (
+            <SavedSearches
+              key={user.id}
+              onNew={() => {
+                setQuery({ ...defaultSearch(), date: today() });
+                setPassengerFormOpen(true);
+                setError("");
+              }}
+              onLoad={(q) => {
+                setQuery(q);
+                setPassengerFormOpen(true);
+                setError("");
+              }}
             />
-            {role === "passenger" && (
-              <label className="walking-budget">
-                {t("Koliko si spreman hodati?")}
-                <select
-                  aria-label={t("Najviše minuta hodanja")}
-                  value={query.walkMinutes || ""}
-                  onChange={(e) =>
-                    setQuery({ ...query, walkMinutes: e.target.value })
-                  }
-                >
-                  <option value="">{t("Odaberi 5, 10 ili 15 minuta")}</option>
-                  {[5, 10, 15].map((n) => (
-                    <option key={n} value={String(n)}>
-                      {n} min
-                    </option>
-                  ))}
-                </select>
-                <small>
-                  {t(
-                    "Najviše po dionici: do mjesta ulaska i od mjesta izlaska.",
-                  )}
-                </small>
-              </label>
-            )}
-            {role === "driver" && (
-              <div className="offer-fields">
-                <VehicleManager
-                  service={service}
-                  onChange={setVehicle}
-                  compact
-                />
-                <label className="field-label">
-                  {t(" Kratka napomena ")}
-                  <span className="optional">{t("opcionalno")}</span>
-                  <textarea
-                    name="note"
-                    placeholder={t("Bez pušenja, malo muzike…")}
-                    maxLength={280}
-                    rows={2}
+          )}
+          {role === "passenger" && passengerFormOpen && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setPassengerFormOpen(false)}
+            >
+              {t("Sačuvane pretrage")}
+            </button>
+          )}
+          {(role === "driver" || passengerFormOpen) && (
+            <form onSubmit={submit}>
+              <SearchFields
+                value={query}
+                onChange={setQuery}
+                places={places}
+                defaultCity={
+                  user.city || searchPlace(query, "from", places)?.city || ""
+                }
+              />
+              {role === "passenger" && (
+                <label className="walking-budget">
+                  {t("Koliko si spreman hodati?")}
+                  <select
+                    aria-label={t("Najviše minuta hodanja")}
+                    value={query.walkMinutes || ""}
+                    onChange={(e) =>
+                      setQuery({ ...query, walkMinutes: e.target.value })
+                    }
+                  >
+                    <option value="">{t("Odaberi 5, 10 ili 15 minuta")}</option>
+                    {[5, 10, 15].map((n) => (
+                      <option key={n} value={String(n)}>
+                        {n} min
+                      </option>
+                    ))}
+                  </select>
+                  <small>
+                    {t(
+                      "Najviše po dionici: do mjesta ulaska i od mjesta izlaska.",
+                    )}
+                  </small>
+                </label>
+              )}
+              {role === "driver" && (
+                <div className="offer-fields">
+                  <VehicleManager
+                    service={service}
+                    onChange={setVehicle}
+                    compact
                   />
-                </label>
-                <label className="cost-sharing-choice">
-                  <input type="checkbox" name="costSharing" />
-                  <span>
-                    <strong>{t("Očekujem dijeljenje troškova")}</strong>
-                    <small>
-                      {t(
-                        "Iznos i način podjele dogovorite prije potvrde vožnje. Plaćanje nije dio aplikacije.",
-                      )}
-                    </small>
-                  </span>
-                </label>
-                <div className="soft-note">
-                  <Leaf size={17} />
-                  {t(" Jedno mjesto. Jasan dogovor. Bez obaveze skretanja. ")}
+                  <label className="field-label">
+                    {t(" Kratka napomena ")}
+                    <span className="optional">{t("opcionalno")}</span>
+                    <textarea
+                      name="note"
+                      placeholder={t("Bez pušenja, malo muzike…")}
+                      maxLength={280}
+                      rows={2}
+                    />
+                  </label>
+                  <label className="cost-sharing-choice">
+                    <input type="checkbox" name="costSharing" />
+                    <span>
+                      <strong>{t("Očekujem dijeljenje troškova")}</strong>
+                      <small>
+                        {t(
+                          "Iznos i način podjele dogovorite prije potvrde vožnje. Plaćanje nije dio aplikacije.",
+                        )}
+                      </small>
+                    </span>
+                  </label>
+                  <div className="soft-note">
+                    <Leaf size={17} />
+                    {t(" Jedno mjesto. Jasan dogovor. Bez obaveze skretanja. ")}
+                  </div>
                 </div>
-              </div>
-            )}
-            <ErrorBox error={error} />
-            <Button type="submit" arrow busy={busy}>
-              {role === "passenger" ? t("Pronađi vožnju") : t("Objavi vožnju")}
-            </Button>
-          </form>
+              )}
+              <ErrorBox error={error} />
+              <Button type="submit" arrow busy={busy}>
+                {role === "passenger"
+                  ? t("Pronađi vožnju")
+                  : t("Objavi vožnju")}
+              </Button>
+            </form>
+          )}
           <p className="search-footnote">
             <Leaf size={13} />{" "}
             {role === "passenger"
@@ -457,7 +594,7 @@ export function Home({
                   "Razgledaj s probnim profilima. Stvarne vožnje se ovdje ne dogovaraju.",
                 )
               : t(
-                  "Beta podržava odabrana mjesta susreta u Sarajevu. Nova mjesta dodajemo nakon provjere.",
+                  "Vozač potvrđuje mjesta susreta na svojoj trasi. Putnik dolazi do odabrane tačke.",
                 )}
           </p>
         </section>

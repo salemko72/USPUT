@@ -1,7 +1,20 @@
+import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
+import {
+  proposeMeetingStops,
+  previewMeetingRoute,
+  consumeMeetingPreview,
+} from "./meeting-stops.mjs";
+import { handleSavedSearchApi } from "./saved-searches.mjs";
+import {
+  handleMeetingCatalogApi,
+  isMeetingAdmin,
+  registerMeetingPoint,
+  resolveCatalogMeetingPoint,
+  suggestMeetingPointsForRoute,
+} from "./meeting-catalog.mjs";
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
 import { corridorMatch } from "./corridor.mjs";
 import { geocode, locateCity } from "./geocoding.mjs";
-import { readRoadMatrix, matchRoute } from "./routing.mjs";
 import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
 import { places, getPlace, departureMs } from "./places.mjs";
@@ -53,11 +66,12 @@ const fail = (status, message) => {
   throw new ApiError(status, message);
 };
 const publicUser = (u) => ({ id: u.id, name: u.name });
-const selfUser = (u) => ({
+const selfUser = (u, env = {}) => ({
   ...publicUser(u),
   email: u.email,
   city: u.city || "",
   provider: u.google_id ? "google" : "email",
+  admin: isMeetingAdmin(u, env),
 });
 const cookieValue = (request, name) =>
   request.headers
@@ -144,6 +158,9 @@ const rideView = (r) => ({
   costSharing: r.cost_sharing === 1,
   geometry: r.route_json ? JSON.parse(r.route_json).coordinates : undefined,
   routeProvider: r.route_json ? JSON.parse(r.route_json).provider : undefined,
+  meetingStops: r.meeting_stops_json
+    ? JSON.parse(r.meeting_stops_json)
+    : undefined,
   status: r.status,
   driver: { id: r.driver_id, name: r.driver_name },
   createdAt: r.created_at,
@@ -409,7 +426,7 @@ export async function handleApi(request, env) {
           .prepare("DELETE FROM oauth_states WHERE id=?")
           .bind(await hash(token)),
       ]);
-      return json({ user: selfUser(u) }, 201, {
+      return json({ user: selfUser(u, env) }, 201, {
         "Set-Cookie": await newSession(u, request, env),
       });
     }
@@ -464,7 +481,7 @@ export async function handleApi(request, env) {
             Date.now(),
           )
           .run();
-        return json({ user: selfUser(u) }, 201, {
+        return json({ user: selfUser(u, env) }, 201, {
           "Set-Cookie": await newSession(u, request, env),
         });
       }
@@ -497,14 +514,32 @@ export async function handleApi(request, env) {
           }
         }
       }
-      return json({ user: selfUser(u) }, 200, {
+      return json({ user: selfUser(u, env) }, 200, {
         "Set-Cookie": await newSession(u, request, env),
       });
     }
     const user = await session(request, env);
     if (!user) fail(401, "Prijavi se da nastaviš.");
     if (path === "/auth/me" && method === "GET")
-      return json({ user: selfUser(user) });
+      return json({
+        user: { ...selfUser(user, env), admin: isMeetingAdmin(user, env) },
+      });
+    const savedResponse = await handleSavedSearchApi(
+      path,
+      method,
+      body,
+      user,
+      env,
+    );
+    if (savedResponse) return savedResponse;
+    const catalogResponse = await handleMeetingCatalogApi(
+      path + url.search,
+      method,
+      body,
+      user,
+      env,
+    );
+    if (catalogResponse) return catalogResponse;
     if (path === "/auth/logout" && method === "POST") {
       const token = cookieValue(request, "usput_session");
       if (token)
@@ -570,20 +605,45 @@ export async function handleApi(request, env) {
         .prepare("UPDATE users SET name=?,city=? WHERE id=?")
         .bind(name, city, user.id)
         .run();
-      return json({ user: selfUser({ ...user, name, city }) });
+      return json({ user: selfUser({ ...user, name, city }, env) });
     }
     if (path === "/routes/preview" && method === "POST") {
       const from = normalizeLocation(body.fromLocation) || getPlace(body.from),
         to = normalizeLocation(body.toLocation) || getPlace(body.to);
       if (!from || !to) fail(400, "Potvrdi polazište i odredište.");
       await rateLimit(db, "route-preview:" + user.id, 20);
+      if (body.meetingStops) {
+        try {
+          return json(
+            await previewMeetingRoute(
+              env,
+              user.id,
+              from,
+              to,
+              body.meetingStops,
+            ),
+          );
+        } catch (e) {
+          fail(e instanceof TypeError ? 400 : 503, e.message);
+        }
+      }
       const route = await readRoute(env, [from, to]);
       if (!route || route.unreachable)
         fail(
           503,
           "Cestovni proračun trenutno nije dostupan. Rutu još nije moguće potvrditi.",
         );
-      return json({ route, from, to });
+      const catalogSuggestions = await suggestMeetingPointsForRoute(
+        env,
+        route.coordinates,
+      );
+      return json({
+        route,
+        from,
+        to,
+        meetingStops: proposeMeetingStops(route, from, to),
+        catalogSuggestions,
+      });
     }
     if (path === "/locations/city" && method === "POST") {
       await rateLimit(db, "geocode:" + user.id, 20);
@@ -663,22 +723,66 @@ export async function handleApi(request, env) {
           400,
           "Odaberi različita mjesta, budući polazak u narednih 90 dana i podatke o vozilu.",
         );
-      let confirmedRoute = null;
-      if (fromLocation || toLocation) {
-        if (body.routeConfirmed !== true)
-          fail(400, "Prvo pregledaj i potvrdi cestovnu trasu.");
-        confirmedRoute = await readRoute(env, [
-          fromLocation || getPlace(from),
-          toLocation || getPlace(to),
-        ]);
-        if (!confirmedRoute || confirmedRoute.unreachable)
-          fail(503, "Cestovni proračun trenutno nije dostupan. Ponovi objavu.");
-      }
+      let confirmedRoute = null,
+        meetingStops = null;
       await rateLimit(db, "publish:" + user.id, 20);
+      if (body.meetingStops) {
+        if (
+          !Array.isArray(body.meetingStops) ||
+          body.meetingStops.some((p) => !p || typeof p !== "object")
+        )
+          fail(400, "Potvrdi između 2 i 10 mjesta ulaska i izlaska.");
+        if (body.stopsConfirmed !== true || body.routeConfirmed !== true)
+          fail(400, "Potvrdi mjesta na kojima možeš stati i konačnu trasu.");
+        if (
+          body.meetingStops.some((p) => /^Predložena tačka/.test(p.name || ""))
+        )
+          fail(
+            400,
+            "Imenuj svako mjesto susreta tako da ga putnik može prepoznati.",
+          );
+        let preview;
+        try {
+          preview = await consumeMeetingPreview(
+            env,
+            user.id,
+            body.previewToken,
+            fromLocation || getPlace(from),
+            toLocation || getPlace(to),
+            body.meetingStops,
+          );
+        } catch (e) {
+          fail(400, e.message);
+        }
+        confirmedRoute = preview.route;
+        meetingStops = preview.meetingStops;
+        for (let i = 0; i < meetingStops.length; i++) {
+          const stop = meetingStops[i];
+          const linked = stop.catalogId
+            ? await resolveCatalogMeetingPoint(env, stop)
+            : null;
+          if (stop.catalogId && !linked)
+            fail(
+              400,
+              "Odabrano mjesto iz baze se promijenilo. Odaberi ga ponovo.",
+            );
+          const registered =
+            body.shareMeetingPoints === true
+              ? await registerMeetingPoint(env, user, stop)
+              : linked;
+          if (registered?.catalogId)
+            meetingStops[i] = { ...stop, catalogId: registered.catalogId };
+          else {
+            delete meetingStops[i].catalogId;
+          }
+        }
+      } else {
+        fail(400, "Prvo odaberi i potvrdi mjesta susreta na svojoj trasi.");
+      }
       const id = crypto.randomUUID();
       await db
         .prepare(
-          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,from_json,to_json,route_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,from_json,to_json,route_json,meeting_stops_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           id,
@@ -694,6 +798,7 @@ export async function handleApi(request, env) {
           fromLocation ? JSON.stringify(fromLocation) : null,
           toLocation ? JSON.stringify(toLocation) : null,
           confirmedRoute ? JSON.stringify(confirmedRoute) : null,
+          meetingStops ? JSON.stringify(meetingStops) : null,
           Date.now(),
         )
         .run();
@@ -742,6 +847,7 @@ export async function handleApi(request, env) {
         let unavailable = false;
         const found = [];
         for (const row of candidates) {
+          await ensureDemoMeetingStops(routingEnv, row);
           const ride = {
               ...rideView(row),
               route: row.route_json ? JSON.parse(row.route_json) : null,
@@ -753,6 +859,10 @@ export async function handleApi(request, env) {
               end,
               wanted,
               minutes,
+              {
+                pickupStopId: q.get("pickupStopId"),
+                dropoffStopId: q.get("dropoffStopId"),
+              },
             );
           if (match?.unavailable) {
             unavailable = true;
@@ -774,34 +884,6 @@ export async function handleApi(request, env) {
             .slice(0, 60),
           routingUnavailable: unavailable,
         });
-      }
-      if (
-        env.OSRM_URL &&
-        getPlace(q.get("from")) &&
-        getPlace(q.get("to")) &&
-        Number.isFinite(wanted)
-      ) {
-        const matrix = await readRoadMatrix(env);
-        if (matrix) {
-          const candidates = (
-            await db
-              .prepare(
-                rideSelect +
-                  " WHERE r.status='open' AND r.departure>? AND r.driver_id<>? AND r.date=? AND r.departure<=? ORDER BY r.departure",
-              )
-              .bind(Date.now(), user.id, q.get("date"), wanted + 3600000)
-              .all()
-          ).results;
-          const rides = candidates
-            .map((r) => ({
-              ...rideView(r),
-              match: matchRoute(r, q.get("from"), q.get("to"), wanted, matrix),
-            }))
-            .filter((r) => r.match)
-            .sort((a, b) => a.match.score - b.match.score)
-            .slice(0, 60);
-          return json({ rides });
-        }
       }
       let sql =
           rideSelect +
@@ -865,11 +947,13 @@ export async function handleApi(request, env) {
     if (rideMatch) {
       const r = await readRide(db, rideMatch[1]);
       if (!r) fail(404, "Vožnja nije pronađena.");
+      await ensureDemoMeetingStops(env, r);
       const action = rideMatch[2];
       if (!action && method === "GET") {
         const q = url.searchParams,
           wanted = departureMs(q.get("date"), q.get("time"));
-        let match;
+        let match,
+          resultUnavailable = false;
         if (q.has("walkMinutes")) {
           const start =
               normalizeLocation(q.get("fromLocation")) ||
@@ -887,20 +971,21 @@ export async function handleApi(request, env) {
               end,
               wanted,
               Number(q.get("walkMinutes")),
+              {
+                pickupStopId: q.get("pickupStopId"),
+                dropoffStopId: q.get("dropoffStopId"),
+              },
             );
             match = result?.unavailable ? null : result;
+            resultUnavailable = !!result?.unavailable;
           }
-          return json({ ride: { ...rideView(r), match } });
-        }
-        if (
-          r.driver_id !== user.id &&
-          getPlace(q.get("from")) &&
-          getPlace(q.get("to")) &&
-          Number.isFinite(wanted)
-        ) {
-          const matrix = await readRoadMatrix(env);
-          if (matrix)
-            match = matchRoute(r, q.get("from"), q.get("to"), wanted, matrix);
+          return json({
+            ride: {
+              ...rideView(r),
+              match,
+              routingUnavailable: resultUnavailable,
+            },
+          });
         }
         return json({ ride: { ...rideView(r), match } });
       }
@@ -930,6 +1015,12 @@ export async function handleApi(request, env) {
           fail(400, "Ne možeš tražiti vlastitu vožnju.");
         if (r.status !== "open" || r.departure <= Date.now())
           fail(409, "Ova vožnja više nije dostupna.");
+        if (
+          r.meeting_stops_json &&
+          (!body.search ||
+            ![5, 10, 15].includes(Number(body.search.walkMinutes)))
+        )
+          fail(400, "Odaberi ulazak i izlazak kroz pretragu vožnje.");
         let routeMatch = null;
         if (body.search) {
           const q = body.search,
@@ -941,7 +1032,6 @@ export async function handleApi(request, env) {
             q.date !== r.date
           )
             fail(400, "Pretraga rute nije ispravna.");
-          let matrix;
           if (q.walkMinutes) {
             const result = await corridorMatch(
               env,
@@ -953,6 +1043,7 @@ export async function handleApi(request, env) {
               normalizeLocation(q.toLocation) || getPlace(q.to),
               wanted,
               Number(q.walkMinutes),
+              { pickupStopId: q.pickupStopId, dropoffStopId: q.dropoffStopId },
             );
             if (result?.unavailable)
               fail(
@@ -965,18 +1056,9 @@ export async function handleApi(request, env) {
                 409,
                 "Ruta ili dozvoljeno hodanje se ne podudaraju. Ponovi pretragu.",
               );
-          } else {
-            matrix = await readRoadMatrix(env);
-            if (matrix)
-              routeMatch = matchRoute(r, q.from, q.to, wanted, matrix);
           }
           if (!routeMatch && (q.from !== r.from_id || q.to !== r.to_id))
             fail(409, "Ovu rutu sada ne možemo potvrditi. Ponovi pretragu.");
-          if (matrix && !routeMatch)
-            fail(
-              409,
-              "Vrijeme ili ruta više se ne podudaraju. Ponovi pretragu.",
-            );
         }
         const existing = await db
           .prepare("SELECT id FROM bookings WHERE ride_id=? AND passenger_id=?")

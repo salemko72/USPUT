@@ -4,7 +4,7 @@ base=os.environ.get('USPUT_TEST_URL','http://127.0.0.1:8791')
 with sync_playwright() as p:
  browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium');page=browser.new_page(viewport={'width':390,'height':844})
  r=page.request.post(base+'/api/auth/register',headers={'Origin':base},data={'name':'Location Test','email':f'locations-{time.time_ns()}@example.test','password':'testna-lozinka-123','city':'Sarajevo','adult':True,'terms':True});assert r.ok,r.text()
- page.goto(base);page.get_by_text('Probna mjesta iz prethodne bete',exact=True).click();page.get_by_label('Najviše minuta hodanja',exact=True).select_option('5');origin=page.get_by_role('combobox',name='Polazište',exact=True)
+ page.goto(base);page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click();page.get_by_text('Probna mjesta iz prethodne bete',exact=True).click();page.get_by_label('Najviše minuta hodanja',exact=True).select_option('5');origin=page.get_by_role('combobox',name='Polazište',exact=True)
  for query,name in [('bistr','Bistrik'),('alfakovac','Alifakovac'),('bascars','Baščaršija'),('logav','Logavina'),('kated','Katedrala'),('kovacici','Kovačići'),('sirokaca','Širokača')]:
   origin.fill(query);page.get_by_role('option',name=name,exact=True).click();expect(origin).to_have_value(name)
  origin.fill('bistr');origin.press('Enter');expect(origin).to_have_value('Bistrik')
