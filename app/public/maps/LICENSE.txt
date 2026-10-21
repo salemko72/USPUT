@@ -1,4 +1,4 @@
-USPUT map style: modified colours, Latin labels and reduced label density.
+USPUT map style: original Positron colours, Latin labels and reduced label density.
 Source: https://github.com/hyperknot/openfreemap-styles/tree/main/styles/positron
 
 Copyright (c) 2024, MapTiler.com & OpenMapTiles contributors.  

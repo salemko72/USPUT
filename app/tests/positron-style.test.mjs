@@ -5,7 +5,7 @@ import { validateStyleMin } from "@maplibre/maplibre-gl-style-spec";
 const style = JSON.parse(
   readFileSync(new URL("../public/maps/usput-positron.json", import.meta.url)),
 );
-test("custom Positron is a valid key-free vector style with the requested physical-feature colours", () => {
+test("standard Positron uses its original light palette on a valid key-free vector style", () => {
   assert.deepEqual(
     validateStyleMin(style).map((e) => e.message),
     [],
@@ -17,14 +17,13 @@ test("custom Positron is a valid key-free vector style with the requested physic
   );
   const colour = (id, property) =>
     style.layers.find((l) => l.id === id).paint[property];
-  assert.equal(colour("background", "background-color"), "#E0E0E0");
-  assert.equal(colour("park", "fill-color"), "#ABBEA7");
-  assert.equal(colour("water", "fill-color"), "#79858B");
-  assert.equal(colour("waterway", "line-color"), "#8799A1");
-  assert.equal(colour("building", "fill-color"), "#D1D1D1");
-  assert.equal(colour("building", "fill-outline-color"), "#A5A8A3");
-  assert.equal(colour("highway_minor", "line-color"), "#DCDBDB");
-  assert.equal(colour("landcover_grass", "fill-color"), "#C9D5C8");
+  assert.equal(colour("background", "background-color"), "rgb(242,243,240)");
+  assert.equal(colour("park", "fill-color"), "rgb(230, 233, 229)");
+  assert.equal(colour("water", "fill-color"), "rgb(194, 200, 202)");
+  assert.equal(colour("waterway", "line-color"), "hsl(195,17%,78%)");
+  assert.equal(colour("building", "fill-color"), "rgb(234, 234, 229)");
+  assert.equal(colour("building", "fill-outline-color"), "rgb(219, 219, 218)");
+  assert.equal(colour("highway_minor", "line-color"), "hsl(0,0%,88%)");
 });
 test("map labels prefer Latin without duplicate scripts and omit distracting POIs and shields", () => {
   const labels = style.layers.filter((l) => l.type === "symbol");

@@ -6,11 +6,18 @@ import { Layers, MapPin, Plus, Minus, Expand } from "lucide-react";
 import type { Map as LeafletMap, LayerGroup, LatLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
 const emptyStops: Place[] = [];
+export type MapInsets = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};
 type RouteSnapshot = {
   from: Place;
   to: Place;
   geometry?: number[][];
   stops: Place[];
+  insets?: MapInsets;
 };
 type LiveRoute = {
   map: LeafletMap;
@@ -21,7 +28,7 @@ type LiveRoute = {
 };
 function drawRoute(view: LiveRoute, data: RouteSnapshot) {
   const { map, L, layers } = view,
-    { from, to, geometry, stops } = data;
+    { from, to, geometry, stops, insets } = data;
   layers.clearLayers();
   for (const p of [from, to])
     L.circleMarker([p.lat, p.lng], {
@@ -59,12 +66,22 @@ function drawRoute(view: LiveRoute, data: RouteSnapshot) {
     ...line,
     ...stops.map((p) => [p.lat, p.lng] as [number, number]),
   ]);
-  const routeKey = JSON.stringify(line);
+  const routeKey = JSON.stringify([line, insets]);
   // A label or stop edit updates the overlay without discarding the user's zoom/pan.
   if (view.routeKey !== routeKey) {
-    map.fitBounds(view.bounds, { padding: [35, 45], maxZoom: 14 });
+    map.fitBounds(view.bounds, fitOptions(insets));
     view.routeKey = routeKey;
   }
+}
+function fitOptions(insets?: MapInsets) {
+  return {
+    paddingTopLeft: [insets?.left ?? 35, insets?.top ?? 45] as [number, number],
+    paddingBottomRight: [insets?.right ?? 35, insets?.bottom ?? 45] as [
+      number,
+      number,
+    ],
+    maxZoom: 14,
+  };
 }
 
 export function RouteMap({
@@ -74,6 +91,8 @@ export function RouteMap({
   geometry,
   provider,
   stops = emptyStops,
+  insets,
+  animated = true,
 }: {
   from: Place;
   to: Place;
@@ -81,14 +100,16 @@ export function RouteMap({
   geometry?: number[][];
   provider?: string;
   stops?: Place[];
+  insets?: MapInsets;
+  animated?: boolean;
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false),
     [mapReady, setMapReady] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const view = useRef<LiveRoute | null>(null);
-  const latest = useRef<RouteSnapshot>({ from, to, geometry, stops });
-  latest.current = { from, to, geometry, stops };
+  const latest = useRef<RouteSnapshot>({ from, to, geometry, stops, insets });
+  latest.current = { from, to, geometry, stops, insets };
   useEffect(() => {
     if (geometry) setLive(true);
   }, [geometry]);
@@ -107,6 +128,10 @@ export function RouteMap({
           touchZoom: true,
           minZoom: 2,
           maxZoom: 20,
+          // Full-screen resizing can be followed immediately by closing. Leaflet
+          // 1.9 does not cancel its CSS zoom-transition timer on map.remove().
+          zoomAnimation: animated,
+          markerZoomAnimation: animated,
         });
         const layers = L.layerGroup().addTo(map),
           current = { map, L, layers };
@@ -133,10 +158,10 @@ export function RouteMap({
       cancelled = true;
       cleanup();
     };
-  }, [live]);
+  }, [live, animated]);
   useEffect(() => {
     if (view.current) drawRoute(view.current, latest.current);
-  }, [from, to, geometry, stops]);
+  }, [from, to, geometry, stops, insets]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
       <svg
@@ -268,10 +293,10 @@ export function RouteMap({
               onClick={() => {
                 const current = view.current;
                 if (current?.bounds)
-                  current.map.fitBounds(current.bounds, {
-                    padding: [35, 45],
-                    maxZoom: 14,
-                  });
+                  current.map.fitBounds(
+                    current.bounds,
+                    fitOptions(latest.current.insets),
+                  );
               }}
             >
               <Expand size={17} />

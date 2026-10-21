@@ -60,6 +60,7 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 d.get_by_role('button',name='Objavi vožnju',exact=True).click()
                 dialog = d.get_by_role('dialog',name='Je li ovo ruta kojom stvarno voziš?')
                 expect(dialog).to_be_visible()
+                dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
                 publish = dialog.get_by_role('button',name='Vozim ovom trasom — objavi',exact=True)
                 expect(publish).to_be_disabled()
                 # One initial meeting field; choosing a catalogue point fills it.

@@ -12,7 +12,7 @@ import {
   Check,
   MapPin,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useCurrentUserPhoto } from "./AvatarPhotoContext";
 export function Brand({ light = false }: { light?: boolean }) {
@@ -151,6 +151,15 @@ export function Modal({
   children: ReactNode;
   onClose: () => void;
 }) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    closeButton.current?.focus({ preventScroll: true });
+    return () => {
+      if (previous instanceof HTMLElement && previous.isConnected)
+        previous.focus({ preventScroll: true });
+    };
+  }, []);
   return (
     <div
       className="modal-shade"
@@ -164,11 +173,44 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={t(title)}
+        onKeyDown={(event) => {
+          if (
+            (event.target as HTMLElement).closest('[role="dialog"]') !==
+            event.currentTarget
+          )
+            return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            onClose();
+          } else if (event.key === "Tab") {
+            const controls = Array.from(
+              event.currentTarget.querySelectorAll<HTMLElement>(
+                "button,a[href],input,select,textarea,summary,[tabindex]",
+              ),
+            ).filter(
+              (el) =>
+                !el.matches(":disabled") &&
+                el.tabIndex >= 0 &&
+                el.offsetParent !== null,
+            );
+            const first = controls[0],
+              last = controls.at(-1);
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first?.focus();
+            }
+          }
+        }}
       >
         <button
+          ref={closeButton}
+          type="button"
           className="icon-button modal-close"
           aria-label={t("Zatvori")}
-          autoFocus
           onClick={onClose}
         >
           <X />

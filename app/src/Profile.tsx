@@ -154,7 +154,7 @@ export function Profile({
               <br />
               {t(" mjesta. ")}
               <br />
-              {t(" Više dobrih jutara. ")}
+              {t(" Više lijepih trenutaka. ")}
             </h2>
             <p>
               {t("Tvoja rutina ostaje tvoja. USPUT joj dodaje dobro društvo.")}

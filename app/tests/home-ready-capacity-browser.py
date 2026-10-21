@@ -257,6 +257,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 d.locator('input[name=costSharing]').check()
                 d.get_by_role('button', name='Objavi vožnju', exact=True).click()
                 dialog = d.get_by_role('dialog', name='Je li ovo ruta kojom stvarno voziš?')
+                dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
                 with d.expect_response(lambda r: r.url.endswith('/api/routes/preview')) as recalculated:
                     dialog.get_by_role('button', name='Proračunaj trasu s ovim tačkama', exact=True).click()
                 assert recalculated.value.ok, recalculated.value.text()
@@ -347,6 +348,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 assert [(p['lat'], p['lng']) for p in preview_body['meetingStops']] == [(p['lat'], p['lng']) for p in original['meetingStops']]
                 assert len(driver.request.get(base + '/api/my-rides').json()['rides']) == before_count
                 repeat_dialog = d.get_by_role('dialog', name='Je li ovo ruta kojom stvarno voziš?')
+                repeat_dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
                 repeat_confirm = repeat_dialog.get_by_role('button', name='Vozim ovom trasom — objavi', exact=True)
                 expect(repeat_confirm).to_be_disabled()
                 repeat_dialog.locator('.stop-confirmation input').check()

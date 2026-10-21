@@ -3,7 +3,7 @@ import { SavedSearches } from "./SavedSearches";
 import { savePassengerSearch } from "./saved-searches";
 import { LocationScopeControl, type LocationScope } from "./LocationScope";
 import { api } from "./api";
-import { RouteMap } from "./Map";
+import { RoutePlanner } from "./RoutePlanner";
 import { StreetPicker } from "./StreetPicker";
 import { PlacePicker } from "./PlacePicker";
 import { t } from "./i18n";
@@ -191,6 +191,8 @@ export function Home({
       previewToken?: string;
     } | null>(null);
   const consumedRepeat = useRef<string | undefined>(undefined);
+  const draftRouteKey = useRef("");
+  const publishTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!repeatRide) {
       consumedRepeat.current = undefined;
@@ -207,6 +209,10 @@ export function Home({
     setNote(repeatRide.note);
     setCostSharing(Boolean(repeatRide.costSharing));
     setDraftStops(repeatRide.meetingStops?.map((stop) => ({ ...stop })));
+    draftRouteKey.current = JSON.stringify([
+      repeatRide.from.id,
+      repeatRide.to.id,
+    ]);
     setRepeatDraft(true);
     setQuery({
       from: repeatRide.from.id,
@@ -220,6 +226,9 @@ export function Home({
   }, [repeatRide, onRepeatConsumed, setQuery]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    publishTrigger.current = e.currentTarget.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
     setError("");
     if (
       !(query.fromLocation || places.some((p) => p.id === query.from)) ||
@@ -278,10 +287,14 @@ export function Home({
           previewToken?: string;
         }>("/routes/preview", {
           ...offer,
-          ...(draftStops ? { meetingStops: draftStops } : {}),
+          ...(draftStops &&
+          draftRouteKey.current === JSON.stringify([offer.from, offer.to])
+            ? { meetingStops: draftStops }
+            : {}),
         });
         setStopsApproved(false);
         setShareMeetingPoints(false);
+        draftRouteKey.current = JSON.stringify([offer.from, offer.to]);
         setPreview({ ...result, offer });
       }
     } catch (e) {
@@ -294,24 +307,51 @@ export function Home({
     <div className="home-page">
       <UpcomingRide service={service} user={user} />
       {preview && (
-        <Modal
-          title={t("Je li ovo ruta kojom stvarno voziš?")}
+        <RoutePlanner
+          from={preview.from}
+          to={preview.to}
+          route={preview.route}
+          stops={preview.meetingStops}
+          busy={busy}
+          returnFocusTo={publishTrigger}
           onClose={() => {
-            if (!busy) setPreview(null);
+            if (!busy) {
+              setDraftStops(preview.meetingStops);
+              setPreview(null);
+            }
           }}
+          action={
+            <Button
+              busy={busy}
+              arrow
+              disabled={!preview.previewToken || !stopsApproved}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  await onPublish({
+                    ...preview.offer,
+                    routeConfirmed: true,
+                    stopsConfirmed: true,
+                    previewToken: preview.previewToken,
+                    meetingStops: preview.meetingStops,
+                    shareMeetingPoints,
+                  });
+                  setPreview(null);
+                  setDraftStops(undefined);
+                  draftRouteKey.current = "";
+                  setRepeatDraft(false);
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {t("Vozim ovom trasom — objavi")}
+            </Button>
+          }
         >
-          <RouteMap
-            from={preview.from}
-            to={preview.to}
-            geometry={preview.route.coordinates}
-            provider={preview.route.provider}
-            stops={preview.meetingStops}
-            large
-          />
-          <p>
-            {Math.round(preview.route.distance / 100) / 10} km ·{" "}
-            {Math.ceil(preview.route.duration / 60)} min
-          </p>
           <p>
             {t(
               "Ako ova trasa nije tvoj put, nemoj je potvrditi. Vrati se i promijeni polazište ili odredište.",
@@ -324,7 +364,7 @@ export function Home({
             suggestions={preview.catalogSuggestions}
             onChange={(meetingStops) => {
               setPreview({ ...preview, meetingStops, previewToken: undefined });
-              if (repeatDraft) setDraftStops(meetingStops);
+              setDraftStops(meetingStops);
               setStopsApproved(false);
             }}
           />
@@ -383,47 +423,23 @@ export function Home({
               )}
             </span>
           </label>
-          <label className="community-contribution">
-            <input
-              type="checkbox"
-              checked={shareMeetingPoints}
-              onChange={(e) => setShareMeetingPoints(e.target.checked)}
-            />
-            <span>
-              {t(
-                "Predloži ova javna mjesta zajedničkoj gradskoj bazi. Ne dijeli privatne kućne adrese.",
-              )}
-            </span>
-          </label>
+          <details className="route-planner-extra">
+            <summary>{t("Dodatne postavke")}</summary>
+            <label className="community-contribution">
+              <input
+                type="checkbox"
+                checked={shareMeetingPoints}
+                onChange={(e) => setShareMeetingPoints(e.target.checked)}
+              />
+              <span>
+                {t(
+                  "Predloži ova javna mjesta zajedničkoj gradskoj bazi. Ne dijeli privatne kućne adrese.",
+                )}
+              </span>
+            </label>
+          </details>
           <ErrorBox error={error} />
-          <Button
-            busy={busy}
-            disabled={!preview.previewToken || !stopsApproved}
-            onClick={async () => {
-              setBusy(true);
-              setError("");
-              try {
-                await onPublish({
-                  ...preview.offer,
-                  routeConfirmed: true,
-                  stopsConfirmed: true,
-                  previewToken: preview.previewToken,
-                  meetingStops: preview.meetingStops,
-                  shareMeetingPoints,
-                });
-                setPreview(null);
-                setDraftStops(undefined);
-                setRepeatDraft(false);
-              } catch (e) {
-                setError((e as Error).message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t("Vozim ovom trasom — objavi")}
-          </Button>
-        </Modal>
+        </RoutePlanner>
       )}
 
       <section className="home-hero">

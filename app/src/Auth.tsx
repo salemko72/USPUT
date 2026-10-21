@@ -50,7 +50,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
           <span className="sticker-dots">● ●</span>
           {t(" Manje praznih mjesta. ")}
           <br />
-          {t(" Više dobrih jutara. ")}
+          {t(" Više lijepih trenutaka. ")}
         </div>
       </div>
       <section className="landing-panel">

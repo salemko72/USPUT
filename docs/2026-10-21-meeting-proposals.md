@@ -2,13 +2,15 @@
 
 Ovo je razrađen prijedlog za sljedeću iteraciju, a ne tvrdnja da su chat, dijeljenje GPS-a i pregovaranje već implementirani. Trenutna aplikacija povezuje vožnju s mjestima susreta koja je vozač odobrio, uz proračun hodanja putnika.
 
+Usaglašeni smjer: gradska baza i učenje tačaka rade u pozadini. Običan korisnik bira gdje će se naći, bez obaveznog imenovanja tačke, popunjavanja gradskog kataloga ili ocjenjivanja svake lokacije. Detaljan unos ostaje opcija. Sljedeći odjeljci opisuju cilj naredne iteracije; ovo pojednostavljenje još zahtijeva promjene ugovaranja vožnje i algoritma.
+
 ## 1. Vozač potvrđuje trasu
 
 Vozač unosi polazište i cilj. Aplikacija prikaže preporučenu cestovnu trasu. OSRM trenutno optimizira vrijeme putovanja; to ne treba nazivati najkraćom trasom po kilometrima.
 
 Na karti vozač može dodati ili povući prolazni pin i proračunati novu trasu. Prolazni pin samo određuje kuda se vozi. Mjesto susreta zasebno određuje gdje je vozač spreman stati. Prolazak nekom ulicom nije dozvola za zaustavljanje u toj ulici.
 
-Aplikacija nudi mjesta iz gradske baze uz trasu, s nazivom i napomenom o prilazu/strani ulice. Dok baza nije popunjena, vozač može dodati vlastiti pin. Naziv je opcionalan: dobit će „Mjesto susreta 1“, ali ga je korisno imenovati, npr. „Kod Alte — ulaz na parking“. Automatski prijedlog uvijek čeka vozačevu potvrdu. Proračun ne može potvrditi da je stajanje zakonito ili praktično.
+Aplikacija može ponuditi nekoliko dobrih mjesta uz trasu. Vozač može prihvatiti prijedlog ili dodati/pomjeriti svoj pin, bez uređivanja gradske baze. Naziv je opcionalan; sistem može prikazati najbliži orijentir ili „Mjesto susreta 1“. Napomena o prilazu/strani ulice dostupna je kada treba. Vozač potvrđuje da na dogovorenom mjestu može stati; učestalost korištenja nije dokaz da je stajanje zakonito ili praktično.
 
 Ponuda čuva potvrđenu trasu, redoslijed stajanja i broj slobodnih putničkih mjesta. Ponuda s tri mjesta ostaje dostupna dok ima slobodnog kapaciteta.
 
@@ -59,9 +61,11 @@ Ocjenu osobe dopuštamo samo učesnicima završene stvarne vožnje, jednom po do
 
 ## 7. Gradska baza koja raste
 
-Predlaganje javnog mjesta u zajedničku bazu ostaje odvojen izbor. Privatni početni pinovi i neimenovani automatski pinovi ne objavljuju se sami.
+Učenje polazi od stvarno potvrđenih, uspješno završenih susreta. Korisniku ne postavljamo novi zadatak „definiraj gradsku tačku“. Sistem u pozadini grupiše upotrebe istog mjesta, računa pouzdanost prema broju nezavisnih dogovora, svježini potvrda i iskustvu susreta, pa dobre kandidate kasnije nudi na odgovarajućim putanjama. Jedno ponavljanje ili nekoliko demo vožnji ne gradi javnu reputaciju tačke. Ručna ocjena mjesta i uređivanje kataloga ostaju napredne opcije.
 
-Sličan naziv („Alta“, „Kod Alte“) i blizina daju **kandidate za spajanje**, ne dokaz da su tačke iste. Dvije strane ceste, parking i tramvajska stanica mogu biti nekoliko metara udaljeni, a imati potpuno drugačiji prilaz. Čuvamo smjer, stranu ulice i napomenu. Urednik potvrđuje spajanje, čuvaju se aliasi i stari ID vodi na aktivnu tačku. Broj uspješnih potvrđenih susreta pomaže rangiranju.
+Privatni polazni i završni pinovi ne postaju gradske tačke. Dogovoreni pin koriste učesnici tog dogovora. Tačan privatni pin ili korisnikov naziv ne objavljuje se automatski drugim korisnicima; javni prijedlozi trebaju odvojenu provjeru javnog mjesta. Postojeći izbor dijeljenja javnih mjesta ostaje pod dodatnim postavkama dok taj model ne bude implementiran.
+
+Sličan naziv („Alta“, „Kod Alte“) i blizina daju kandidate za automatsko grupisanje, uz čuvanje smjera i strane ulice. Dvije strane ceste, parking i tramvajska stanica mogu biti nekoliko metara udaljeni, a imati potpuno drugačiji prilaz. Kao prijedlog biramo stvarno korišten pin, umjesto aritmetičkog centra koji bi mogao završiti nasred ceste. Nejasna spajanja ostaju uredniku; čuvaju se aliasi i stari ID vodi na aktivnu tačku.
 
 Servisni meni može uvoziti početne tačke po gradovima kao kandidate za pregled. Deset nasumičnih POI-ja nije deset pogodnih mjesta za zaustavljanje; početne tačke treba lokalno provjeriti prije aktivacije.
 

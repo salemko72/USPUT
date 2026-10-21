@@ -30,7 +30,6 @@
   "Nekome si baš usput.": "You're going someone's way.",
   "Zeleni gradski automobil, urbana naselja, tramvaj i drveće": "Green city car, urban neighbourhoods, tram and trees",
   "Manje praznih mjesta.": "Fewer empty seats.",
-  "Više dobrih jutara.": "More good mornings.",
   "GRAD JE LJEPŠI ZAJEDNO": "THE CITY IS BETTER TOGETHER",
   "Isti smjer.": "Same direction.",
   "Novi ljudi.": "New people.",
@@ -819,5 +818,15 @@
   "Mjesto je već spojeno. Učitaj katalog ponovo.": "The point is already merged. Reload the catalogue.",
   "Spajanje zahtijeva isti grad, razmak do 40 m i usklađenu stranu i prilaz.": "Merging requires the same city, a distance of at most 40 m, and compatible roadside and approach.",
   "Spajanje nije pronađeno.": "Merge not found.",
-  "Spajanje je već poništeno.": "The merge has already been undone."
+  "Spajanje je već poništeno.": "The merge has already been undone.",
+  "Više lijepih trenutaka.": "More lovely moments.",
+  "Nazad na unos vožnje": "Back to ride details",
+  "TVOJA RUTA. TVOJ DOGOVOR.": "YOUR ROUTE. YOUR PLAN.",
+  "Udaljenost": "Distance",
+  "Trajanje": "Travel time",
+  "tačke": "points",
+  "Uredi mjesta susreta": "Edit meeting points",
+  "Više mape": "More map",
+  "Pregledaj i potvrdi rutu": "Review and confirm route",
+  "Dodatne postavke": "More settings"
 }
