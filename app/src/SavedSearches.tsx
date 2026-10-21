@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, Clock3, Footprints, Plus, X } from "lucide-react";
 import { t } from "./i18n";
 import type { Search } from "./types";
+import { dateLabel } from "./types";
+import { DatePicker } from "./DatePicker";
 import {
   deletePassengerSearch,
   listPassengerSearches,
@@ -15,9 +17,13 @@ import "./saved-searches.css";
 export function SavedSearches({
   onNew,
   onLoad,
+  selectedDate,
+  onDateChange,
 }: {
   onNew: () => void;
   onLoad: (query: Search) => void;
+  selectedDate?: string;
+  onDateChange?: (date: string) => void;
 }) {
   const [searches, setSearches] = useState<SavedPassengerSearch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +82,14 @@ export function SavedSearches({
     >
       <div className="saved-searches-heading">
         <h3>{t("Tvoj svakodnevni put")}</h3>
-        <p>{t("Pretrage se automatski čuvaju. Odaberi rutu za danas.")}</p>
+        <p>{t("Pretrage se automatski čuvaju. Odaberi rutu i datum.")}</p>
       </div>
+      {selectedDate && onDateChange && (
+        <div className="saved-search-date">
+          <span>{t("Datum vožnje")}</span>
+          <DatePicker value={selectedDate} onChange={onDateChange} />
+        </div>
+      )}
       <div className="saved-searches-grid">
         <button className="saved-search-new" type="button" onClick={onNew}>
           <span className="saved-search-plus">
@@ -97,7 +109,15 @@ export function SavedSearches({
                 type="button"
                 aria-label={t("Učitaj pretragu {from} — {to}", { from, to })}
                 disabled={busy}
-                onClick={() => onLoad(restorePassengerSearch(search.query))}
+                onClick={() =>
+                  onLoad(
+                    restorePassengerSearch(
+                      search.query,
+                      new Date(),
+                      selectedDate,
+                    ),
+                  )
+                }
               >
                 <span className="saved-search-route">
                   <span>
@@ -122,7 +142,7 @@ export function SavedSearches({
                   </span>
                 </span>
                 <span className="saved-search-today">
-                  {t("Za danas")}
+                  {selectedDate ? dateLabel(selectedDate) : t("Za danas")}
                   <ArrowUpRight size={16} aria-hidden="true" />
                 </span>
               </button>

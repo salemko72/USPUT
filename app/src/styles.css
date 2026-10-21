@@ -1342,6 +1342,35 @@ textarea::placeholder {
   box-shadow: 0 3px 10px #15181509;
   z-index: 500;
 }
+.route-map-controls {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 500;
+  display: grid;
+  border: 1px solid #dce1d5;
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 3px 12px #15181514;
+}
+.route-map-controls button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: white;
+  color: #151815;
+}
+.route-map-controls button + button {
+  border-top: 1px solid #e4e7df;
+}
+.route-map-controls button:hover {
+  background: #edf2e3;
+}
+.route-map-controls button:disabled {
+  opacity: 0.4;
+}
 .map-note {
   position: absolute;
   bottom: 10px;
@@ -4373,7 +4402,7 @@ textarea::placeholder {
 }
 .route-provider-credit {
   position: absolute;
-  top: 12px;
+  bottom: 44px;
   left: 12px;
   max-width: 65%;
   padding: 5px 8px;

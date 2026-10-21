@@ -11,7 +11,7 @@ with sync_playwright() as p:
         page.goto(base)
         page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click()
         trigger=page.get_by_role('button',name=re.compile('Datum polaska:'))
-        expect(trigger).to_have_text('Danas')
+        expect(trigger).to_have_text('Sutra')
         trigger.click(position={'x':8,'y':12})
         calendar=page.get_by_role('dialog',name='Odaberi datum polaska')
         expect(calendar).to_be_visible()

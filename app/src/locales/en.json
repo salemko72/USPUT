@@ -661,5 +661,19 @@
   "Ocjena je dostupna samo učesnicima završene vožnje za njeno mjesto susreta.": "Only participants in a completed ride can rate its meeting points.",
   "Ovo mjesto nije navedeno u dogovoru završene vožnje.": "This point is not listed in the completed ride agreement.",
   "Vozačeva mjesta ulaska i izlaska": "The driver's pick-up and drop-off points",
-  "Sačuvane pretrage i tvoji polazni pinovi su privatni. Saputnik dobija dogovorena mjesta ulaska i izlaska. Mjesta u zajedničkoj gradskoj bazi postaju javna samo ako ih predložiš toj bazi; urednik odlučuje o aktivaciji.": "Your saved searches and starting pins are private. Your travel companion receives the agreed pick-up and drop-off points. Points become public in the shared city catalogue only if you contribute them; an editor decides whether to activate them."
+  "Sačuvane pretrage i tvoji polazni pinovi su privatni. Saputnik dobija dogovorena mjesta ulaska i izlaska. Mjesta u zajedničkoj gradskoj bazi postaju javna samo ako ih predložiš toj bazi; urednik odlučuje o aktivaciji.": "Your saved searches and starting pins are private. Your travel companion receives the agreed pick-up and drop-off points. Points become public in the shared city catalogue only if you contribute them; an editor decides whether to activate them.",
+  "Mapa rute": "Route map",
+  "Približi mapu": "Zoom in",
+  "Udalji mapu": "Zoom out",
+  "Prikaži cijelu trasu": "Show the whole route",
+  "Mjesto susreta": "Meeting point",
+  "Mjesta na tvojoj ruti": "Stops along your route",
+  "Polazište vozača": "Driver’s starting point",
+  "Završna tačka": "Final destination",
+  "Prilaz i strana ulice (opcionalno)": "Approach and side of the street (optional)",
+  "Krećeš od polazišta, biraš mjesto susreta i završavaš na odredištu. Dodatne tačke dodaj samo gdje želiš stati.": "Start from your departure point, choose a meeting point and finish at your destination. Add further points only where you want to stop.",
+  "Polazište i odredište mijenjaš u prethodnom koraku.": "Change your departure point and destination in the previous step.",
+  "Ta tačka je već na ruti. Pomjeri pin na drugo mjesto.": "That point is already on the route. Move the pin to another place.",
+  "Pretrage se automatski čuvaju. Odaberi rutu i datum.": "Searches are saved automatically. Choose a route and date.",
+  "Datum vožnje": "Ride date"
 }

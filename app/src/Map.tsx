@@ -2,9 +2,71 @@ import { MAP_TILE_URL, MAP_TILE_OPTIONS } from "./map-style";
 import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "./types";
-import { Layers, MapPin } from "lucide-react";
+import { Layers, MapPin, Plus, Minus, Expand } from "lucide-react";
+import type { Map as LeafletMap, LayerGroup, LatLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
 const emptyStops: Place[] = [];
+type RouteSnapshot = {
+  from: Place;
+  to: Place;
+  geometry?: number[][];
+  stops: Place[];
+};
+type LiveRoute = {
+  map: LeafletMap;
+  L: typeof import("leaflet");
+  layers: LayerGroup;
+  bounds?: LatLngBounds;
+  routeKey?: string;
+};
+function drawRoute(view: LiveRoute, data: RouteSnapshot) {
+  const { map, L, layers } = view,
+    { from, to, geometry, stops } = data;
+  layers.clearLayers();
+  for (const p of [from, to])
+    L.circleMarker([p.lat, p.lng], {
+      radius: 9,
+      color: "#151815",
+      weight: 4,
+      fillColor: "#d7f56a",
+      fillOpacity: 1,
+    }).addTo(layers);
+  stops.forEach((p, i) => {
+    const label = document.createElement("span");
+    label.textContent = `${i + 1}. ${p.name || t("Mjesto susreta")}`;
+    L.circleMarker([p.lat, p.lng], {
+      radius: 6,
+      weight: 2,
+      color: "#151815",
+      fillColor: "#d7f56a",
+      fillOpacity: 1,
+    })
+      .addTo(layers)
+      .bindTooltip(label);
+  });
+  const line: [number, number][] = geometry?.length
+    ? geometry.map((p) => [p[1], p[0]])
+    : [
+        [from.lat, from.lng],
+        [to.lat, to.lng],
+      ];
+  L.polyline(line, {
+    color: "#151815",
+    weight: 4,
+    dashArray: geometry ? undefined : "7 10",
+  }).addTo(layers);
+  view.bounds = L.latLngBounds([
+    ...line,
+    ...stops.map((p) => [p.lat, p.lng] as [number, number]),
+  ]);
+  const routeKey = JSON.stringify(line);
+  // A label or stop edit updates the overlay without discarding the user's zoom/pan.
+  if (view.routeKey !== routeKey) {
+    map.fitBounds(view.bounds, { padding: [35, 45], maxZoom: 14 });
+    view.routeKey = routeKey;
+  }
+}
+
 export function RouteMap({
   from,
   to,
@@ -21,73 +83,59 @@ export function RouteMap({
   stops?: Place[];
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
-    [failed, setFailed] = useState(false);
+    [failed, setFailed] = useState(false),
+    [mapReady, setMapReady] = useState(false);
   const container = useRef<HTMLDivElement>(null);
+  const view = useRef<LiveRoute | null>(null);
+  const latest = useRef<RouteSnapshot>({ from, to, geometry, stops });
+  latest.current = { from, to, geometry, stops };
   useEffect(() => {
     if (geometry) setLive(true);
   }, [geometry]);
   useEffect(() => {
     if (!live || !container.current) return;
-    let cleanup = () => {},
-      cancelled = false;
+    let cancelled = false,
+      cleanup = () => {};
+    setMapReady(false);
+    setFailed(false);
     import("leaflet")
       .then((L) => {
         if (cancelled || !container.current) return;
         const map = L.map(container.current, {
           zoomControl: false,
-          scrollWheelZoom: false,
+          scrollWheelZoom: true,
+          touchZoom: true,
         });
+        const layers = L.layerGroup().addTo(map),
+          current = { map, L, layers };
         const tiles = L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS);
         let errors = 0;
         tiles.on("tileerror", () => {
           if (++errors > 3) setFailed(true);
         });
         tiles.addTo(map);
-        const points: [number, number][] = [
-          [from.lat, from.lng],
-          [to.lat, to.lng],
-        ];
-        for (const p of points)
-          L.circleMarker(p, {
-            radius: 9,
-            color: "#151815",
-            weight: 4,
-            fillColor: "#d7f56a",
-            fillOpacity: 1,
-          }).addTo(map);
-        stops.forEach((p, i) => {
-          const label = document.createElement("span");
-          label.textContent = `${i + 1}. ${p.name}`;
-          L.circleMarker([p.lat, p.lng], {
-            radius: 6,
-            weight: 2,
-            color: "#151815",
-            fillColor: "#d7f56a",
-            fillOpacity: 1,
-          })
-            .addTo(map)
-            .bindTooltip(label);
-        });
-        const line: [number, number][] = geometry?.length
-          ? geometry.map((p) => [p[1], p[0]])
-          : points;
-        L.polyline(line, {
-          color: "#151815",
-          weight: 4,
-          dashArray: geometry ? undefined : "7 10",
-        }).addTo(map);
-        map.fitBounds(L.latLngBounds(line), {
-          padding: [35, 45],
-          maxZoom: 14,
-        });
-        cleanup = () => map.remove();
+        view.current = current;
+        drawRoute(current, latest.current);
+        const observer = new ResizeObserver(() =>
+          map.invalidateSize({ pan: false }),
+        );
+        observer.observe(container.current);
+        setMapReady(true);
+        cleanup = () => {
+          observer.disconnect();
+          view.current = null;
+          map.remove();
+        };
       })
       .catch(() => setFailed(true));
     return () => {
       cancelled = true;
       cleanup();
     };
-  }, [live, from.id, to.id, geometry, stops]);
+  }, [live]);
+  useEffect(() => {
+    if (view.current) drawRoute(view.current, latest.current);
+  }, [from, to, geometry, stops]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
       <svg
@@ -184,7 +232,52 @@ export function RouteMap({
           {t(" PRIKAZ MJESTA ")}
         </text>
       </svg>
-      {live && <div className="leaflet-container-wrap" ref={container} />}
+      {live && (
+        <>
+          <div
+            className="leaflet-container-wrap"
+            ref={container}
+            role="region"
+            aria-label={t("Mapa rute")}
+          />
+          <div className="route-map-controls">
+            <button
+              type="button"
+              aria-label={t("Približi mapu")}
+              title={t("Približi mapu")}
+              disabled={!mapReady}
+              onClick={() => view.current?.map.zoomIn()}
+            >
+              <Plus size={19} />
+            </button>
+            <button
+              type="button"
+              aria-label={t("Udalji mapu")}
+              title={t("Udalji mapu")}
+              disabled={!mapReady}
+              onClick={() => view.current?.map.zoomOut()}
+            >
+              <Minus size={19} />
+            </button>
+            <button
+              type="button"
+              aria-label={t("Prikaži cijelu trasu")}
+              title={t("Prikaži cijelu trasu")}
+              disabled={!mapReady}
+              onClick={() => {
+                const current = view.current;
+                if (current?.bounds)
+                  current.map.fitBounds(current.bounds, {
+                    padding: [35, 45],
+                    maxZoom: 14,
+                  });
+              }}
+            >
+              <Expand size={17} />
+            </button>
+          </div>
+        </>
+      )}
       <button
         className="map-toggle"
         onClick={() => {

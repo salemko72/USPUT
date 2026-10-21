@@ -67,12 +67,15 @@ export async function deletePassengerSearch(id: string): Promise<void> {
 export function restorePassengerSearch(
   query: SavedPassengerQuery,
   now = new Date(),
+  selectedDate?: string,
 ): Search {
   return {
     ...query,
-    date: new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Europe/Sarajevo",
-    }).format(now),
+    date:
+      selectedDate ||
+      new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "Europe/Sarajevo",
+      }).format(now),
   };
 }
 

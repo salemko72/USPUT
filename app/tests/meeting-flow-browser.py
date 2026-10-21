@@ -60,9 +60,9 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 expect(dialog).to_be_visible()
                 publish = dialog.get_by_role('button',name='Vozim ovom trasom — objavi',exact=True)
                 expect(publish).to_be_disabled()
-                # Remove generic suggestions. Add the reviewed catalogue suggestions instead.
-                while dialog.locator('.meeting-editor ol > li').count() > 2:
-                    dialog.locator('.meeting-editor ol > li').nth(1).get_by_role('button',name='Ukloni tačku').click()
+                # One initial meeting field; choosing a catalogue point fills it.
+                expect(dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True)).to_have_count(1)
+                dialog.get_by_text('Odaberi postojeće mjesto iz gradske baze',exact=True).click()
                 dialog.get_by_role('button',name='Fixture parking A Fixture entrance · parking',exact=True).click()
                 dialog.get_by_role('button',name='Fixture parking B Fixture entrance · parking',exact=True).click()
                 dialog.get_by_role('button',name='Proračunaj trasu s ovim tačkama',exact=True).click()
@@ -106,11 +106,11 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 expect(s.locator('.header-profile .avatar img')).to_have_count(1)
                 s.reload(); expect(s.locator('.header-profile .avatar img')).to_have_count(1)
                 assert len(passenger.request.get(base+'/api/photos/me').json()['avatar']) > 0
-                # Private saved route loads with today's date and removes through the circular X.
+                # Private saved route retains the selected commute date and removes through the circular X.
                 s.goto(base+'/#home'); expect(s.locator('.saved-search-card')).to_have_count(1)
                 columns = s.locator('.saved-searches-grid').evaluate('(e)=>getComputedStyle(e).gridTemplateColumns')
                 assert len(columns.split()) == 2, columns
-                s.locator('.saved-search-load').click(); expect(s.locator('.date-picker-trigger').first).to_contain_text('Danas')
+                s.locator('.saved-search-load').click(); expect(s.locator('.date-picker-trigger').first).to_contain_text('Sutra')
                 s.get_by_role('button',name='Sačuvane pretrage',exact=True).click()
                 s.locator('.saved-search-remove').click(); expect(s.locator('.saved-search-card')).to_have_count(0)
                 for page in [d,s]: assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
@@ -121,6 +121,6 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 s.screenshot(path='/tmp/usput-meeting-flow-results/saved-searches.png',full_page=True)
                 d.screenshot(path='/tmp/usput-meeting-flow-results/driver-completed.png',full_page=True)
                 browser.close()
-                print('PASS: confirmed catalogue stops, route recalculation, walking search, request/accept/complete, feedback, private saved cards/load today/delete, two mobile columns and English')
+                print('PASS: confirmed catalogue stops, route recalculation, walking search, request/accept/complete, feedback, private saved cards/selected date/delete, two mobile columns and English')
         finally:
             server.terminate(); server.wait(timeout=10)

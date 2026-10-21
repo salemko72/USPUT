@@ -50,8 +50,8 @@ export function proposeMeetingStops(route, from, to) {
     lengths.push(total);
   }
   const stops = [{ ...from, stopId: `stop_${from.id}` }];
-  if (total > 1800) {
-    for (const fraction of [1 / 3, 2 / 3]) {
+  if (total > 2) {
+    for (const fraction of [1 / 2]) {
       const target = total * fraction;
       let i = lengths.findIndex((n) => n >= target);
       if (i < 1) i = 1;
@@ -63,13 +63,13 @@ export function proposeMeetingStops(route, from, to) {
       const p = normalizeLocation({
         lat: a[1] + ratio * (b[1] - a[1]),
         lng: a[0] + ratio * (b[0] - a[0]),
-        name: `Predložena tačka ${stops.length + 1}`,
+        name: "Mjesto susreta",
         city: from.city || to.city,
         detail:
           "Prijedlog uz trasu. Vozač treba provjeriti prilaz, imenovati mjesto i potvrditi gdje može stati.",
       });
-      if (p && !stops.some((s) => metres(s, p) < 30))
-        stops.push({ ...p, stopId: `stop_${p.id}` });
+      if (p && ![from, to].some((s) => metres(s, p) < 1))
+        stops.push({ ...p, name: "", stopId: `stop_${p.id}` });
     }
   }
   stops.push({ ...to, stopId: `stop_${to.id}` });

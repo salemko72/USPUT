@@ -27,7 +27,7 @@ import type {
   Vehicle,
   MeetingStop,
 } from "./types";
-import { dateLabel, searchPlace, defaultSearch, today } from "./types";
+import { dateLabel, searchPlace, defaultSearch } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
 export function SearchFields({
   value,
@@ -453,8 +453,10 @@ export function Home({
           {role === "passenger" && !passengerFormOpen && (
             <SavedSearches
               key={user.id}
+              selectedDate={query.date}
+              onDateChange={(date) => setQuery({ ...query, date })}
               onNew={() => {
-                setQuery({ ...defaultSearch(), date: today() });
+                setQuery({ ...defaultSearch(), date: query.date });
                 setPassengerFormOpen(true);
                 setError("");
               }}

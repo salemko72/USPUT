@@ -7,6 +7,7 @@ import {
   previewMeetingRoute,
   consumeMeetingPreview,
   matchMeetingStops,
+  proposeMeetingStops,
 } from "../server/meeting-stops.mjs";
 const point = (name, lng) => ({
   name,
@@ -14,6 +15,25 @@ const point = (name, lng) => ({
   detail: "Public meeting point",
   lat: 0,
   lng,
+});
+test("initial driver route offers one unnamed meeting point between the two route endpoints", () => {
+  const from = point("Start", 0),
+    to = point("Finish", 0.03);
+  const stops = proposeMeetingStops(
+    {
+      coordinates: [
+        [0, 0],
+        [0.03, 0],
+      ],
+    },
+    from,
+    to,
+  );
+  assert.equal(stops.length, 3);
+  assert.equal(stops[0].name, "Start");
+  assert.equal(stops[1].name, "");
+  assert.ok(stops[1].lng > from.lng && stops[1].lng < to.lng);
+  assert.equal(stops[2].name, "Finish");
 });
 function fixture() {
   const sqlite = new DatabaseSync(":memory:");
