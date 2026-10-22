@@ -27,7 +27,7 @@ Tabela razlikuje postojeći kod od preostalih prijedloga iz ovog dokumenta. Odno
 | Privatne sačuvane putničke pretrage                               | Implementirano      | `SavedSearches.tsx`, `saved-searches.ts`, `app/server/saved-searches.mjs`: vezane za račun, ponovno korištenje s izabranim datumom i uklanjanje.                                                                                                |
 | Gradski katalog, povratne informacije i uredničko spajanje        | Implementirano      | `MeetingAdmin.tsx`, `MeetingFeedback.tsx`, `app/server/meeting-catalog.mjs`: prijedlozi i aktivacija, aliasi, ručno spajanje i poništavanje, povratne informacije učesnika završene vožnje za korištenu katalošku tačku.                        |
 | Tiho automatsko učenje i grupisanje uspješnih susreta             | Nije implementirano | Postoje kataloški prijedlozi uz trasu, statistika povratnih informacija završenih vožnji i ručno spajanje. Nema pozadinskog automatskog grupisanja proizvoljnih dogovorenih pinova niti automatske aktivacije javne tačke.                      |
-| Dobrovoljno dijeljenje trenutnog GPS-a                            | Nije implementirano | Nema vremenskog prozora, sesije dijeljenja ni GPS toka između učesnika. Trenutni server izričito isključuje geolokacijsku dozvolu u `Permissions-Policy`.                                                                                       |
+| Uzajamna geopozicija putnika i vozača tokom aktivne usluge        | Nije implementirano | Dogovoreni dodatak za sljedeću iteraciju, uz dobrovoljno uključivanje. Nema vremenskog prozora, sesije dijeljenja ni GPS toka između učesnika. Trenutni server isključuje geolokacijsku dozvolu u `Permissions-Policy`.                         |
 | Bluetooth, jednokratni kod ili QR za potvrdu susreta              | Nije implementirano | Trenutni `ready` je ručna izjava putnika. Nema Bluetooth postupka, koda ni QR ugovora.                                                                                                                                                          |
 | Recenzije osoba s 1–5 zvjezdica                                   | Nije implementirano | Postoje samo povratne informacije za gradska mjesta (`MeetingFeedback.tsx`, `meeting_point_feedback`), ne ocjene vozača ili putnika.                                                                                                            |
 
@@ -78,7 +78,11 @@ Poruka sama ne mijenja dogovoreni pin. Promjena ide kroz prijedlog i obostranu p
 
 Grad iz profila je početni grad pretrage. IP adresa je slaba procjena zbog mobilnih mreža i VPN-a. GPS se može ponuditi na izričit klik, bez automatskog stalnog praćenja.
 
-Za kasniju iteraciju predlažemo opcionalno dijeljenje trenutne lokacije samo s prihvaćenim saputnikom i samo tokom kratkog dogovorenog vremenskog prozora. Na ekranu su vidljivi kome se dijeli lokacija, kada ističe i dugme „Prekini“. Prekid/istek/otkazivanje/završetak ukidaju dijeljenje. Web aplikacija ne može obećati stalni GPS kada je zatvorena.
+Dogovoreni dodatak za sljedeću iteraciju: **putnik i vozač vide trenutnu geopoziciju jedno drugoga samo tokom aktivne usluge, radi lakšeg susreta**. Uz dogovoreni pin na karti mogu pratiti gdje je njihov saputnik i lakše se pronaći.
+
+Svako zasebno uključuje dijeljenje svoje lokacije i odobrava pristup uređaju. Dijeljenje je dostupno samo učesnicima prihvaćenog dogovora, u ograničenom vremenskom prozoru neposredno oko susreta i tokom aktivne vožnje. Prihvatanje vožnje za sutra ne otkriva današnju lokaciju. Na ekranu se jasno vide kome se lokacija dijeli, kada pristup ističe i dugme „Prekini“. Završetak, otkazivanje ili istek automatski ukidaju pristup i na serveru, čak i ako korisnik ne zatvori ekran. Kod više putnika svaki vidi samo svog vozača; vozač vidi svoje putnike samo dok za njih traje aktivni prozor dogovora.
+
+Uz poziciju prikazujemo vrijeme posljednjeg osvježavanja i procijenjenu preciznost. Zastarjela pozicija nije prikazana kao lokacija uživo. Ako neko ne uključi GPS ili signal nestane, dogovoreni pin i „Na mjestu sam“ ostaju dostupni. Čuvamo samo posljednju potrebnu poziciju tokom dijeljenja, bez historije kretanja i bez automatskog prenošenja GPS podataka u gradsku bazu. Web aplikacija ne može obećati stalno osvježavanje GPS-a kada je u pozadini ili zatvorena, posebno na iPhoneu.
 
 GPS blizina i Bluetooth nisu pouzdana potvrda da su ljudi u istom autu. Web Bluetooth nije široko podržan na iPhoneu. Za početak: vozač i putnik ručno potvrde susret; po potrebi kratki jednokratni kod ili QR smanjuje zamjenu osoba. Automatska blizina može biti pomoćni signal, nikad jedini dokaz.
 
@@ -104,4 +108,6 @@ Servisni meni može uvoziti početne tačke po gradovima kao kandidate za pregle
 2. Interaktivno oblikovanje trase, odvojeno od mjesta za stajanje.
 3. Prijedlog/protuprijedlog mjesta susreta s obostranom potvrdom i kapacitetom.
 4. Kratke poruke uz zahtjev.
-5. Ručna potvrda susreta/završetka i ocjene; GPS tek kao dobrovoljna pomoć.
+5. Ručna potvrda susreta/završetka i ocjene; uzajamna GPS lokacija kao dobrovoljna pomoć samo tokom aktivne usluge.
+
+Limiti vanjskih servisa, preporuke i preostale odluke razrađeni su u [Q/A o servisima i otvorenim odlukama](2026-10-22-otvorena-pitanja-qa.md).
