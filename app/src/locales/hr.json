@@ -832,5 +832,9 @@
   "Auto koji dolazi": "Auto koji dolazi",
   "Fotografija automobila nije dostupna.": "Fotografija automobila nije dostupna.",
   "Odaberi samo mjesta na kojima zaista možeš stati. Ruta se automatski preračunava.": "Odaberi samo mjesta na kojima zaista možeš stati. Ruta se automatski preračunava.",
-  "Preračunavam trasu kroz odabrana mjesta susreta…": "Preračunavam trasu kroz odabrana mjesta susreta…"
+  "Preračunavam trasu kroz odabrana mjesta susreta…": "Preračunavam trasu kroz odabrana mjesta susreta…",
+  "Pin na karti ({coordinates})": "Točka na karti ({coordinates})",
+  "Približna ulica uz pin. Potvrdite gdje se može stati.": "Približna ulica uz pin. Potvrdite gdje se može stati.",
+  "Demo / test": "Demo / test",
+  "Demo/test: izmišljena vožnja. Tačka nije provjerena za sigurno zaustavljanje.": "Demo/test: izmišljena vožnja. Točka nije provjerena za sigurno zaustavljanje."
 }

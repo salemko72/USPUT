@@ -6,6 +6,7 @@ import type { Booking, Service, User } from "./types";
 import { Button, ErrorBox } from "./ui";
 import { RideVehiclePhoto } from "./RideVehiclePhoto";
 import { displayVehicleLabel } from "./VehicleManager";
+import { MeetingPointLabel, isDemoMeetingPoint } from "./MeetingPointLabel";
 import "./upcoming-ride.css";
 
 export function UpcomingRide({
@@ -127,11 +128,20 @@ export function UpcomingRide({
         <div className="upcoming-ride-pickup">
           <MapPin size={18} aria-hidden="true" />
           <div>
-            <strong>{pickup.name}</strong>
+            <strong>
+              <MeetingPointLabel point={pickup} demo={upcoming.ride.demo} />
+            </strong>
             <span>
               {dateLabel(pickupDate)} · {t("Susret oko ")}
               {pickupTime}
             </span>
+            {(upcoming.ride.demo || isDemoMeetingPoint(pickup)) && (
+              <small className="meeting-point-warning">
+                {t(
+                  "Demo/test: izmišljena vožnja. Tačka nije provjerena za sigurno zaustavljanje.",
+                )}
+              </small>
+            )}
           </div>
         </div>
       </div>

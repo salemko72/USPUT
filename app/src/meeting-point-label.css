@@ -1,0 +1,39 @@
+.meeting-point-label {
+  overflow-wrap: anywhere;
+}
+.meeting-label .meeting-point-label,
+.meeting-label .meeting-point-address,
+.upcoming-ride-pickup .meeting-point-label,
+.upcoming-ride-pickup .meeting-point-address,
+.upcoming-ride-pickup .meeting-point-nickname {
+  display: inline;
+  margin-top: 0;
+  color: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.meeting-point-nickname {
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.meeting-point-demo,
+.upcoming-ride-pickup .meeting-point-demo {
+  display: inline-block;
+  margin-inline-start: 0.45em;
+  margin-top: 0;
+  padding: 0.1em 0.45em;
+  border: 1px solid currentColor;
+  border-radius: 1em;
+  font-size: 0.65em;
+  color: inherit;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.meeting-point-warning {
+  display: block;
+  margin-top: 0.35em;
+  font-weight: 400;
+}

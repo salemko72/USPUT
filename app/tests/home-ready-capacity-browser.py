@@ -144,7 +144,8 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 expect(card).to_contain_text('Vozač za jutarnji put')
                 mine = passenger.request.get(base + '/api/my-rides').json()['bookings']
                 agreed = next(b for b in mine if b['id'] == booking['id'])['match']
-                expect(card).to_contain_text(agreed['pickup']['name'])
+                expect(card.locator('.meeting-point-address')).to_contain_text(
+                    f"{agreed['pickup']['lat']:.5f}, {agreed['pickup']['lng']:.5f}")
                 pickup_time = datetime.fromtimestamp(agreed['pickupAt'] / 1000,
                     ZoneInfo('Europe/Sarajevo')).strftime('%H:%M')
                 expect(card).to_contain_text(pickup_time)

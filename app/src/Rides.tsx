@@ -4,6 +4,11 @@ import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
 import { RideVehiclePhoto } from "./RideVehiclePhoto";
 import { MeetingFeedback } from "./MeetingFeedback";
+import {
+  MeetingPointLabel,
+  MeetingStopOption,
+  isDemoMeetingPoint,
+} from "./MeetingPointLabel";
 import "./driver-request-status.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -78,18 +83,24 @@ const seatsSummary = (ride: Ride) =>
     available: availableSeats(ride),
     capacity: ride.seats ?? 1,
   });
-function MatchSummary({ match }: { match: RouteMatch }) {
+function MatchSummary({
+  match,
+  demo = false,
+}: {
+  match: RouteMatch;
+  demo?: boolean;
+}) {
   return (
     <div className="route-match-summary">
       <strong>
         {t(" Susret: ")}
-        {match.pickup.name}
+        <MeetingPointLabel point={match.pickup} demo={demo} />
         {t(" · oko ")}
         {pickupTime(match.pickupAt)}
       </strong>
       <span>
         {t("Izlazak: ")}
-        {match.dropoff.name}
+        <MeetingPointLabel point={match.dropoff} demo={demo} />
       </span>
       <span>
         {t(" Vozaču +")}
@@ -146,7 +157,7 @@ export function RideCard({
         <ArrowRight size={13} />
         {ride.to.name}
       </div>
-      {ride.match && <MatchSummary match={ride.match} />}
+      {ride.match && <MatchSummary match={ride.match} demo={ride.demo} />}
       <p className="cost-sharing-summary">
         <CostSharingBadge shared={ride.costSharing} />
       </p>
@@ -473,8 +484,16 @@ export function RideDetails({
             <MapPin size={19} />
             <div>
               <span>{t("MJESTO SUSRETA")}</span>
-              <strong>{pickup.name}</strong>
-              <p>{pickup.detail}</p>
+              <strong>
+                <MeetingPointLabel point={pickup} demo={ride.demo} />
+              </strong>
+              <p>
+                {ride.demo || isDemoMeetingPoint(pickup)
+                  ? t(
+                      "Demo/test: izmišljena vožnja. Tačka nije provjerena za sigurno zaustavljanje.",
+                    )
+                  : pickup.detail}
+              </p>
             </div>
           </div>
           <p className="fine-print">
@@ -556,7 +575,9 @@ export function RideDetails({
                 <ol>
                   {ride.meetingStops.map((p) => (
                     <li key={p.stopId}>
-                      <strong>{p.name}</strong>
+                      <strong>
+                        <MeetingPointLabel point={p} demo={ride.demo} />
+                      </strong>
                       {p.approach && <small>{p.approach}</small>}
                     </li>
                   ))}
@@ -592,9 +613,7 @@ export function RideDetails({
                         {t("Najbliža odgovarajuća tačka")}
                       </option>
                       {ride.meetingStops.slice(0, -1).map((p) => (
-                        <option key={p.stopId} value={p.stopId}>
-                          {p.name}
-                        </option>
+                        <MeetingStopOption key={p.stopId} point={p} />
                       ))}
                     </select>
                   </label>
@@ -621,9 +640,7 @@ export function RideDetails({
                         {t("Najbliža odgovarajuća tačka")}
                       </option>
                       {ride.meetingStops.slice(1).map((p) => (
-                        <option key={p.stopId} value={p.stopId}>
-                          {p.name}
-                        </option>
+                        <MeetingStopOption key={p.stopId} point={p} />
                       ))}
                     </select>
                   </label>
@@ -648,7 +665,7 @@ export function RideDetails({
                   )}
                 </div>
               )}
-            {agreed && <MatchSummary match={agreed} />}
+            {agreed && <MatchSummary match={agreed} demo={ride.demo} />}
             <div className="ride-facts">
               <span>
                 <Clock3 size={16} />
@@ -722,7 +739,7 @@ export function RideDetails({
                       <small>{t(statusText[b.status])}</small>
                     </span>
                   </div>
-                  {b.match && <MatchSummary match={b.match} />}
+                  {b.match && <MatchSummary match={b.match} demo={ride.demo} />}
                   {b.status === "pending" && (
                     <div className="request-actions">
                       <button

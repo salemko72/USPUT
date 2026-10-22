@@ -832,5 +832,9 @@
   "Auto koji dolazi": "Car to look for",
   "Fotografija automobila nije dostupna.": "Car photo is not available.",
   "Odaberi samo mjesta na kojima zaista možeš stati. Ruta se automatski preračunava.": "Choose only places where you can actually stop. The route recalculates automatically.",
-  "Preračunavam trasu kroz odabrana mjesta susreta…": "Recalculating the route through your meeting points…"
+  "Preračunavam trasu kroz odabrana mjesta susreta…": "Recalculating the route through your meeting points…",
+  "Pin na karti ({coordinates})": "Map pin ({coordinates})",
+  "Približna ulica uz pin. Potvrdite gdje se može stati.": "Approximate street by the pin. Confirm where stopping is possible.",
+  "Demo / test": "Demo / test",
+  "Demo/test: izmišljena vožnja. Tačka nije provjerena za sigurno zaustavljanje.": "Demo/test: fictional ride. This point has not been checked for stopping."
 }

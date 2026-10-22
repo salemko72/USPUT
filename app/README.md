@@ -56,7 +56,7 @@ Nova ažuriranja testnog Workera: nakon builda i testova koristiti `wrangler dep
 
 ## Prijava i privatnost
 
-Lozinke: PBKDF2-SHA256, 100.000 iteracija, slučajni salt. Sesije: slučajni token, SHA256 hash u bazi, HttpOnly/SameSite=Lax kolačić, Secure na HTTPS, 14 dana. Promjene traže isti Origin, JSON i ograničenu veličinu. Auth pokušaji ograničeni po IP-u i emailu. Sesije i zastarjeli OAuth tokovi se čiste pri novim prijavama. Beta ne potvrđuje email ni telefon i ne tvrdi da je identitet provjeren.
+Lozinke: PBKDF2-SHA256, 100.000 iteracija, slučajni salt. Sesije: slučajni token, SHA256 hash u bazi, HttpOnly/SameSite=Lax kolačić, Secure na HTTPS, 30 dana. Promjene traže isti Origin, JSON i ograničenu veličinu. Auth pokušaji ograničeni po IP-u i emailu. Sesije i zastarjeli OAuth tokovi se čiste pri novim prijavama. Beta ne potvrđuje email ni telefon i ne tvrdi da je identitet provjeren.
 
 Google OAuth koristi server-side razmjenu koda, PKCE i jednokratni state vezan za HttpOnly kolačić. Novi korisnik mora potvrditi punoljetnost/pravila. Koraci: [GOOGLE-PRIJAVA.md](GOOGLE-PRIJAVA.md). Bez OAuth podataka dugme daje jasnu poruku, ne simulira prijavu.
 
@@ -213,3 +213,11 @@ Putnik ima kružnu fotografiju vozačevog auta na karticama „Putujem“, u pot
 Uređivanje mjesta susreta automatski pokreće novi proračun nakon kratke pauze u unosu. Objavu i potvrdu stajanja omogućuje tek važeći rezultat za posljednju izmjenu. Stariji odgovori ne mogu prepisati noviji nacrt, a zatvaranje prekida primjenu rezultata. Ručno dugme za redovni proračun je uklonjeno; ponovni pokušaj ostaje za oporavak od greške. Naziv mjesta i dalje nije obavezan.
 
 Provjere ovih tokova: `npm test`, `npm run build`, `python tests/ride-vehicle-photo-browser.py`, `python tests/auto-route-preview-browser.py`, `python tests/home-ready-capacity-browser.py`, `python tests/meeting-flow-browser.py` i `python tests/commute-corrections-browser.py`. Browser provjere koriste privremene korisnike/bazu i sintetičku fotografiju, geometriju i vektorske pločice.
+
+## Jasno mjesto susreta, boje i upute
+
+Naziv susreta i izlaska vezan je za dogovoreni pin, odvojeno od polazišta vozača ili privatne adrese putnika. Ulica uz pin može se razriješiti preko postojećeg geokodera; rezultat ne pomjera sačuvanu tačku niti mijenja dogovor. Kada naziv nije dostupan, prikaz ostaje vezan za pin i njegove koordinate. Demo oznaka prikazuje se odvojeno od naziva mjesta.
+
+Zajednička paleta `shared/vehicle-colors.json` ima 34 izbora, od čega 15 metalik varijanti. Postojeći identifikatori boja i sačuvani opisi ranijih vožnji ostaju isti. Prikaz prevodi opis, dok se kanonski opis vozila čuva radi povezivanja fotografije s pravim autom.
+
+Profil ima upute za korištenje, a registracija i profil koriste isti tekst privatnosti. Tekstovi su dostupni na četiri jezika i opisuju stvarnu trenutnu obradu podataka. Detalji i otvorene stavke su u [uputama](../docs/UPUTE-ZA-KORISTENJE.md), [privatnosti](../docs/PRIVATNOST.md) i [statusu brainstorminga](../docs/2026-10-21-meeting-proposals.md).

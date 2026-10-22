@@ -3,6 +3,8 @@ import { OwnPhoto } from "./Photos";
 import { vehicleDescription } from "./VehicleManager";
 import { VehicleManager } from "./VehicleManager";
 import { NotificationSettings } from "./Notifications";
+import { HelpContent } from "./HelpContent";
+import { PrivacyContent } from "./PrivacyContent";
 import { useState } from "react";
 import {
   LogOut,
@@ -12,6 +14,7 @@ import {
   ArrowUpRight,
   RotateCcw,
   UserRound,
+  BookOpen,
 } from "lucide-react";
 import type { Service, User, Vehicle } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
@@ -162,6 +165,14 @@ export function Profile({
             <span className="eyebrow">{t("BEZ NAPLATE. S RAZLOGOM.")}</span>
           </section>
           <NotificationSettings />
+          <button className="settings-row" onClick={() => setModal("help")}>
+            <BookOpen size={22} />
+            <span>
+              <strong>{t("Upute za korištenje")}</strong>
+              <small>{t("Od prve pretrage do ponovljene vožnje")}</small>
+            </span>
+            <ArrowUpRight size={20} />
+          </button>
           <button className="settings-row" onClick={() => setModal("privacy")}>
             <ShieldCheck size={22} />
             <span>
@@ -187,7 +198,9 @@ export function Profile({
           title={
             modal === "reset"
               ? t("Ponovo od početka?")
-              : t("Tvoji podaci, tvoja stvar.")
+              : modal === "help"
+                ? t("Upute za korištenje")
+                : t("Privatnost i beta pravila")
           }
           onClose={() => setModal("")}
         >
@@ -207,48 +220,14 @@ export function Profile({
                 {t(" Resetuj demo ")}
               </Button>
             </>
+          ) : modal === "help" ? (
+            <>
+              <HelpContent />
+              <Button onClick={() => setModal("")}>{t("Razumijem")}</Button>
+            </>
           ) : (
             <>
-              <p>
-                {t(
-                  "USPUT je razvojna beta. Stvarne vožnje još ne organizujemo.",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Za probni račun čuvamo ime, email, hash lozinke, sesiju, ponude i dogovore. Email nije javno prikazan; ime i podaci o ponudi jesu dostupni prijavljenim korisnicima. Dogovore vide samo učesnici. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Ako dodaš fotografije, čuvamo samo male kompresovane kopije u privatnom skladištu u EU. Saputnik ih može učitati tek nakon potvrđenog dogovora; otkazivanje ili završetak ukida pristup. Sliku možeš ukloniti u profilu. Već preuzetu kopiju nije moguće povući. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Za procjenu kompatibilnih ruta OSRM servisu šaljemo koordinate javnih probnih mjesta, bez tvog imena ili emaila. Vrijeme vožnje je procjena bez podataka o gužvi. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  "Za pretragu adresa šaljemo unesenu ulicu i grad geokoderu. Za putanje šaljemo koordinate servisu za cestovno i pješačko rutiranje, bez tvog imena ili emaila. Objavljena ponuda prikazuje približne lokacije koje potvrdiš.",
-                )}
-              </p>
-              <p>
-                {t(
-                  "Sačuvane pretrage i tvoji polazni pinovi su privatni. Saputnik dobija dogovorena mjesta ulaska i izlaska. Mjesta u zajedničkoj gradskoj bazi postaju javna samo ako ih predložiš toj bazi; urednik odlučuje o aktivaciji.",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Nema automatskog praćenja, naplate niti provjere identiteta. Demo ostaje u ovom pregledniku. Za brisanje probnog računa kontaktiraj administratora projekta. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Prije stvarne probe objavit ćemo odgovornu osobu, rokove čuvanja, podršku i završna pravila. ",
-                )}
-              </p>
+              <PrivacyContent />
               <Button onClick={() => setModal("")}>{t("Razumijem")}</Button>
             </>
           )}

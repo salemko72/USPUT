@@ -1,4 +1,5 @@
 import { LanguageSwitch } from "./LanguageSwitch";
+import { PrivacyContent } from "./PrivacyContent";
 import { t } from "./i18n";
 import { useState } from "react";
 import {
@@ -394,7 +395,7 @@ export function Auth({
           title={
             modal === "google"
               ? t("Google veza se priprema.")
-              : t("Pravila beta verzije")
+              : t("Privatnost i beta pravila")
           }
           onClose={() => setModal("")}
         >
@@ -414,26 +415,7 @@ export function Auth({
             </>
           ) : (
             <>
-              <p>
-                {t(
-                  " Ovo je razvojna beta verzija USPUT-a za punoljetne osobe. Još nije odobrena za organizaciju stvarnih vožnji. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Ime, email, objavljene vožnje i dogovori čuvaju se u bazi ovog okruženja. Lozinke su hashirane, a prijava koristi sesijski kolačić. Email nije javno prikazan drugim korisnicima. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Podatke koristi samo za testiranje; ne unosi privatnu adresu, dokumente ni osjetljive podatke. Kontakt i pravila za stvarnu probu bit će određeni prije njenog početka. Za uklanjanje probnog računa obrati se administratoru projekta. ",
-                )}
-              </p>
-              <p>
-                {t(
-                  " Demo koristi izmišljene podatke i čuva ih samo u ovom pregledniku. Mapa se učitava s OpenStreetMapa tek kada je uključiš, pri čemu njihov servis prima uobičajene mrežne podatke. ",
-                )}
-              </p>
+              <PrivacyContent />
               <Button onClick={() => setModal("")}>{t("Razumijem")}</Button>
             </>
           )}

@@ -1,0 +1,42 @@
+.information-content {
+  overflow-wrap: anywhere;
+}
+
+.modal .information-content p {
+  color: #49523e;
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 0 0 16px;
+}
+
+.information-content details {
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+
+.information-content summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.information-content summary:focus-visible {
+  outline: 3px solid #638521;
+  outline-offset: 3px;
+}
+
+.information-content details[open] > summary {
+  margin-bottom: 12px;
+}
+
+.information-content details p:last-child {
+  margin-bottom: 0;
+}
+
+.modal .information-content h3 {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 22px 0 8px;
+}

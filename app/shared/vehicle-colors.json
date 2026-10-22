@@ -1,0 +1,131 @@
+[
+  { "id": "crna", "name": "Crna", "hex": "#262a29", "metallic": false },
+  { "id": "bijela", "name": "Bijela", "hex": "#fafafa", "metallic": false },
+  { "id": "siva", "name": "Siva", "hex": "#858b8b", "metallic": false },
+  { "id": "srebrna", "name": "Srebrna", "hex": "#c8cdd0", "metallic": false },
+  { "id": "zlatna", "name": "Zlatna", "hex": "#c5a45b", "metallic": false },
+  { "id": "plava", "name": "Plava", "hex": "#3f6ca3", "metallic": false },
+  { "id": "crvena", "name": "Crvena", "hex": "#b94743", "metallic": false },
+  { "id": "zelena", "name": "Zelena", "hex": "#4e755b", "metallic": false },
+  { "id": "smedja", "name": "Smeđa", "hex": "#866a50", "metallic": false },
+  { "id": "bez", "name": "Bež", "hex": "#d7c7a4", "metallic": false },
+  { "id": "zuta", "name": "Žuta", "hex": "#e8cf4c", "metallic": false },
+  {
+    "id": "narandzasta",
+    "name": "Narandžasta",
+    "hex": "#d88a44",
+    "metallic": false
+  },
+  {
+    "id": "ljubicasta",
+    "name": "Ljubičasta",
+    "hex": "#826a9b",
+    "metallic": false
+  },
+  {
+    "id": "tamnosiva",
+    "name": "Tamnosiva (antracit)",
+    "hex": "#4b5054",
+    "metallic": false
+  },
+  {
+    "id": "tamnoplava",
+    "name": "Tamnoplava",
+    "hex": "#263d58",
+    "metallic": false
+  },
+  { "id": "bordo", "name": "Bordo", "hex": "#71363f", "metallic": false },
+  { "id": "bronzana", "name": "Bronzana", "hex": "#a07850", "metallic": false },
+  { "id": "sampanj", "name": "Šampanj", "hex": "#cbbb9a", "metallic": false },
+  { "id": "druga", "name": "Druga", "hex": "#c1bcae", "metallic": false },
+  {
+    "id": "crna_metalik",
+    "name": "Crna metalik",
+    "hex": "#262a29",
+    "metallic": true
+  },
+  {
+    "id": "bijela_metalik",
+    "name": "Bijela metalik",
+    "hex": "#f1f0e9",
+    "metallic": true
+  },
+  {
+    "id": "siva_metalik",
+    "name": "Siva metalik",
+    "hex": "#858b8b",
+    "metallic": true
+  },
+  {
+    "id": "tamnosiva_metalik",
+    "name": "Tamnosiva metalik (antracit)",
+    "hex": "#4b5054",
+    "metallic": true
+  },
+  {
+    "id": "srebrna_metalik",
+    "name": "Srebrna metalik",
+    "hex": "#c8cdd0",
+    "metallic": true
+  },
+  {
+    "id": "zlatna_metalik",
+    "name": "Zlatna metalik",
+    "hex": "#c5a45b",
+    "metallic": true
+  },
+  {
+    "id": "plava_metalik",
+    "name": "Plava metalik",
+    "hex": "#3f6ca3",
+    "metallic": true
+  },
+  {
+    "id": "tamnoplava_metalik",
+    "name": "Tamnoplava metalik",
+    "hex": "#263d58",
+    "metallic": true
+  },
+  {
+    "id": "crvena_metalik",
+    "name": "Crvena metalik",
+    "hex": "#b94743",
+    "metallic": true
+  },
+  {
+    "id": "bordo_metalik",
+    "name": "Bordo metalik",
+    "hex": "#71363f",
+    "metallic": true
+  },
+  {
+    "id": "zelena_metalik",
+    "name": "Zelena metalik",
+    "hex": "#4e755b",
+    "metallic": true
+  },
+  {
+    "id": "smedja_metalik",
+    "name": "Smeđa metalik",
+    "hex": "#866a50",
+    "metallic": true
+  },
+  {
+    "id": "bez_metalik",
+    "name": "Bež metalik",
+    "hex": "#d7c7a4",
+    "metallic": true
+  },
+  {
+    "id": "bronzana_metalik",
+    "name": "Bronzana metalik",
+    "hex": "#a07850",
+    "metallic": true
+  },
+  {
+    "id": "sampanj_metalik",
+    "name": "Šampanj metalik",
+    "hex": "#cbbb9a",
+    "metallic": true
+  }
+]

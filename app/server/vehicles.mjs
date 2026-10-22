@@ -1,20 +1,6 @@
 import catalog from "./vehicle-catalog.json" with { type: "json" };
-export const colors = [
-  { id: "crna", name: "Crna", hex: "#262a29" },
-  { id: "bijela", name: "Bijela", hex: "#fafafa" },
-  { id: "siva", name: "Siva", hex: "#858b8b" },
-  { id: "srebrna", name: "Srebrna", hex: "#c8cdd0" },
-  { id: "zlatna", name: "Zlatna", hex: "#c5a45b" },
-  { id: "plava", name: "Plava", hex: "#3f6ca3" },
-  { id: "crvena", name: "Crvena", hex: "#b94743" },
-  { id: "zelena", name: "Zelena", hex: "#4e755b" },
-  { id: "smedja", name: "Smeđa", hex: "#866a50" },
-  { id: "bez", name: "Bež", hex: "#d7c7a4" },
-  { id: "zuta", name: "Žuta", hex: "#e8cf4c" },
-  { id: "narandzasta", name: "Narandžasta", hex: "#d88a44" },
-  { id: "ljubicasta", name: "Ljubičasta", hex: "#826a9b" },
-  { id: "druga", name: "Druga", hex: "#c1bcae" },
-];
+import vehicleColors from "../shared/vehicle-colors.json" with { type: "json" };
+export const colors = vehicleColors;
 const fold = (s) =>
   s
     .normalize("NFD")

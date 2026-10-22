@@ -2,6 +2,8 @@ import { useSyncExternalStore } from "react";
 import english from "./locales/en.json";
 import croatian from "./locales/hr.json";
 import serbian from "./locales/sr-Latn.json";
+import helpTranslations from "./help-translations.json";
+import vehicleColorTranslations from "./vehicle-color-translations.json";
 // Keep the legacy bhs storage value for existing Bosnian sessions.
 export type Language = "bhs" | "sr-Latn" | "hr" | "en";
 export const languages: {
@@ -71,9 +73,18 @@ export function t(
         : language === "sr-Latn"
           ? serbian
           : {};
-  const translated = Object.hasOwn(dictionary, normalized)
-    ? dictionary[normalized]
-    : undefined;
+  const extensions: Record<string, string>[] =
+    language === "bhs"
+      ? []
+      : [helpTranslations[language], vehicleColorTranslations[language]];
+  const extension = extensions.find((entries) =>
+    Object.hasOwn(entries, normalized),
+  );
+  const translated = extension
+    ? extension[normalized]
+    : Object.hasOwn(dictionary, normalized)
+      ? dictionary[normalized]
+      : undefined;
   let result =
     translated !== undefined
       ? (source.match(/^\s*/)?.[0] || "") +

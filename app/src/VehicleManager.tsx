@@ -1,5 +1,5 @@
 import { t } from "./i18n";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Car,
@@ -12,26 +12,20 @@ import {
 } from "lucide-react";
 import type { Service, Vehicle, VehicleInput } from "./types";
 import { Button, ErrorBox, Modal } from "./ui";
+import colors from "../shared/vehicle-colors.json";
+import "./vehicle-colors.css";
 type Brand = { id: string; name: string; models: string[] };
 type Catalog = { brands: Brand[]; version: string };
-const colors = [
-  ["crna", "Crna", "#262a29"],
-  ["bijela", "Bijela", "#fafafa"],
-  ["siva", "Siva", "#858b8b"],
-  ["srebrna", "Srebrna", "#c8cdd0"],
-  ["zlatna", "Zlatna", "#c5a45b"],
-  ["plava", "Plava", "#3f6ca3"],
-  ["crvena", "Crvena", "#b94743"],
-  ["zelena", "Zelena", "#4e755b"],
-  ["smedja", "Smeđa", "#866a50"],
-  ["bez", "Bež", "#d7c7a4"],
-  ["zuta", "Žuta", "#e8cf4c"],
-  ["narandzasta", "Narandžasta", "#d88a44"],
-  ["ljubicasta", "Ljubičasta", "#826a9b"],
-  ["druga", "Druga", "#c1bcae"],
+const colorGroups = [
+  { name: "Boje i nijanse", metallic: false },
+  { name: "Metalik boje", metallic: true },
 ];
+const swatchBackground = (color: (typeof colors)[number]) =>
+  color.metallic
+    ? `linear-gradient(135deg, transparent 10%, #ffffff99 42%, transparent 57%, #00000040 100%), ${color.hex}`
+    : color.hex;
 export const vehicleDescription = (v: Vehicle) =>
-  `${v.make} ${v.model} · ${colors.find((c) => c[0] === v.color)?.[1] || v.color}`;
+  `${v.make} ${v.model} · ${colors.find((c) => c.id === v.color)?.name || v.color}`;
 export function displayVehicleLabel(value: string) {
   const parts = value.split(" · ");
   if (parts.length < 2) return value;
@@ -377,22 +371,36 @@ function VehicleEditor({
                 : t("Model nije na listi")}
             </button>
           )}
-          <fieldset className="vehicle-colors">
+          <fieldset className="vehicle-colors vehicle-colors-expanded">
             <legend>{t("Boja vozila")}</legend>
-            {colors.map(([id, name, hex]) => (
-              <label key={id} className={id === color ? "selected" : ""}>
-                <input
-                  type="radio"
-                  name="vehicle-color"
-                  value={id}
-                  checked={color === id}
-                  onChange={() => setColor(id)}
-                  required
-                />
-                <span className="color-swatch" style={{ background: hex }} />
-                {t(name)}
-                {id === color && <Check size={12} />}
-              </label>
+            {colorGroups.map((group) => (
+              <Fragment key={group.name}>
+                <p className="vehicle-color-group-title">{t(group.name)}</p>
+                {colors
+                  .filter((c) => c.metallic === group.metallic)
+                  .map((c) => (
+                    <label
+                      key={c.id}
+                      className={c.id === color ? "selected" : ""}
+                    >
+                      <input
+                        type="radio"
+                        name="vehicle-color"
+                        value={c.id}
+                        checked={color === c.id}
+                        onChange={() => setColor(c.id)}
+                        required
+                      />
+                      <span
+                        className="color-swatch"
+                        aria-hidden="true"
+                        style={{ background: swatchBackground(c) }}
+                      />
+                      <span className="vehicle-color-name">{t(c.name)}</span>
+                      {c.id === color && <Check size={12} />}
+                    </label>
+                  ))}
+              </Fragment>
             ))}
           </fieldset>
           <ErrorBox error={error} />
@@ -428,6 +436,7 @@ export function VehicleManager({
     [editing, setEditing] = useState(false),
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
+  const savedColor = colors.find((c) => c.id === vehicle?.color);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -482,13 +491,12 @@ export function VehicleManager({
             <span>
               <i
                 style={{
-                  background: colors.find((c) => c[0] === vehicle.color)?.[2],
+                  background: savedColor
+                    ? swatchBackground(savedColor)
+                    : undefined,
                 }}
               />
-              {t(
-                colors.find((c) => c[0] === vehicle.color)?.[1] ||
-                  vehicle.color,
-              )}
+              {t(savedColor?.name || vehicle.color)}
             </span>
           </div>
           <button

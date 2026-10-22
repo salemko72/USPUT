@@ -21,6 +21,7 @@ import {
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
 import { corridorMatch } from "./corridor.mjs";
 import { geocode, locateCity } from "./geocoding.mjs";
+import { meetingAddress } from "./meeting-address.mjs";
 import { suggestStreets } from "./street-suggestions.mjs";
 import { handlePhotoApi } from "./photos.mjs";
 import { validateVehicle, vehicleView, vehicleLabel } from "./vehicles.mjs";
@@ -684,6 +685,23 @@ export async function handleApi(request, env) {
       if (!scope || !scope.city)
         fail(503, "Grad nije prepoznat. Upiši grad ručno.");
       return json(scope);
+    }
+    if (path === "/places/label" && method === "GET") {
+      const coordinates = url.searchParams;
+      if (coordinates.getAll("lat").length !== 1 || coordinates.getAll("lng").length !== 1)
+        fail(400, "Lokacija nije ispravna.");
+      await rateLimit(db, "meeting-label:" + user.id, 120);
+      let address;
+      try {
+        address = await meetingAddress(env, {
+          lat: coordinates.get("lat"), lng: coordinates.get("lng"),
+        });
+      } catch (e) {
+        if (e instanceof TypeError) fail(400, e.message);
+        throw e;
+      }
+      if (!address) fail(503, "Ulica uz pin trenutno nije dostupna.");
+      return json({ ...address, attribution: "© OpenStreetMap contributors · Nominatim" });
     }
     if (path === "/locations/suggest" && method === "POST") {
       await rateLimit(db, "autocomplete:" + user.id, 90);
