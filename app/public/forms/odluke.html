@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="bs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>USPUT — formular za dogovor</title>
+    <link rel="stylesheet" href="/forms/odluke.css" />
+    <script src="/forms/odluke.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header class="intro">
+        <a class="brand" href="/">USPUT<span> · dogovor o aplikaciji</span></a>
+        <p class="eyebrow">Tvoje odluke. Naš sljedeći korak.</p>
+        <h1>Hajmo se dogovoriti.</h1>
+        <p>
+          21 pitanje iz Q/A pregleda. Odaberi odgovor ili upiši komentar. Možeš
+          popuniti samo dio i nastaviti kasnije u istom pregledniku na ovom
+          uređaju.
+        </p>
+        <p class="privacy">
+          Odgovori ostaju u ovom pregledniku. Formular ih ne šalje serveru. Na
+          kraju preuzmi odgovore kao tekstualnu datoteku i priloži je u naš
+          razgovor.
+        </p>
+        <a
+          href="https://github.com/salemko72/USPUT/blob/feat/pulse-app/docs/2026-10-22-otvorena-pitanja-qa.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Otvori detaljni Q/A i izvore</a
+        >
+      </header>
+
+      <noscript
+        >Za popunjavanje formulara uključi JavaScript u pregledniku. Detaljni
+        Q/A možeš otvoriti preko linka iznad.</noscript
+      >
+
+      <form id="answers" autocomplete="off">
+        <section class="context" aria-labelledby="context-title">
+          <h2 id="context-title">Za početak, okvir probe</h2>
+          <p>Sve je opcionalno. Ako još ne znaš brojke, ostavi prazno.</p>
+          <div class="fields">
+            <label
+              >Mjesečni budžet za adrese i rute (€)
+              <input
+                name="budget"
+                inputmode="decimal"
+                maxlength="80"
+                placeholder="Npr. 0 za betu, kasnije do 50 €"
+              />
+            </label>
+            <label
+              >Koliko ljudi očekuješ u jutarnjoj špici?
+              <input
+                name="people"
+                inputmode="numeric"
+                maxlength="80"
+                placeholder="Npr. 20, 100 ili još ne znam"
+              />
+            </label>
+            <label
+              >Gradovi prve probe
+              <input
+                name="cities"
+                maxlength="240"
+                placeholder="Npr. Sarajevo"
+              />
+            </label>
+          </div>
+        </section>
+        <nav aria-label="Dijelovi formulara">
+          <a href="#services">Servisi i troškovi</a>
+          <a href="#agreement">Susret i dogovor</a>
+          <a href="#location">GPS i povjerenje</a>
+        </nav>
+        <div id="questions"></div>
+        <section class="context" aria-labelledby="last-title">
+          <h2 id="last-title">Još nešto što treba dodati?</h2>
+          <label for="last-notes">Dodatni komentar</label>
+          <textarea
+            id="last-notes"
+            name="notes"
+            rows="4"
+            maxlength="6000"
+            placeholder="Ideje, prioriteti ili nešto što smo propustili…"
+          ></textarea>
+        </section>
+      </form>
+
+      <section
+        id="text-preview"
+        class="context"
+        hidden
+        aria-labelledby="preview-title"
+      >
+        <h2 id="preview-title">Odgovori spremni za slanje</h2>
+        <p>
+          Možeš kopirati ovaj tekst i zalijepiti ga u razgovor umjesto slanja
+          datoteke.
+        </p>
+        <label for="export-text">Tekst odgovora</label>
+        <textarea id="export-text" readonly rows="12"></textarea>
+        <button id="copy" class="secondary" type="button">Kopiraj tekst</button>
+      </section>
+
+      <footer class="actions">
+        <div class="progress">
+          <strong id="progress">Odgovoreno 0 / 21</strong
+          ><span id="save-state" role="status" aria-live="polite"
+            >Odgovori se čuvaju na ovom uređaju.</span
+          >
+        </div>
+        <div class="buttons">
+          <button id="preview" class="secondary" type="button">
+            Prikaži tekst
+          </button>
+          <button id="download" class="primary" type="button">
+            Preuzmi odgovore (.txt) ↓
+          </button>
+        </div>
+      </footer>
+      <p
+        id="export-status"
+        class="export-status"
+        role="status"
+        aria-live="polite"
+      ></p>
+    </main>
+  </body>
+</html>

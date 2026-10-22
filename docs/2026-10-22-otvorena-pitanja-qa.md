@@ -2,6 +2,8 @@
 
 Pregled od 22.10.2026. Odgovori razlikuju trenutni kod, već dogovoreni smjer i preporuke za raspravu. Novi GPS tok, pregovaranje i chat nisu uvedeni pisanjem ovog dokumenta. Detaljan status implementacije je u [brainstormingu](2026-10-21-meeting-proposals.md#provjereno-stanje--22102026).
 
+Za svoje odgovore otvori [formular za dogovor](https://usput-pulse.salemko.workers.dev/forms/odluke.html). Nema unaprijed odabranih odgovora; može se popuniti djelimično. Nacrt ostaje u lokalnoj pohrani istog preglednika na istom uređaju dok se ne uklone podaci stranice. Dugme **Preuzmi odgovore (.txt)** priprema datoteku za slanje u razgovor; alternativno se tekst može prikazati i kopirati. Formular ne šalje odgovore serveru i ne mijenja postavke aplikacije.
+
 ## Karta, adrese i proračun ruta
 
 ### 1. Šta tačno dobijamo besplatno i gdje su limiti?
