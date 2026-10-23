@@ -29,7 +29,9 @@
     "Potvrdi polazište i završnu tačku odabrane trase.": "Confirm the start and end of the chosen route.",
     "Mjesto susreta nije uz odabranu trasu. Pomjeri pin bliže trasi ili prvo promijeni trasu.": "The meeting point is not along the chosen route. Move the pin closer or edit the route first.",
     "Poredaj mjesta susreta u smjeru odabrane trase.": "Arrange meeting places in the direction of travel.",
-    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "First shape and confirm your route using the white via handles. Then add meeting places along it. Via points are not passenger pickup places; meeting-place names are optional. Finally confirm where you can stop. Meeting times are estimates along the chosen route, without live traffic data."
+    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "First shape and confirm your route using the white via handles. Then add meeting places along it. Via points are not passenger pickup places; meeting-place names are optional. Finally confirm where you can stop. Meeting times are estimates along the chosen route, without live traffic data.",
+    "Povuci zelenu tačku ili klikni na kartu, pa potvrdi mjesto susreta.": "Drag the green point or click the map, then confirm the meeting place.",
+    "Potvrdi mjesto susreta": "Confirm meeting place"
   },
   "hr": {
     "1. Oblikuj trasu": "1. Oblikuj trasu",
@@ -61,7 +63,9 @@
     "Potvrdi polazište i završnu tačku odabrane trase.": "Potvrdi polazište i završnu točku odabrane trase.",
     "Mjesto susreta nije uz odabranu trasu. Pomjeri pin bliže trasi ili prvo promijeni trasu.": "Mjesto susreta nije uz odabranu trasu. Pomakni pin bliže trasi ili prvo promijeni trasu.",
     "Poredaj mjesta susreta u smjeru odabrane trase.": "Poredaj mjesta susreta u smjeru odabrane trase.",
-    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih točaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne točke nisu mjesta ulaska putnika; naziv mjesta susreta nije obvezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi."
+    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih točaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne točke nisu mjesta ulaska putnika; naziv mjesta susreta nije obvezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.",
+    "Povuci zelenu tačku ili klikni na kartu, pa potvrdi mjesto susreta.": "Povuci zelenu točku ili klikni na kartu, pa potvrdi mjesto susreta.",
+    "Potvrdi mjesto susreta": "Potvrdi mjesto susreta"
   },
   "sr-Latn": {
     "1. Oblikuj trasu": "1. Oblikuj trasu",
@@ -93,6 +97,8 @@
     "Potvrdi polazište i završnu tačku odabrane trase.": "Potvrdi polazište i završnu tačku odabrane trase.",
     "Mjesto susreta nije uz odabranu trasu. Pomjeri pin bliže trasi ili prvo promijeni trasu.": "Mesto susreta nije uz odabranu trasu. Pomeri pin bliže trasi ili prvo promeni trasu.",
     "Poredaj mjesta susreta u smjeru odabrane trase.": "Poređaj mesta susreta u smeru odabrane trase.",
-    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "Prvo oblikuj i potvrdi trasu pomoću belih prolaznih tačaka. Zatim dodaj mesta susreta uz tu trasu. Prolazne tačke nisu mesta ulaska putnika; naziv mesta susreta nije obavezan. Na kraju potvrdi gde možeš stati. Vremena susreta su procene duž odabrane trase, bez podataka o gužvi."
+    "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.": "Prvo oblikuj i potvrdi trasu pomoću belih prolaznih tačaka. Zatim dodaj mesta susreta uz tu trasu. Prolazne tačke nisu mesta ulaska putnika; naziv mesta susreta nije obavezan. Na kraju potvrdi gde možeš stati. Vremena susreta su procene duž odabrane trase, bez podataka o gužvi.",
+    "Povuci zelenu tačku ili klikni na kartu, pa potvrdi mjesto susreta.": "Povuci zelenu tačku ili klikni na kartu, pa potvrdi mesto susreta.",
+    "Potvrdi mjesto susreta": "Potvrdi mesto susreta"
   }
 }

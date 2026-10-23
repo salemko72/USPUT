@@ -22,6 +22,8 @@ type RouteSnapshot = {
   viaPoints?: RouteViaPoint[];
   onViaMove?: (index: number, point: RouteViaPoint) => void;
   onMapAdd?: (point: RouteViaPoint) => void;
+  meetingDraft?: RouteViaPoint;
+  onMeetingMove?: (point: RouteViaPoint) => void;
 };
 type LiveRoute = {
   map: LeafletMap;
@@ -101,6 +103,29 @@ function drawRoute(view: LiveRoute, data: RouteSnapshot) {
       if (element) L.DomEvent.disableClickPropagation(element);
     });
   }
+  if (data.meetingDraft && data.onMeetingMove) {
+    const p = data.meetingDraft;
+    const marker = L.marker([p.lat, p.lng], {
+      draggable: true,
+      title: t("Mjesto susreta"),
+      alt: t("Mjesto susreta"),
+      icon: L.divIcon({
+        className: "route-meeting-handle",
+        html: "<span></span>",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      }),
+    }).addTo(layers);
+    marker.on("dragend", () => {
+      const p = marker.getLatLng();
+      data.onMeetingMove?.({
+        lat: Math.round(p.lat * 1e5) / 1e5,
+        lng: Math.round(p.lng * 1e5) / 1e5,
+      });
+    });
+    const element = marker.getElement();
+    if (element) L.DomEvent.disableClickPropagation(element);
+  }
   view.bounds = L.latLngBounds([
     ...line,
     ...stops.map((p) => [p.lat, p.lng] as [number, number]),
@@ -135,6 +160,9 @@ export function RouteMap({
   viaPoints,
   onViaMove,
   onMapAdd,
+  meetingDraft,
+  onMeetingMove,
+  onReady,
 }: {
   from: Place;
   to: Place;
@@ -147,6 +175,9 @@ export function RouteMap({
   viaPoints?: RouteViaPoint[];
   onViaMove?: (index: number, point: RouteViaPoint) => void;
   onMapAdd?: (point: RouteViaPoint) => void;
+  meetingDraft?: RouteViaPoint;
+  onMeetingMove?: (point: RouteViaPoint) => void;
+  onReady?: (ready: boolean) => void;
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false),
@@ -163,7 +194,12 @@ export function RouteMap({
     viaPoints,
     onViaMove,
     onMapAdd,
+    meetingDraft,
+    onMeetingMove,
   };
+  useEffect(() => {
+    onReady?.(live && mapReady && !failed);
+  }, [live, mapReady, failed, onReady]);
   useEffect(() => {
     if (geometry) setLive(true);
   }, [geometry]);
@@ -230,6 +266,7 @@ export function RouteMap({
     viaPoints,
     Boolean(onViaMove),
     Boolean(onMapAdd),
+    meetingDraft,
   ]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>

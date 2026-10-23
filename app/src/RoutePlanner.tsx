@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowLeft,
@@ -17,6 +24,15 @@ import { PinMap } from "./StreetPicker";
 import { routeMidpoint } from "./route-midpoint";
 import type { MeetingStop, Place, RouteViaPoint } from "./types";
 import "./route-planner.css";
+
+type MeetingPinDraft = {
+  point: MeetingStop;
+  index: number;
+  confirm: (point: MeetingStop) => void;
+};
+export const MeetingPinContext = createContext<
+  ((draft: MeetingPinDraft) => void) | null
+>(null);
 
 export function RoutePlanner({
   from,
@@ -58,6 +74,10 @@ export function RoutePlanner({
     () => window.matchMedia("(min-width: 900px)").matches,
   );
   const [insets, setInsets] = useState<MapInsets>();
+  const [meetingDraft, setMeetingDraft] = useState<MeetingPinDraft | null>(
+    null,
+  );
+  const [meetingMapReady, setMeetingMapReady] = useState(false);
   const [adding, setAdding] = useState(false);
   const [edit, setEdit] = useState<{ index: number; point: Place } | null>(
     null,
@@ -66,6 +86,7 @@ export function RoutePlanner({
   useEffect(() => {
     setAdding(false);
     setEdit(null);
+    setMeetingDraft(null);
     if (stage === "stops") setExpanded(true);
   }, [stage]);
   function moveVia(index: number, point: RouteViaPoint) {
@@ -87,6 +108,32 @@ export function RoutePlanner({
       },
     });
   }
+  function moveMeeting(point: RouteViaPoint) {
+    setMeetingDraft((old) =>
+      old
+        ? {
+            ...old,
+            point: {
+              ...old.point,
+              ...point,
+              id: `pin_${point.lat.toFixed(5)}_${point.lng.toFixed(5)}`,
+              stopId: `stop_pin_${point.lat.toFixed(5)}_${point.lng.toFixed(5)}`,
+              catalogId: undefined,
+            },
+          }
+        : null,
+    );
+  }
+  const duplicateMeeting =
+    meetingDraft &&
+    stops.some(
+      (p, i) =>
+        i !== meetingDraft.index &&
+        Math.hypot(
+          p.lat - meetingDraft.point.lat,
+          p.lng - meetingDraft.point.lng,
+        ) < 0.00001,
+    );
   const root = useRef<HTMLElement>(null),
     panel = useRef<HTMLElement>(null),
     header = useRef<HTMLElement>(null),
@@ -95,6 +142,25 @@ export function RoutePlanner({
     locked = useRef(busy);
   close.current = onClose;
   locked.current = busy;
+  function finishMeeting() {
+    const index = meetingDraft?.index ?? -1;
+    setMeetingDraft(null);
+    setExpanded(true);
+    requestAnimationFrame(() => {
+      const buttons = Array.from(
+        panel.current?.querySelectorAll<HTMLButtonElement>("button") || [],
+      );
+      const target =
+        index < 0
+          ? panel.current?.querySelector<HTMLButtonElement>(
+              ".meeting-add-slot button",
+            )
+          : buttons.filter((button) =>
+              button.textContent?.includes(t("Provjeri ili pomjeri pin")),
+            )[index - 1];
+      (target || back.current)?.focus({ preventScroll: true });
+    });
+  }
   const id = useId();
   useEffect(() => {
     const previous = document.activeElement,
@@ -158,7 +224,9 @@ export function RoutePlanner({
         if (event.key === "Escape") {
           event.preventDefault();
           event.stopPropagation();
-          if (!locked.current) close.current();
+          if (meetingDraft) {
+            finishMeeting();
+          } else if (!locked.current) close.current();
         }
         if (event.key === "Tab") {
           const focusable = Array.from(
@@ -193,14 +261,20 @@ export function RoutePlanner({
           insets={insets}
           animated={false}
           viaPoints={viaPoints}
+          meetingDraft={meetingDraft?.point}
+          onMeetingMove={meetingDraft ? moveMeeting : undefined}
+          onReady={setMeetingMapReady}
           onViaMove={stage === "shape" && !busy ? moveVia : undefined}
           onMapAdd={
-            stage === "shape" && adding && !busy
-              ? (point) => {
-                  if (viaPoints.length < 8) onViaChange([...viaPoints, point]);
-                  setAdding(false);
-                }
-              : undefined
+            meetingDraft
+              ? moveMeeting
+              : stage === "shape" && adding && !busy
+                ? (point) => {
+                    if (viaPoints.length < 8)
+                      onViaChange([...viaPoints, point]);
+                    setAdding(false);
+                  }
+                : undefined
           }
         />
       </div>
@@ -275,7 +349,7 @@ export function RoutePlanner({
             className="route-planner-expand"
             aria-expanded={expanded}
             aria-controls={id + "-editor"}
-            disabled={busy}
+            disabled={busy || !!meetingDraft}
             onClick={() => setExpanded(!expanded)}
           >
             {t(
@@ -293,7 +367,7 @@ export function RoutePlanner({
           id={id + "-editor"}
           hidden={!expanded}
         >
-          <fieldset disabled={busy}>
+          <fieldset disabled={busy || !!meetingDraft}>
             {stage === "shape" ? (
               <div className="route-shape-editor">
                 <p>
@@ -389,14 +463,59 @@ export function RoutePlanner({
                 >
                   {t("Nazad na oblikovanje trase")}
                 </button>
-                {children}
+                <MeetingPinContext.Provider
+                  value={(draft) => {
+                    setMeetingDraft(draft);
+                    setExpanded(false);
+                    requestAnimationFrame(() =>
+                      panel.current
+                        ?.querySelector<HTMLButtonElement>(
+                          ".meeting-pin-actions .button",
+                        )
+                        ?.focus({ preventScroll: true }),
+                    );
+                  }}
+                >
+                  {children}
+                </MeetingPinContext.Provider>
               </>
             )}
           </fieldset>
         </div>
         {feedback && <div className="route-planner-feedback">{feedback}</div>}
         <footer className="route-planner-footer">
-          {expanded || stage === "shape" ? (
+          {meetingDraft ? (
+            <div className="meeting-pin-actions">
+              <p role="status">
+                {t(
+                  "Povuci zelenu tačku ili klikni na kartu, pa potvrdi mjesto susreta.",
+                )}
+              </p>
+              {duplicateMeeting && (
+                <p role="alert">
+                  {t("Ta tačka je već na ruti. Pomjeri pin na drugo mjesto.")}
+                </p>
+              )}
+              <Button
+                disabled={!meetingMapReady || !!duplicateMeeting || busy}
+                onClick={() => {
+                  meetingDraft.confirm(meetingDraft.point);
+                  finishMeeting();
+                }}
+              >
+                {t("Potvrdi mjesto susreta")}
+              </Button>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  finishMeeting();
+                }}
+              >
+                {t("Odustani")}
+              </button>
+            </div>
+          ) : expanded || stage === "shape" ? (
             action
           ) : (
             <Button arrow onClick={() => setExpanded(true)}>

@@ -22,7 +22,7 @@ Tvoj početni i završni pin služe za računanje hodanja. Vozač staje na dogov
 
 1. Dodaj vozilo u Profilu. Na Početnoj odaberi **Nudim vožnju** i unesi polazište, odredište, datum, vrijeme i broj slobodnih putničkih mjesta, od 1 do 7. Označi želiš li dijeliti troškove; USPUT ne obrađuje plaćanja.
 2. Prvo oblikuj trasu. Bijela srednja tačka služi korekciji putanje: povuci je i pusti na željenu ulicu. Proračun počinje tek kada je pustiš. Po potrebi dodaj još prolaznih tačaka ili ih uredi preko dugmeta; one nisu mjesta ulaska putnika.
-3. Klikni **Potvrdi trasu — odaberi mjesta susreta**. Tek sada dodaj mjesta gdje možeš stati, redom u smjeru vožnje. Naziv je opcionalan; prilaz i stranu ulice dodaj kada treba. Mjesta se provjeravaju uz odabranu trasu i ne mijenjaju je. Za skretanje koristi **Nazad na oblikovanje trase**.
+3. Klikni **Potvrdi trasu — odaberi mjesta susreta**. Tek sada dodaj mjesta gdje možeš stati, redom u smjeru vožnje. **Dodaj mjesto susreta** prikazuje zelenu tačku s crnim obrubom na istoj mapi, bez dodatnog prozora. Povuci je ili klikni na kartu, pa izaberi **Potvrdi mjesto susreta**. **Odustani** odbacuje samo tu nepotvrđenu promjenu. Postojeći pin pomjeraš na isti način. Naziv je opcionalan; prilaz i stranu ulice dodaj kada treba. Mjesta se provjeravaju uz odabranu trasu i ne mijenjaju je. Za skretanje koristi **Nazad na oblikovanje trase**.
 4. Sačekaj provjeru i potvrdi da na tim mjestima možeš stati, primiti i ostaviti putnika i da ćeš voziti prikazanom trasom. Zatim objavi. Trasa, prolazne tačke i odobrena mjesta ostaju vezani za potvrđeni pregled.
 5. U **Vožnje → Vozim** otvori ponudu i prihvati ili odbij svaki zahtjev. Ponuda s više mjesta ostaje dostupna dok ima slobodnog kapaciteta.
 

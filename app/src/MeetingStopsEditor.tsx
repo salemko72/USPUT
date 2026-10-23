@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { MapPin, Plus, X, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { t } from "./i18n";
 import { api } from "./api";
-import { PinMap } from "./StreetPicker";
+import { MeetingPinContext } from "./RoutePlanner";
 import { routeMidpoint } from "./route-midpoint";
-import { Button, ErrorBox, Modal } from "./ui";
+import { ErrorBox } from "./ui";
 import type { MeetingStop, Place } from "./types";
 import "./meeting-stops.css";
 
@@ -21,16 +21,22 @@ export function MeetingStopsEditor({
   route: number[][];
   suggestions?: MeetingStop[];
 }) {
-  const [edit, setEdit] = useState<{
-      point: MeetingStop;
-      index: number;
-    } | null>(null),
-    [searchCity, setSearchCity] = useState(city),
+  const pick = useContext(MeetingPinContext);
+  const [searchCity, setSearchCity] = useState(city),
     [search, setSearch] = useState(""),
     [found, setFound] = useState<MeetingStop[]>([]),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [mapReady, setMapReady] = useState(false);
+    [busy, setBusy] = useState(false);
+  function editPin(point: MeetingStop, index: number) {
+    pick?.({
+      point,
+      index,
+      confirm: (next) => {
+        if (index < 0) add(next);
+        else patch(index, next);
+      },
+    });
+  }
   function patch(i: number, change: Partial<MeetingStop>) {
     const next = { ...stops[i], ...change };
     if (change.name !== undefined && change.name !== stops[i].name)
@@ -101,8 +107,7 @@ export function MeetingStopsEditor({
       name: "",
       detail: "Mjesto koje potvrđuje vozač",
     };
-    setMapReady(false);
-    setEdit({ index: -1, point: { ...point, stopId: `stop_${point.id}` } });
+    editPin({ ...point, stopId: `stop_${point.id}` }, -1);
   }
   function row(p: MeetingStop, i: number) {
     const endpoint = i === 0 || i === stops.length - 1;
@@ -135,8 +140,7 @@ export function MeetingStopsEditor({
                 type="button"
                 className="text-button"
                 onClick={() => {
-                  setMapReady(false);
-                  setEdit({ point: p, index: i });
+                  editPin(p, i);
                 }}
               >
                 <MapPin size={14} />
@@ -229,13 +233,6 @@ export function MeetingStopsEditor({
       </button>
     );
   }
-  const duplicatePin =
-    edit &&
-    stops.some(
-      (p, i) =>
-        i !== edit.index &&
-        Math.hypot(p.lat - edit.point.lat, p.lng - edit.point.lng) < 0.00001,
-    );
   return (
     <div className="meeting-editor">
       <h3>{t("Mjesta na tvojoj ruti")}</h3>
@@ -329,48 +326,6 @@ export function MeetingStopsEditor({
         {found.map(result)}
         <ErrorBox error={error} />
       </details>
-      {edit && (
-        <Modal
-          title={t("Mjesto gdje možeš stati")}
-          onClose={() => setEdit(null)}
-        >
-          <p>
-            {t(
-              "Pin označava tačno mjesto susreta. Provjeri prilaz i stranu ulice.",
-            )}
-          </p>
-          <PinMap
-            point={edit.point}
-            onReady={setMapReady}
-            onChange={(p) =>
-              setEdit({
-                ...edit,
-                point: {
-                  ...edit.point,
-                  ...p,
-                  stopId: `stop_${p.id}`,
-                  catalogId: undefined,
-                },
-              })
-            }
-          />
-          {duplicatePin && (
-            <p className="fine-print">
-              {t("Ta tačka je već na ruti. Pomjeri pin na drugo mjesto.")}
-            </p>
-          )}
-          <Button
-            disabled={!mapReady || !!duplicatePin}
-            onClick={() => {
-              if (edit.index < 0) add(edit.point);
-              else patch(edit.index, edit.point);
-              setEdit(null);
-            }}
-          >
-            {t("Koristi ovaj pin")}
-          </Button>
-        </Modal>
-      )}
     </div>
   );
 }

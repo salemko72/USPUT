@@ -89,9 +89,8 @@ class CommuteCorrections(unittest.TestCase):
         dialog.get_by_role('button',name='Potvrdi trasu — odaberi mjesta susreta',exact=True).click()
         expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
         dialog.get_by_role('button',name='Dodaj mjesto susreta',exact=True).click()
-        pin=self.page.get_by_role('dialog',name='Mjesto gdje možeš stati',exact=True)
-        expect(pin.get_by_role('button',name='Koristi ovaj pin',exact=True)).to_be_enabled()
-        pin.get_by_role('button',name='Koristi ovaj pin',exact=True).click()
+        expect(dialog.locator('.route-meeting-handle')).to_be_visible()
+        dialog.get_by_role('button',name='Potvrdi mjesto susreta',exact=True).click()
         expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
         if not edit:dialog.get_by_role('button',name='Više mape',exact=True).click()
         return dialog
@@ -120,6 +119,7 @@ class CommuteCorrections(unittest.TestCase):
             expect(self.page.get_by_role('button',name=re.compile('^Datum polaska:'))).to_contain_text('Sutra')
         finally: driver.close()
     def test_driver_adds_unnamed_meeting_points_after_confirming_the_shape(self):
+        self.page.set_viewport_size({'width':1440,'height':900})
         dialog=self.preview()
         names=dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True)
         expect(names).to_have_count(1)
@@ -130,10 +130,12 @@ class CommuteCorrections(unittest.TestCase):
         order=dialog.evaluate("el => {const button=Array.from(el.querySelectorAll('button')).find(x=>x.textContent.includes('Dodaj mjesto susreta'));const end=el.querySelector('[data-stop-role=end]');return !!end && !!(button.compareDocumentPosition(end)&Node.DOCUMENT_POSITION_FOLLOWING)}")
         self.assertTrue(order,'Add meeting point belongs before the final endpoint')
         add.click()
-        pin=self.page.get_by_role('dialog',name='Mjesto gdje možeš stati',exact=True)
-        box=pin.locator('.street-pin-map').bounding_box()
-        pin.locator('.street-pin-map').click(position={'x':box['width']/2+20,'y':box['height']/2-7})
-        pin.get_by_role('button',name='Koristi ovaj pin',exact=True).click()
+        self.page.wait_for_timeout(250)
+        marker=dialog.locator('.route-meeting-handle')
+        box=marker.bounding_box()
+        x=box['x']+16;y=box['y']+16
+        self.page.mouse.move(x,y);self.page.mouse.down();self.page.mouse.move(x+4,y,steps=4);self.page.mouse.up()
+        dialog.get_by_role('button',name='Potvrdi mjesto susreta',exact=True).click()
         expect(names).to_have_count(2)
     def test_later_date_survives_switching_saved_cards_and_new_search(self):
         self.saved();self.saved('bascarsija','ilidza');self.page.goto(self.base)
@@ -239,21 +241,14 @@ class CommuteCorrections(unittest.TestCase):
         expect(dialog).to_have_count(0)
         expect(self.page.get_by_role('button',name='Objavi vožnju',exact=True)).to_be_focused()
 
-    def test_pin_dialog_traps_focus_and_escape_keeps_the_route_open(self):
+    def test_inline_pin_escape_keeps_route_open_and_restores_focus(self):
         dialog=self.preview()
         edit_pin=dialog.get_by_role('button',name='Provjeri ili pomjeri pin',exact=True).first
         edit_pin.click()
-        pin=self.page.get_by_role('dialog',name='Mjesto gdje možeš stati',exact=True)
-        confirm=pin.get_by_role('button',name='Koristi ovaj pin',exact=True)
-        close=pin.get_by_role('button',name='Zatvori',exact=True)
-        expect(confirm).to_be_enabled()
-        confirm.focus()
-        self.page.keyboard.press('Tab')
-        expect(close).to_be_focused()
-        self.page.keyboard.press('Shift+Tab')
-        expect(confirm).to_be_focused()
+        expect(self.page.get_by_role('dialog')).to_have_count(1)
+        expect(dialog.get_by_role('button',name='Potvrdi mjesto susreta',exact=True)).to_be_enabled()
         self.page.keyboard.press('Escape')
-        expect(pin).to_have_count(0)
+        expect(dialog.locator('.route-meeting-handle')).to_have_count(0)
         expect(dialog).to_be_visible()
         expect(edit_pin).to_be_focused()
 

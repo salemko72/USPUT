@@ -179,12 +179,14 @@ class AutoRoutePreview(unittest.TestCase):
 
     def add_pin(self):
         self.dialog.get_by_role('button', name='Dodaj mjesto susreta', exact=True).click()
-        pin = self.page.get_by_role('dialog', name='Mjesto gdje možeš stati', exact=True)
-        expect(pin.locator('canvas.maplibregl-canvas')).to_be_visible()
-        if self.names.count():
-            self.click_along(pin,.502)
-        expect(pin.get_by_role('button', name='Koristi ovaj pin', exact=True)).to_be_enabled()
-        pin.get_by_role('button', name='Koristi ovaj pin', exact=True).click()
+        expect(self.page.get_by_role('dialog')).to_have_count(1)
+        marker = self.dialog.locator('.route-meeting-handle')
+        expect(marker).to_be_visible()
+        if self.dialog.locator(".meeting-stop").count():
+            self.page.wait_for_timeout(250)
+            box=marker.bounding_box();x=box['x']+16;y=box['y']+16
+            self.page.mouse.move(x,y);self.page.mouse.down();self.page.mouse.move(x-4,y,steps=4);self.page.mouse.up()
+        self.dialog.get_by_role('button', name='Potvrdi mjesto susreta', exact=True).click()
 
     def test_initial_proposal_is_automatically_ready_without_manual_recalculation(self):
         latest = self.open_preview(with_meeting=False)
@@ -202,6 +204,7 @@ class AutoRoutePreview(unittest.TestCase):
         self.assertEqual(self.publish_requests[0]['meetingStops'], latest['result']['meetingStops'])
 
     def test_meeting_edits_keep_confirmed_geometry_and_reject_reverse_order(self):
+        self.page.set_viewport_size({'width':1440,'height':900})
         initial = self.open_preview()['result']
         self.approval.check()
         body, added = self.updated(self.add_pin)
@@ -212,11 +215,11 @@ class AutoRoutePreview(unittest.TestCase):
 
         def move_pin():
             self.dialog.get_by_role('button', name='Provjeri ili pomjeri pin', exact=True).first.click()
-            pin = self.page.get_by_role('dialog', name='Mjesto gdje možeš stati', exact=True)
-            expect(pin.get_by_role('button', name='Koristi ovaj pin', exact=True)).to_be_enabled()
-            stop=self.previews[-1]['body']['meetingStops'][1]
-            self.click_along(pin,.499,center=[stop['lng'],stop['lat']])
-            pin.get_by_role('button', name='Koristi ovaj pin', exact=True).click()
+            marker=self.dialog.locator('.route-meeting-handle')
+            self.page.wait_for_timeout(250)
+            box=marker.bounding_box();x=box['x']+16;y=box['y']+16
+            self.page.mouse.move(x,y);self.page.mouse.down();self.page.mouse.move(x+4,y,steps=4);self.page.mouse.up()
+            self.dialog.get_by_role('button', name='Potvrdi mjesto susreta', exact=True).click()
 
         self.approval.check()
         body, moved = self.updated(move_pin)
