@@ -239,6 +239,60 @@
 .route-planner button:disabled {
   cursor: default;
 }
+.route-via-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 3px;
+  border: 3px solid #151815;
+  border-radius: 7px;
+  background: white;
+  box-shadow: 0 1px 8px #15181560;
+  transform: rotate(45deg);
+}
+.route-via-handle {
+  cursor: grab !important;
+}
+.route-via-handle:active {
+  cursor: grabbing !important;
+}
+.route-shape-editor ol {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+}
+.route-shape-editor li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0;
+}
+.route-shape-editor li .text-button {
+  margin-right: auto;
+}
+.route-shape-editor li button:not(.text-button) {
+  padding: 8px;
+  border-radius: 50%;
+  background: white;
+  display: grid;
+  place-items: center;
+}
+.route-planner-feedback {
+  padding: 0 22px;
+  font-size: 12px;
+  max-height: 140px;
+  overflow: auto;
+  flex-shrink: 0;
+}
+.route-planner-feedback p {
+  margin: 8px 0;
+}
+.route-shape-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #657354;
+  margin: 10px 0 0;
+}
 @media (max-width: 899px) {
   .route-planner-header {
     top: max(14px, env(safe-area-inset-top));

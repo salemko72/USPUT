@@ -101,6 +101,8 @@ automatizovanog testa.
 
 ## Rute i mape
 
+Objava ima dva koraka: oblikovanje trase bijelim prolaznim ručkama, zatim odabir mjesta susreta. Srednja ručka nije meeting point; početna ponuda sadrži samo polazište i završetak. `routeViaPoints` (do 8 koordinatnih tačaka) oblikuje putanju, potpisuje se uz pregled i čuva u postojećem `route_json.viaPoints`, bez migracije. Ponovljena ponuda zadržava te kontrole, uz novo potvrđivanje. U novom toku mjesta moraju biti uz odabranu trasu (50 m tolerancije, u smjeru vožnje); njihovo uređivanje ne šalje novi automobilski upit niti mijenja geometriju. Vrijeme susreta je procjena po udaljenosti i vremenu dionica izabranog puta. Stariji klijenti i ponude bez polja zadržavaju stari potpisani tok. Provjere: `tests/route-shape-browser.py`, `tests/auto-route-preview-browser.py`, `tests/meeting-stops.test.mjs` i API testovi.
+
 Pretraga podržava ulice i ručni pin, uz preostali beta katalog sarajevskih područja. Uz OSRM radi cestovno spajanje i procjena hodanja do potvrđenih mjesta susreta. Vozač bira 1–7 slobodnih putničkih mjesta i prihvata svakog putnika posebno; slanje zahtjeva nije potvrđena vožnja. Serverske transakcije čuvaju kapacitet. Nema stalnog GPS praćenja.
 
 Mapa koristi Leaflet s MapLibre vektorskom podlogom OpenFreeMap, originalnim Positron bojama, latiničnim nazivima i smanjenim brojem natpisa. Pregled rute i pomjeranje pina koriste isti lokalni stil; CARTO raster koji je vraćao „API KEY REQUIRED” se ne koristi. Atribucija ostaje vidljiva. Stvarna cestovna geometrija prikazuje se punom crnom linijom; bez nje skica nije cestovna ruta. Nema masovnog preuzimanja ili offline cache-a. Browser provjere koriste sintetičke vektorske pločice i ne dokazuju dostupnost javnog servisa.

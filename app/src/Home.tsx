@@ -28,11 +28,13 @@ import type {
   Vehicle,
   MeetingStop,
   Ride,
+  RouteViaPoint,
 } from "./types";
 import { dateLabel, searchPlace, defaultSearch, tomorrow } from "./types";
 import { Avatar, Button, ErrorBox, Modal } from "./ui";
 
 type RoutePreviewResult = {
+  routeViaPoints: RouteViaPoint[];
   route: {
     coordinates: number[][];
     duration: number;
@@ -191,6 +193,8 @@ export function Home({
     [costSharing, setCostSharing] = useState(false),
     [repeatDraft, setRepeatDraft] = useState(false),
     [draftStops, setDraftStops] = useState<MeetingStop[] | undefined>(),
+    [draftViaPoints, setDraftViaPoints] = useState<RouteViaPoint[]>([]),
+    [plannerStage, setPlannerStage] = useState<"shape" | "stops">("shape"),
     [vehicle, setVehicle] = useState<Vehicle | null>(null),
     [passengerFormOpen, setPassengerFormOpen] = useState(false),
     [stopsApproved, setStopsApproved] = useState(false),
@@ -211,7 +215,7 @@ export function Home({
     return ++previewRequest.current;
   }
 
-  function updateRoutePreview(draft: RoutePreview) {
+  function updateRoutePreview(draft: RoutePreview, stage = plannerStage) {
     const request = cancelRoutePreview();
     // Keep the editable text, including optional blank names, while publishing
     // the server-normalized stops covered by the signed token.
@@ -222,6 +226,7 @@ export function Home({
     };
     setPreview(next);
     setDraftStops(next.meetingStops);
+    setDraftViaPoints(next.routeViaPoints);
     setStopsApproved(false);
     setError("");
     setRoutePreviewError("");
@@ -235,7 +240,7 @@ export function Home({
       duplicatePin =
         new Set(next.meetingStops.map((p) => `${p.lat},${p.lng}`)).size !==
         next.meetingStops.length;
-    if (invalidPin || duplicatePin) {
+    if (stage === "stops" && (invalidPin || duplicatePin)) {
       setRouteCalculating(false);
       setRoutePreviewError(
         invalidPin
@@ -250,10 +255,11 @@ export function Home({
       try {
         const result = await api<RoutePreviewResult>("/routes/preview", {
           ...next.offer,
-          meetingStops: next.meetingStops,
+          routeViaPoints: next.routeViaPoints,
+          ...(stage === "stops" ? { meetingStops: next.meetingStops } : {}),
         });
         if (!mounted.current || request !== previewRequest.current) return;
-        if (!result.previewToken)
+        if (stage === "stops" && !result.previewToken)
           throw new Error("Proračun trenutno nije dostupan.");
         setPreview({
           ...next,
@@ -297,6 +303,7 @@ export function Home({
     setNote(repeatRide.note);
     setCostSharing(Boolean(repeatRide.costSharing));
     setDraftStops(repeatRide.meetingStops?.map((stop) => ({ ...stop })));
+    setDraftViaPoints(repeatRide.routeViaPoints || []);
     draftRouteKey.current = JSON.stringify([
       repeatRide.from.id,
       repeatRide.to.id,
@@ -370,11 +377,15 @@ export function Home({
             : undefined;
         const result = await api<RoutePreviewResult>("/routes/preview", {
           ...offer,
-          ...(preservedStops ? { meetingStops: preservedStops } : {}),
+          routeViaPoints:
+            draftRouteKey.current === JSON.stringify([offer.from, offer.to])
+              ? draftViaPoints
+              : [],
         });
         if (!mounted.current || request !== previewRequest.current) return;
         setStopsApproved(false);
         setShareMeetingPoints(false);
+        setPlannerStage("shape");
         draftRouteKey.current = JSON.stringify([offer.from, offer.to]);
         const next = {
           ...result,
@@ -384,8 +395,7 @@ export function Home({
             ? result.meetingStops
             : undefined,
         };
-        if (result.previewToken) setPreview(next);
-        else updateRoutePreview(next);
+        setPreview(next);
       }
     } catch (e) {
       if (mounted.current && request === previewRequest.current)
@@ -404,6 +414,23 @@ export function Home({
           route={preview.route}
           stops={preview.meetingStops}
           busy={busy}
+          stage={plannerStage}
+          viaPoints={preview.routeViaPoints}
+          onViaChange={(routeViaPoints) =>
+            updateRoutePreview({ ...preview, routeViaPoints }, "shape")
+          }
+          onEditShape={() => {
+            cancelRoutePreview();
+            setRouteCalculating(false);
+            setRoutePreviewError("");
+            setStopsApproved(false);
+            setPreview({
+              ...preview,
+              previewToken: undefined,
+              confirmedMeetingStops: undefined,
+            });
+            setPlannerStage("shape");
+          }}
           returnFocusTo={publishTrigger}
           onClose={() => {
             if (!busy) {
@@ -411,55 +438,98 @@ export function Home({
               setRouteCalculating(false);
               setRoutePreviewError("");
               setDraftStops(preview.meetingStops);
+              setDraftViaPoints(preview.routeViaPoints);
               setPreview(null);
             }
           }}
+          feedback={
+            <>
+              {routeCalculating && (
+                <p className="meeting-route-outdated" role="status">
+                  {t(
+                    plannerStage === "shape"
+                      ? "Preračunavam trasu…"
+                      : "Provjeravam mjesta susreta na odabranoj trasi…",
+                  )}
+                </p>
+              )}
+              {routePreviewError && (
+                <>
+                  <ErrorBox error={routePreviewError} />
+                  <Button
+                    variant="outline"
+                    onClick={() => updateRoutePreview(preview)}
+                  >
+                    {t("Pokušaj ponovo")}
+                  </Button>
+                </>
+              )}
+              <ErrorBox error={error} />
+            </>
+          }
           action={
-            <Button
-              busy={busy}
-              arrow
-              disabled={
-                routeCalculating || !preview.previewToken || !stopsApproved
-              }
-              onClick={async () => {
-                if (
-                  busy ||
-                  routeCalculating ||
-                  !preview.previewToken ||
-                  !stopsApproved
-                )
-                  return;
-                setBusy(true);
-                setError("");
-                try {
-                  await onPublish({
-                    ...preview.offer,
-                    routeConfirmed: true,
-                    stopsConfirmed: true,
-                    previewToken: preview.previewToken,
-                    meetingStops:
-                      preview.confirmedMeetingStops || preview.meetingStops,
-                    shareMeetingPoints,
-                  });
-                  cancelRoutePreview();
-                  setPreview(null);
-                  setDraftStops(undefined);
-                  draftRouteKey.current = "";
-                  setRepeatDraft(false);
-                } catch (e) {
-                  setError((e as Error).message);
-                } finally {
-                  setBusy(false);
+            plannerStage === "shape" ? (
+              <Button
+                arrow
+                disabled={
+                  busy || routeCalculating || Boolean(routePreviewError)
                 }
-              }}
-            >
-              {t("Vozim ovom trasom — objavi")}
-            </Button>
+                onClick={() => {
+                  setPlannerStage("stops");
+                  updateRoutePreview(preview, "stops");
+                }}
+              >
+                {t("Potvrdi trasu — odaberi mjesta susreta")}
+              </Button>
+            ) : (
+              <Button
+                busy={busy}
+                arrow
+                disabled={
+                  routeCalculating || !preview.previewToken || !stopsApproved
+                }
+                onClick={async () => {
+                  if (
+                    busy ||
+                    routeCalculating ||
+                    !preview.previewToken ||
+                    !stopsApproved
+                  )
+                    return;
+                  setBusy(true);
+                  setError("");
+                  try {
+                    await onPublish({
+                      ...preview.offer,
+                      routeConfirmed: true,
+                      stopsConfirmed: true,
+                      previewToken: preview.previewToken,
+                      routeViaPoints: preview.routeViaPoints,
+                      meetingStops:
+                        preview.confirmedMeetingStops || preview.meetingStops,
+                      shareMeetingPoints,
+                    });
+                    cancelRoutePreview();
+                    setPreview(null);
+                    setDraftStops(undefined);
+                    setDraftViaPoints([]);
+                    draftRouteKey.current = "";
+                    setRepeatDraft(false);
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {t("Vozim ovom trasom — objavi")}
+              </Button>
+            )
           }
         >
           <p>
             {t(
-              "Ako ova trasa nije tvoj put, nemoj je potvrditi. Vrati se i promijeni polazište ili odredište.",
+              "Mjesta susreta postavi uz potvrđenu trasu. Za skretanje prvo promijeni trasu.",
             )}
           </p>
           <MeetingStopsEditor
@@ -471,22 +541,6 @@ export function Home({
               updateRoutePreview({ ...preview, meetingStops });
             }}
           />
-          {routeCalculating && (
-            <p className="meeting-route-outdated" role="status">
-              {t("Preračunavam trasu kroz odabrana mjesta susreta…")}
-            </p>
-          )}
-          {routePreviewError && (
-            <>
-              <ErrorBox error={routePreviewError} />
-              <Button
-                variant="outline"
-                onClick={() => updateRoutePreview(preview)}
-              >
-                {t("Pokušaj ponovo")}
-              </Button>
-            </>
-          )}
           <label className="stop-confirmation">
             <input
               type="checkbox"
@@ -515,7 +569,6 @@ export function Home({
               </span>
             </label>
           </details>
-          <ErrorBox error={error} />
         </RoutePlanner>
       )}
 

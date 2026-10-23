@@ -1,4 +1,9 @@
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
+import {
+  normalizeRouteViaPoints,
+  readDriverRoute,
+  stopsOnShape,
+} from "./route-shape.mjs";
 const text = (v, n = 120) =>
   typeof v === "string"
     ? v
@@ -57,41 +62,10 @@ export function normalizeMeetingStops(raw) {
   return stops;
 }
 export function proposeMeetingStops(route, from, to) {
-  const coords = route.coordinates,
-    lengths = [0];
-  let total = 0;
-  for (let i = 1; i < coords.length; i++) {
-    total += metres(
-      { lng: coords[i - 1][0], lat: coords[i - 1][1] },
-      { lng: coords[i][0], lat: coords[i][1] },
-    );
-    lengths.push(total);
-  }
-  const stops = [{ ...from, stopId: `stop_${from.id}` }];
-  if (total > 2) {
-    for (const fraction of [1 / 2]) {
-      const target = total * fraction;
-      let i = lengths.findIndex((n) => n >= target);
-      if (i < 1) i = 1;
-      const ratio =
-          (target - lengths[i - 1]) /
-          Math.max(0.01, lengths[i] - lengths[i - 1]),
-        a = coords[i - 1],
-        b = coords[i];
-      const p = normalizeLocation({
-        lat: a[1] + ratio * (b[1] - a[1]),
-        lng: a[0] + ratio * (b[0] - a[0]),
-        name: "Mjesto susreta",
-        city: from.city || to.city,
-        detail:
-          "Prijedlog uz trasu. Vozač treba provjeriti prilaz, imenovati mjesto i potvrditi gdje može stati.",
-      });
-      if (p && ![from, to].some((s) => metres(s, p) < 1))
-        stops.push({ ...p, name: "", stopId: `stop_${p.id}` });
-    }
-  }
-  stops.push({ ...to, stopId: `stop_${to.id}` });
-  return stops;
+  return [
+    { ...from, stopId: `stop_${from.id}` },
+    { ...to, stopId: `stop_${to.id}` },
+  ];
 }
 function routePoints(from, to, stops) {
   const points = [from],
@@ -103,33 +77,47 @@ function routePoints(from, to, stops) {
   if (metres(points.at(-1), to) > 1) points.push(to);
   return { points, indices };
 }
-const signature = (from, to, stops) =>
+const signature = (from, to, stops, via) =>
   JSON.stringify([
     normalizeLocation(from),
     normalizeLocation(to),
     normalizeMeetingStops(stops),
+    ...(via === undefined ? [] : [normalizeRouteViaPoints(via)]),
   ]);
-export async function previewMeetingRoute(env, ownerId, from, to, rawStops) {
+export async function previewMeetingRoute(
+  env,
+  ownerId,
+  from,
+  to,
+  rawStops,
+  rawVia,
+) {
   const stops = normalizeMeetingStops(rawStops),
     { points, indices } = routePoints(from, to, stops);
-  const route = await readRoute(env, points);
+  const route =
+    rawVia === undefined
+      ? await readRoute(env, points)
+      : await readDriverRoute(env, from, to, rawVia);
   if (!route || route.unreachable)
     throw new Error(
       "Cestovni proračun trenutno nije dostupan. Rutu još nije moguće potvrditi.",
     );
   const elapsed = [0];
   for (const leg of route.legs) elapsed.push(elapsed.at(-1) + leg.duration);
-  const meetingStops = stops.map((stop, i) => ({
-    ...stop,
-    travelSeconds: elapsed[indices[i]],
-  }));
+  const meetingStops =
+    rawVia === undefined
+      ? stops.map((stop, i) => ({
+          ...stop,
+          travelSeconds: elapsed[indices[i]],
+        }))
+      : stopsOnShape(route, stops, from, to);
   const previewToken = crypto.randomUUID() + crypto.randomUUID(),
     payload = {
       route,
       from,
       to,
       meetingStops,
-      signature: signature(from, to, stops),
+      signature: signature(from, to, stops, rawVia),
     };
   await env.DB.prepare("DELETE FROM meeting_route_previews WHERE expires<?")
     .bind(Date.now())
@@ -144,7 +132,14 @@ export async function previewMeetingRoute(env, ownerId, from, to, rawStops) {
       Date.now() + 600000,
     )
     .run();
-  return { route, from, to, meetingStops, previewToken };
+  return {
+    route,
+    from,
+    to,
+    meetingStops,
+    previewToken,
+    ...(rawVia === undefined ? {} : { routeViaPoints: route.viaPoints }),
+  };
 }
 export async function consumeMeetingPreview(
   env,
@@ -153,6 +148,7 @@ export async function consumeMeetingPreview(
   from,
   to,
   stops,
+  via,
 ) {
   if (typeof token !== "string" || token.length > 200)
     throw new TypeError("Ponovo pregledaj i potvrdi trasu s mjestima susreta.");
@@ -164,7 +160,7 @@ export async function consumeMeetingPreview(
   if (!row)
     throw new TypeError("Pregled rute je istekao. Ponovo potvrdi trasu.");
   const payload = JSON.parse(row.payload);
-  if (payload.signature !== signature(from, to, stops))
+  if (payload.signature !== signature(from, to, stops, via))
     throw new TypeError(
       "Mjesta susreta su promijenjena. Ponovo proračunaj trasu.",
     );

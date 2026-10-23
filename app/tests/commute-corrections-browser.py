@@ -85,8 +85,15 @@ class CommuteCorrections(unittest.TestCase):
         dialog=self.page.get_by_role('dialog',name='Je li ovo ruta kojom stvarno voziš?')
         expect(dialog).to_be_visible()
         expect(dialog.locator('canvas.maplibregl-canvas').first).to_be_visible()
-        if edit:dialog.get_by_role('button',name='Uredi mjesta susreta',exact=True).click()
+        expect(dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True)).to_have_count(0)
+        dialog.get_by_role('button',name='Potvrdi trasu — odaberi mjesta susreta',exact=True).click()
         expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
+        dialog.get_by_role('button',name='Dodaj mjesto susreta',exact=True).click()
+        pin=self.page.get_by_role('dialog',name='Mjesto gdje možeš stati',exact=True)
+        expect(pin.get_by_role('button',name='Koristi ovaj pin',exact=True)).to_be_enabled()
+        pin.get_by_role('button',name='Koristi ovaj pin',exact=True).click()
+        expect(dialog.locator('.stop-confirmation input')).to_be_enabled()
+        if not edit:dialog.get_by_role('button',name='Više mape',exact=True).click()
         return dialog
     def test_selected_tomorrow_survives_search_return_and_saved_route_load(self):
         driver=self.account('Driver')
@@ -112,7 +119,7 @@ class CommuteCorrections(unittest.TestCase):
             self.page.get_by_role('button',name='Nova vožnja Odaberi drugu rutu',exact=True).click()
             expect(self.page.get_by_role('button',name=re.compile('^Datum polaska:'))).to_contain_text('Sutra')
         finally: driver.close()
-    def test_driver_starts_with_one_meeting_point_and_add_before_finish(self):
+    def test_driver_adds_unnamed_meeting_points_after_confirming_the_shape(self):
         dialog=self.preview()
         names=dialog.get_by_role('textbox',name='Naziv mjesta susreta',exact=True)
         expect(names).to_have_count(1)
@@ -124,7 +131,8 @@ class CommuteCorrections(unittest.TestCase):
         self.assertTrue(order,'Add meeting point belongs before the final endpoint')
         add.click()
         pin=self.page.get_by_role('dialog',name='Mjesto gdje možeš stati',exact=True)
-        pin.locator('.street-pin-map').click(position={'x':200,'y':140})
+        box=pin.locator('.street-pin-map').bounding_box()
+        pin.locator('.street-pin-map').click(position={'x':box['width']/2+20,'y':box['height']/2-7})
         pin.get_by_role('button',name='Koristi ovaj pin',exact=True).click()
         expect(names).to_have_count(2)
     def test_later_date_survives_switching_saved_cards_and_new_search(self):
@@ -145,6 +153,9 @@ class CommuteCorrections(unittest.TestCase):
         expect(trigger).to_contain_text(display)
     def test_route_map_zoom_and_edit_keep_the_chosen_view(self):
         dialog=self.preview()
+        # The helper now explicitly adds a meeting pin in a separate zoom-17
+        # map. Measure route-map tile zooms, not that closed pin dialog's history.
+        self.map_levels.clear()
         map=dialog.locator('.leaflet-container-wrap')
         def level():
             return map.locator('path.leaflet-interactive').last.evaluate("e=>e.getBBox().width")
@@ -204,6 +215,7 @@ class CommuteCorrections(unittest.TestCase):
         expect(self.page.get_by_role('combobox',name='Odredište',exact=True)).to_have_value('Ilidža')
         self.assertNotEqual(self.page.evaluate('getComputedStyle(document.body).overflow'),'hidden')
         self.page.get_by_role('button',name='Objavi vožnju',exact=True).click()
+        dialog.get_by_role('button',name='Potvrdi trasu — odaberi mjesta susreta',exact=True).click()
         expect(self.page.get_by_role('dialog',name='Je li ovo ruta kojom stvarno voziš?').get_by_role('textbox',name='Naziv mjesta susreta',exact=True)).to_have_value('Kod parkinga — test')
         dialog.get_by_role('button',name='Nazad na unos vožnje',exact=True).click()
         self.page.get_by_role('button',name='Zamijeni polazište i odredište',exact=True).click()

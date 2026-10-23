@@ -1,7 +1,8 @@
 import { addBasemap } from "./map-style";
 import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
-import type { Place } from "./types";
+import type { Place, RouteViaPoint } from "./types";
+import { routeMidpoint } from "./route-midpoint";
 import { Layers, MapPin, Plus, Minus, Expand } from "lucide-react";
 import type { Map as LeafletMap, LayerGroup, LatLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -18,6 +19,9 @@ type RouteSnapshot = {
   geometry?: number[][];
   stops: Place[];
   insets?: MapInsets;
+  viaPoints?: RouteViaPoint[];
+  onViaMove?: (index: number, point: RouteViaPoint) => void;
+  onMapAdd?: (point: RouteViaPoint) => void;
 };
 type LiveRoute = {
   map: LeafletMap;
@@ -62,6 +66,41 @@ function drawRoute(view: LiveRoute, data: RouteSnapshot) {
     weight: 4,
     dashArray: geometry ? undefined : "7 10",
   }).addTo(layers);
+  if (data.onViaMove && geometry?.length) {
+    const midpoint = routeMidpoint(geometry);
+    const controls = data.viaPoints?.length
+      ? data.viaPoints
+      : midpoint
+        ? [midpoint]
+        : [];
+    controls.forEach((p, index) => {
+      const label = t("Povuci da promijeniš trasu");
+      const icon = document.createElement("span");
+      icon.className = "route-via-dot";
+      const marker = L.marker([p.lat, p.lng], {
+        draggable: true,
+        title: label,
+        alt: label,
+        icon: L.divIcon({
+          className: "route-via-handle",
+          html: icon,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        }),
+      })
+        .addTo(layers)
+        .bindTooltip(label);
+      marker.on("dragend", () => {
+        const next = marker.getLatLng();
+        data.onViaMove?.(index, {
+          lat: Math.round(next.lat * 1e5) / 1e5,
+          lng: Math.round(next.lng * 1e5) / 1e5,
+        });
+      });
+      const element = marker.getElement();
+      if (element) L.DomEvent.disableClickPropagation(element);
+    });
+  }
   view.bounds = L.latLngBounds([
     ...line,
     ...stops.map((p) => [p.lat, p.lng] as [number, number]),
@@ -93,6 +132,9 @@ export function RouteMap({
   stops = emptyStops,
   insets,
   animated = true,
+  viaPoints,
+  onViaMove,
+  onMapAdd,
 }: {
   from: Place;
   to: Place;
@@ -102,6 +144,9 @@ export function RouteMap({
   stops?: Place[];
   insets?: MapInsets;
   animated?: boolean;
+  viaPoints?: RouteViaPoint[];
+  onViaMove?: (index: number, point: RouteViaPoint) => void;
+  onMapAdd?: (point: RouteViaPoint) => void;
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false),
@@ -109,7 +154,16 @@ export function RouteMap({
   const container = useRef<HTMLDivElement>(null);
   const view = useRef<LiveRoute | null>(null);
   const latest = useRef<RouteSnapshot>({ from, to, geometry, stops, insets });
-  latest.current = { from, to, geometry, stops, insets };
+  latest.current = {
+    from,
+    to,
+    geometry,
+    stops,
+    insets,
+    viaPoints,
+    onViaMove,
+    onMapAdd,
+  };
   useEffect(() => {
     if (geometry) setLive(true);
   }, [geometry]);
@@ -140,6 +194,12 @@ export function RouteMap({
           onError: () => setFailed(true),
         });
         view.current = current;
+        map.on("click", (event) =>
+          latest.current.onMapAdd?.({
+            lat: Math.round(event.latlng.lat * 1e5) / 1e5,
+            lng: Math.round(event.latlng.lng * 1e5) / 1e5,
+          }),
+        );
         drawRoute(current, latest.current);
         const observer = new ResizeObserver(() =>
           map.invalidateSize({ pan: false }),
@@ -161,7 +221,16 @@ export function RouteMap({
   }, [live, animated]);
   useEffect(() => {
     if (view.current) drawRoute(view.current, latest.current);
-  }, [from, to, geometry, stops, insets]);
+  }, [
+    from,
+    to,
+    geometry,
+    stops,
+    insets,
+    viaPoints,
+    Boolean(onViaMove),
+    Boolean(onMapAdd),
+  ]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
       <svg

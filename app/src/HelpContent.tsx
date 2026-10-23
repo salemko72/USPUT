@@ -31,7 +31,7 @@ export function HelpContent() {
         </p>
         <p>
           {t(
-            "Prije objave pregledaj trasu i uredi mjesta susreta. Dodavanje, pomjeranje ili promjena redoslijeda tačaka automatski preračunava rutu. Naziv mjesta je opcionalan; možeš ostaviti redni broj i po potrebi dodati prilaz ili stranu ulice. Sačekaj proračun pa potvrdi da na tim mjestima možeš stati, primiti i ostaviti putnika i da ćeš voziti prikazanom trasom.",
+            "Prvo oblikuj i potvrdi trasu pomoću bijelih prolaznih tačaka. Zatim dodaj mjesta susreta uz tu trasu. Prolazne tačke nisu mjesta ulaska putnika; naziv mjesta susreta nije obavezan. Na kraju potvrdi gdje možeš stati. Vremena susreta su procjene duž odabrane trase, bez podataka o gužvi.",
           )}
         </p>
         <p>

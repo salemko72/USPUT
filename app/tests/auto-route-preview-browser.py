@@ -24,7 +24,7 @@ from playwright.sync_api import expect, sync_playwright
 from map_fixture import install_vector_map
 
 APP = Path(__file__).resolve().parents[1]
-CALCULATING = 'Preračunavam trasu kroz odabrana mjesta susreta…'
+CALCULATING = 'Provjeravam mjesta susreta na odabranoj trasi…'
 
 
 class AutoRoutePreview(unittest.TestCase):
@@ -114,7 +114,7 @@ class AutoRoutePreview(unittest.TestCase):
             self.previews.append({'status':response.status, 'body':response.request.post_data_json,
                                   'result':response.json()})
 
-    def open_preview(self):
+    def open_preview(self, with_meeting=True, shape_only=False):
         self.page.goto(self.base)
         self.page.locator('.saved-search-load').click()
         tomorrow = (datetime.now(ZoneInfo('Europe/Sarajevo')).date() + timedelta(days=1)).isoformat()
@@ -123,14 +123,21 @@ class AutoRoutePreview(unittest.TestCase):
             self.page.get_by_role('button', name='Sljedeći mjesec', exact=True).click()
         self.page.locator('[data-date="' + tomorrow + '"]').click()
         self.page.get_by_role('button', name='Nudim vožnju', exact=True).click()
+        expect(self.page.get_by_role('button',name='Uredi vozilo',exact=True)).to_be_visible()
         self.page.get_by_role('button', name='Objavi vožnju', exact=True).click()
         self.dialog = self.page.get_by_role('dialog', name='Je li ovo ruta kojom stvarno voziš?')
         expect(self.dialog).to_be_visible()
-        self.dialog.get_by_role('button', name='Uredi mjesta susreta', exact=True).click()
         self.approval = self.dialog.locator('.stop-confirmation input')
         self.publish = self.dialog.get_by_role('button', name='Vozim ovom trasom — objavi', exact=True)
         self.names = self.dialog.get_by_role('textbox', name='Naziv mjesta susreta', exact=True)
+        expect(self.names).to_have_count(0)
+        expect(self.dialog.locator('.route-via-handle')).to_have_count(1)
+        if shape_only:
+            return self.previews[-1]
+        self.dialog.get_by_role('button', name='Potvrdi trasu — odaberi mjesta susreta', exact=True).click()
         expect(self.approval).to_be_enabled()
+        if with_meeting:
+            self.updated(self.add_pin)
         return self.previews[-1]
 
     def updated(self, action):
@@ -150,18 +157,38 @@ class AutoRoutePreview(unittest.TestCase):
         expect(values.nth(0)).to_have_text(f'{km:g} km')
         expect(values.nth(1)).to_have_text(f'{math.ceil(result["route"]["duration"] / 60)} min')
 
+    def point_at(self, fraction):
+        geometry = self.previews[-1]['result']['route']['coordinates']
+        lengths = [math.hypot((b[0]-a[0])*math.cos(math.radians(a[1])),b[1]-a[1]) for a,b in zip(geometry,geometry[1:])]
+        left = sum(lengths)*fraction
+        for i,length in enumerate(lengths):
+            if left <= length:
+                a,b=geometry[i],geometry[i+1];f=left/length if length else 0
+                return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]
+            left-=length
+        return geometry[-1]
+
+    def click_along(self,pin,fraction,center=None):
+        target=self.point_at(fraction);center=center or self.point_at(.5)
+        scale=256*2**17
+        def y(lat):
+            phi=math.radians(lat)
+            return (1-math.log(math.tan(phi)+1/math.cos(phi))/math.pi)/2*scale
+        box=pin.locator('.street-pin-map').bounding_box()
+        pin.locator('.street-pin-map').click(position={'x':box['width']/2+(target[0]-center[0])/360*scale,'y':box['height']/2+y(target[1])-y(center[1])})
+
     def add_pin(self):
         self.dialog.get_by_role('button', name='Dodaj mjesto susreta', exact=True).click()
         pin = self.page.get_by_role('dialog', name='Mjesto gdje možeš stati', exact=True)
         expect(pin.locator('canvas.maplibregl-canvas')).to_be_visible()
-        pin.locator('.street-pin-map').click(position={'x':240, 'y':140})
+        if self.names.count():
+            self.click_along(pin,.502)
         expect(pin.get_by_role('button', name='Koristi ovaj pin', exact=True)).to_be_enabled()
         pin.get_by_role('button', name='Koristi ovaj pin', exact=True).click()
 
     def test_initial_proposal_is_automatically_ready_without_manual_recalculation(self):
-        latest = self.open_preview()
-        expect(self.names).to_have_count(1)
-        expect(self.names).to_have_value('')
+        latest = self.open_preview(with_meeting=False)
+        expect(self.names).to_have_count(0)
         expect(self.dialog.get_by_role('button', name='Proračunaj trasu s ovim tačkama', exact=True)).to_have_count(0)
         self.page.wait_for_timeout(600)
         self.assertEqual(len(self.previews), 2, 'One proposal followed by one signed preview')
@@ -174,30 +201,34 @@ class AutoRoutePreview(unittest.TestCase):
         self.assertEqual(self.publish_requests[0]['previewToken'], latest['result']['previewToken'])
         self.assertEqual(self.publish_requests[0]['meetingStops'], latest['result']['meetingStops'])
 
-    def test_add_move_reorder_and_remove_recalculate_geometry_and_stats(self):
+    def test_meeting_edits_keep_confirmed_geometry_and_reject_reverse_order(self):
         initial = self.open_preview()['result']
         self.approval.check()
         body, added = self.updated(self.add_pin)
         self.assertEqual(len(body['meetingStops']), 4)
         expect(self.names).to_have_count(2)
-        self.assertNotEqual(initial['route']['coordinates'], added['route']['coordinates'])
+        self.assertEqual(initial['route']['coordinates'], added['route']['coordinates'])
         self.assert_stats(added)
 
         def move_pin():
             self.dialog.get_by_role('button', name='Provjeri ili pomjeri pin', exact=True).first.click()
             pin = self.page.get_by_role('dialog', name='Mjesto gdje možeš stati', exact=True)
             expect(pin.get_by_role('button', name='Koristi ovaj pin', exact=True)).to_be_enabled()
-            pin.locator('.street-pin-map').click(position={'x':75, 'y':240})
+            stop=self.previews[-1]['body']['meetingStops'][1]
+            self.click_along(pin,.499,center=[stop['lng'],stop['lat']])
             pin.get_by_role('button', name='Koristi ovaj pin', exact=True).click()
 
         self.approval.check()
         body, moved = self.updated(move_pin)
-        self.assertNotEqual(added['route']['coordinates'], moved['route']['coordinates'])
-        self.assertNotEqual(added['route']['distance'], moved['route']['distance'])
+        self.assertEqual(added['route']['coordinates'], moved['route']['coordinates'])
+        self.assertEqual(added['route']['distance'], moved['route']['distance'])
         self.assert_stats(moved)
         before = [(p['lat'], p['lng']) for p in body['meetingStops']]
-        body, reordered = self.updated(lambda:self.dialog.get_by_role('button', name='Pomjeri tačku dolje', exact=True).first.click())
-        self.assertEqual([(p['lat'], p['lng']) for p in body['meetingStops']], [before[0], before[2], before[1], before[3]])
+        with self.page.expect_response(lambda r:r.url.endswith('/api/routes/preview')) as bad:
+            self.dialog.get_by_role('button', name='Pomjeri tačku dolje', exact=True).first.click()
+        self.assertEqual(bad.value.status,400)
+        expect(self.publish).to_be_disabled()
+        body, reordered = self.updated(lambda:self.dialog.get_by_role('button', name='Pomjeri tačku gore', exact=True).last.click())
         self.assert_stats(reordered)
         body, removed = self.updated(lambda:self.dialog.get_by_role('button', name='Ukloni tačku', exact=True).first.click())
         self.assertEqual(len(body['meetingStops']), 3)
@@ -288,7 +319,7 @@ class AutoRoutePreview(unittest.TestCase):
         expect(self.dialog).to_have_count(0)
         self.page.get_by_role('button', name='Objavi vožnju', exact=True).click()
         expect(self.dialog).to_be_visible()
-        self.dialog.get_by_role('button', name='Uredi mjesta susreta', exact=True).click()
+        self.dialog.get_by_role('button', name='Potvrdi trasu — odaberi mjesta susreta', exact=True).click()
         expect(self.names).to_have_value('Sačuvani nacrt')
         expect(self.approval).to_be_enabled()
         self.approval.check()

@@ -1,10 +1,21 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ChevronDown, ChevronUp, Clock3, Route } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
+  Route,
+  X,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { RouteMap, type MapInsets } from "./Map";
 import { t } from "./i18n";
-import { Button } from "./ui";
-import type { MeetingStop, Place } from "./types";
+import { Button, Modal } from "./ui";
+import { PinMap } from "./StreetPicker";
+import { routeMidpoint } from "./route-midpoint";
+import type { MeetingStop, Place, RouteViaPoint } from "./types";
 import "./route-planner.css";
 
 export function RoutePlanner({
@@ -17,6 +28,11 @@ export function RoutePlanner({
   children,
   action,
   returnFocusTo,
+  stage,
+  viaPoints,
+  onViaChange,
+  onEditShape,
+  feedback,
 }: {
   from: Place;
   to: Place;
@@ -32,11 +48,45 @@ export function RoutePlanner({
   children: ReactNode;
   action: ReactNode;
   returnFocusTo?: React.RefObject<HTMLElement | null>;
+  stage: "shape" | "stops";
+  viaPoints: RouteViaPoint[];
+  onViaChange: (points: RouteViaPoint[]) => void;
+  onEditShape: () => void;
+  feedback?: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(
     () => window.matchMedia("(min-width: 900px)").matches,
   );
   const [insets, setInsets] = useState<MapInsets>();
+  const [adding, setAdding] = useState(false);
+  const [edit, setEdit] = useState<{ index: number; point: Place } | null>(
+    null,
+  );
+  const [mapReady, setMapReady] = useState(false);
+  useEffect(() => {
+    setAdding(false);
+    setEdit(null);
+    if (stage === "stops") setExpanded(true);
+  }, [stage]);
+  function moveVia(index: number, point: RouteViaPoint) {
+    if (busy) return;
+    const next = [...viaPoints];
+    next[index] = point;
+    onViaChange(next);
+  }
+  function openVia(index: number, point: RouteViaPoint) {
+    setMapReady(false);
+    setEdit({
+      index,
+      point: {
+        ...point,
+        id: `via_${index}`,
+        name: t("Prolazna tačka"),
+        detail: "",
+        city: from.city,
+      },
+    });
+  }
   const root = useRef<HTMLElement>(null),
     panel = useRef<HTMLElement>(null),
     header = useRef<HTMLElement>(null),
@@ -93,6 +143,7 @@ export function RoutePlanner({
       role="dialog"
       aria-modal="true"
       aria-labelledby={id + "-title"}
+      data-planner-stage={stage}
       style={
         {
           "--planner-bottom-inset": `${insets?.bottom || 300}px`,
@@ -138,9 +189,19 @@ export function RoutePlanner({
           to={to}
           geometry={route.coordinates}
           provider={route.provider}
-          stops={stops}
+          stops={stage === "stops" ? stops : undefined}
           insets={insets}
           animated={false}
+          viaPoints={viaPoints}
+          onViaMove={stage === "shape" && !busy ? moveVia : undefined}
+          onMapAdd={
+            stage === "shape" && adding && !busy
+              ? (point) => {
+                  if (viaPoints.length < 8) onViaChange([...viaPoints, point]);
+                  setAdding(false);
+                }
+              : undefined
+          }
         />
       </div>
       <header ref={header} className="route-planner-header">
@@ -155,7 +216,9 @@ export function RoutePlanner({
           <ArrowLeft size={23} />
         </button>
         <div>
-          <span className="eyebrow">{t("TVOJA RUTA. TVOJ DOGOVOR.")}</span>
+          <span className="eyebrow">
+            {t(stage === "shape" ? "1. Oblikuj trasu" : "2. Mjesta susreta")}
+          </span>
           <h2 id={id + "-title"}>{t("Je li ovo ruta kojom stvarno voziš?")}</h2>
         </div>
       </header>
@@ -187,8 +250,8 @@ export function RoutePlanner({
               </span>
             </div>
             <span className="route-planner-stop-count">
-              {stops.length}
-              <small>{t("tačke")}</small>
+              {stage === "shape" ? viaPoints.length : stops.length}
+              <small>{t(stage === "shape" ? "prolazne" : "mjesta")}</small>
             </span>
           </div>
           <div className="route-planner-endpoints">
@@ -201,6 +264,12 @@ export function RoutePlanner({
               {to.name}
             </strong>
           </div>
+          {stage === "shape" && (
+            <p className="route-shape-hint">
+              {t("Povuci da promijeniš trasu")}.{" "}
+              {t("Korekcija trase — nije mjesto susreta")}.
+            </p>
+          )}
           <button
             type="button"
             className="route-planner-expand"
@@ -209,7 +278,13 @@ export function RoutePlanner({
             disabled={busy}
             onClick={() => setExpanded(!expanded)}
           >
-            {t(expanded ? "Više mape" : "Uredi mjesta susreta")}
+            {t(
+              expanded
+                ? "Više mape"
+                : stage === "shape"
+                  ? "Uredi trasu"
+                  : "Uredi mjesta susreta",
+            )}
             {expanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
           </button>
         </div>
@@ -218,10 +293,110 @@ export function RoutePlanner({
           id={id + "-editor"}
           hidden={!expanded}
         >
-          <fieldset disabled={busy}>{children}</fieldset>
+          <fieldset disabled={busy}>
+            {stage === "shape" ? (
+              <div className="route-shape-editor">
+                <p>
+                  {t(
+                    "Povuci bijelu tačku da promijeniš trasu. Proračun počinje kada je pustiš. Ovdje ne biraš mjesta susreta.",
+                  )}
+                </p>
+                {viaPoints.length === 0 && (
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      const p = routeMidpoint(route.coordinates);
+                      if (p) openVia(0, p);
+                    }}
+                  >
+                    {t("Pomjeri srednju tačku")}
+                  </button>
+                )}
+                <ol>
+                  {viaPoints.map((point, index) => (
+                    <li key={index}>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => openVia(index, point)}
+                      >
+                        {t("Prolazna tačka")} {index + 1}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t("Pomjeri prolaznu tačku gore")}
+                        disabled={index === 0}
+                        onClick={() => {
+                          const next = [...viaPoints];
+                          [next[index - 1], next[index]] = [
+                            next[index],
+                            next[index - 1],
+                          ];
+                          onViaChange(next);
+                        }}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t("Pomjeri prolaznu tačku dolje")}
+                        disabled={index === viaPoints.length - 1}
+                        onClick={() => {
+                          const next = [...viaPoints];
+                          [next[index + 1], next[index]] = [
+                            next[index],
+                            next[index + 1],
+                          ];
+                          onViaChange(next);
+                        }}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t("Ukloni prolaznu tačku")}
+                        onClick={() =>
+                          onViaChange(viaPoints.filter((_, i) => i !== index))
+                        }
+                      >
+                        <X size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+                <Button
+                  variant="outline"
+                  disabled={viaPoints.length >= 8}
+                  onClick={() => setAdding(!adding)}
+                >
+                  {t(adding ? "Odustani od dodavanja" : "Dodaj prolaznu tačku")}
+                </Button>
+                {adding && (
+                  <p role="status">
+                    {t(
+                      "Klikni na kartu da dodaš prolaznu tačku. To nije mjesto susreta.",
+                    )}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={onEditShape}
+                >
+                  {t("Nazad na oblikovanje trase")}
+                </button>
+                {children}
+              </>
+            )}
+          </fieldset>
         </div>
+        {feedback && <div className="route-planner-feedback">{feedback}</div>}
         <footer className="route-planner-footer">
-          {expanded ? (
+          {expanded || stage === "shape" ? (
             action
           ) : (
             <Button arrow onClick={() => setExpanded(true)}>
@@ -230,6 +405,35 @@ export function RoutePlanner({
           )}
         </footer>
       </aside>
+      {edit && (
+        <Modal
+          title={t("Korekcija trase — nije mjesto susreta")}
+          onClose={() => setEdit(null)}
+        >
+          <PinMap
+            point={edit.point}
+            onReady={setMapReady}
+            onChange={(point) => setEdit({ ...edit, point })}
+          />
+          <Button
+            disabled={!mapReady}
+            onClick={() => {
+              const index = edit.index;
+              moveVia(index, edit.point);
+              setEdit(null);
+              requestAnimationFrame(() => {
+                const target =
+                  panel.current?.querySelectorAll<HTMLButtonElement>(
+                    ".route-shape-editor li .text-button",
+                  )[index];
+                (target || back.current)?.focus({ preventScroll: true });
+              });
+            }}
+          >
+            {t("Primijeni korekciju trase")}
+          </Button>
+        </Modal>
+      )}
     </section>,
     document.body,
   );

@@ -18,7 +18,8 @@ import {
   resolveCatalogMeetingPoint,
   suggestMeetingPointsForRoute,
 } from "./meeting-catalog.mjs";
-import { normalizeLocation, readRoute } from "./route-provider.mjs";
+import { normalizeLocation } from "./route-provider.mjs";
+import { readDriverRoute } from "./route-shape.mjs";
 import { corridorMatch } from "./corridor.mjs";
 import { geocode, locateCity } from "./geocoding.mjs";
 import { meetingAddress } from "./meeting-address.mjs";
@@ -171,6 +172,7 @@ const rideView = (r) => ({
       : 0,
   costSharing: r.cost_sharing === 1,
   geometry: r.route_json ? JSON.parse(r.route_json).coordinates : undefined,
+  routeViaPoints: r.route_json ? JSON.parse(r.route_json).viaPoints || [] : [],
   routeProvider: r.route_json ? JSON.parse(r.route_json).provider : undefined,
   meetingStops: r.meeting_stops_json
     ? JSON.parse(r.meeting_stops_json)
@@ -649,13 +651,24 @@ export async function handleApi(request, env) {
               from,
               to,
               body.meetingStops,
+              body.routeViaPoints,
             ),
           );
         } catch (e) {
           fail(e instanceof TypeError ? 400 : 503, e.message);
         }
       }
-      const route = await readRoute(env, [from, to]);
+      let route;
+      try {
+        route = await readDriverRoute(
+          env,
+          from,
+          to,
+          body.routeViaPoints === undefined ? [] : body.routeViaPoints,
+        );
+      } catch (e) {
+        fail(e instanceof TypeError ? 400 : 503, e.message);
+      }
       if (!route || route.unreachable)
         fail(
           503,
@@ -670,6 +683,7 @@ export async function handleApi(request, env) {
         from,
         to,
         meetingStops: proposeMeetingStops(route, from, to),
+        routeViaPoints: route.viaPoints,
         catalogSuggestions,
       });
     }
@@ -810,6 +824,7 @@ export async function handleApi(request, env) {
             fromLocation || getPlace(from),
             toLocation || getPlace(to),
             body.meetingStops,
+            body.routeViaPoints,
           );
         } catch (e) {
           fail(400, e.message);

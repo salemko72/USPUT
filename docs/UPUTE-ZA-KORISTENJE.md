@@ -21,12 +21,12 @@ Tvoj početni i završni pin služe za računanje hodanja. Vozač staje na dogov
 ## Ako nudiš vožnju
 
 1. Dodaj vozilo u Profilu. Na Početnoj odaberi **Nudim vožnju** i unesi polazište, odredište, datum, vrijeme i broj slobodnih putničkih mjesta, od 1 do 7. Označi želiš li dijeliti troškove; USPUT ne obrađuje plaćanja.
-2. Prije objave pregledaj trasu. Dodaj ili pomjeri mjesta susreta na karti i uredi njihov redoslijed. Svaka promjena automatski preračunava trasu kroz odabrana mjesta.
-3. Naziv mjesta nije obavezan. Možeš zadržati redni broj, a prilaz i stranu ulice dodati kada treba. Polazište i odredište mijenjaš u prethodnom koraku.
-4. Sačekaj proračun i potvrdi da na tim mjestima možeš stati, primiti i ostaviti putnika i da ćeš voziti prikazanom trasom. Zatim objavi.
+2. Prvo oblikuj trasu. Bijela srednja tačka služi korekciji putanje: povuci je i pusti na željenu ulicu. Proračun počinje tek kada je pustiš. Po potrebi dodaj još prolaznih tačaka ili ih uredi preko dugmeta; one nisu mjesta ulaska putnika.
+3. Klikni **Potvrdi trasu — odaberi mjesta susreta**. Tek sada dodaj mjesta gdje možeš stati, redom u smjeru vožnje. Naziv je opcionalan; prilaz i stranu ulice dodaj kada treba. Mjesta se provjeravaju uz odabranu trasu i ne mijenjaju je. Za skretanje koristi **Nazad na oblikovanje trase**.
+4. Sačekaj provjeru i potvrdi da na tim mjestima možeš stati, primiti i ostaviti putnika i da ćeš voziti prikazanom trasom. Zatim objavi. Trasa, prolazne tačke i odobrena mjesta ostaju vezani za potvrđeni pregled.
 5. U **Vožnje → Vozim** otvori ponudu i prihvati ili odbij svaki zahtjev. Ponuda s više mjesta ostaje dostupna dok ima slobodnog kapaciteta.
 
-Trasa i vremena su procjene bez podataka o gužvi. Pin, prijedlog ili često korišteno mjesto nisu potvrda da je zaustavljanje dozvoljeno. Uređuješ mjesta na kojima želiš stati; zasebni prolazni pinovi koji samo oblikuju trasu još nisu dostupni.
+Trasa i vremena su procjene bez podataka o gužvi. U novom toku vrijeme susreta procjenjuje se duž odabrane trase iz udaljenosti i vremena njenih dionica. Pin, prijedlog ili često korišteno mjesto nisu potvrda da je zaustavljanje dozvoljeno. Prolazne tačke se ne nude putnicima kao mjesta susreta niti ulaze u gradski katalog.
 
 ## Na dan dogovorene vožnje
 

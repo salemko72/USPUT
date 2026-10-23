@@ -3,6 +3,7 @@ import { MapPin, Plus, X, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { t } from "./i18n";
 import { api } from "./api";
 import { PinMap } from "./StreetPicker";
+import { routeMidpoint } from "./route-midpoint";
 import { Button, ErrorBox, Modal } from "./ui";
 import type { MeetingStop, Place } from "./types";
 import "./meeting-stops.css";
@@ -90,12 +91,12 @@ export function MeetingStopsEditor({
     onChange(next);
   }
   function openAdd() {
-    const coordinate = route[Math.floor(route.length / 2)];
+    const coordinate = routeMidpoint(route);
     if (!coordinate) return;
     const point = {
-      id: `pin_${coordinate[1].toFixed(5)}_${coordinate[0].toFixed(5)}`,
-      lat: coordinate[1],
-      lng: coordinate[0],
+      id: `pin_${coordinate.lat.toFixed(5)}_${coordinate.lng.toFixed(5)}`,
+      lat: coordinate.lat,
+      lng: coordinate.lng,
       city,
       name: "",
       detail: "Mjesto koje potvrđuje vozač",

@@ -33,6 +33,7 @@ export type MeetingStop = Place & {
   approach?: string;
   side?: string;
 };
+export type RouteViaPoint = { lat: number; lng: number };
 export type RouteMatch = {
   pickup: Place & { stopId?: string; catalogId?: string };
   dropoff: Place & { stopId?: string; catalogId?: string };
@@ -68,6 +69,7 @@ export type Ride = {
   meetingStops?: MeetingStop[];
   geometry?: number[][];
   routeProvider?: string;
+  routeViaPoints?: RouteViaPoint[];
   status: "open" | "matched" | "cancelled" | "completed";
   driver: User;
   createdAt: number;
@@ -99,6 +101,7 @@ export type Offer = Search & {
   routeConfirmed?: boolean;
   meetingStops?: MeetingStop[];
   previewToken?: string;
+  routeViaPoints?: RouteViaPoint[];
   stopsConfirmed?: boolean;
   shareMeetingPoints?: boolean;
   costSharing?: boolean;

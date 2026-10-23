@@ -4,6 +4,7 @@ import croatian from "./locales/hr.json";
 import serbian from "./locales/sr-Latn.json";
 import helpTranslations from "./help-translations.json";
 import vehicleColorTranslations from "./vehicle-color-translations.json";
+import routeShapeTranslations from "./route-shape-translations.json";
 // Keep the legacy bhs storage value for existing Bosnian sessions.
 export type Language = "bhs" | "sr-Latn" | "hr" | "en";
 export const languages: {
@@ -76,7 +77,11 @@ export function t(
   const extensions: Record<string, string>[] =
     language === "bhs"
       ? []
-      : [helpTranslations[language], vehicleColorTranslations[language]];
+      : [
+          helpTranslations[language],
+          vehicleColorTranslations[language],
+          routeShapeTranslations[language],
+        ];
   const extension = extensions.find((entries) =>
     Object.hasOwn(entries, normalized),
   );

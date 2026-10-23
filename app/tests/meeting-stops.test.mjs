@@ -16,7 +16,7 @@ const point = (name, lng) => ({
   lat: 0,
   lng,
 });
-test("initial driver route offers one unnamed meeting point between the two route endpoints", () => {
+test("initial driver route has only endpoints, never an automatic middle meeting stop", () => {
   const from = point("Start", 0),
     to = point("Finish", 0.03);
   const stops = proposeMeetingStops(
@@ -29,11 +29,164 @@ test("initial driver route offers one unnamed meeting point between the two rout
     from,
     to,
   );
-  assert.equal(stops.length, 3);
+  assert.equal(stops.length, 2);
   assert.equal(stops[0].name, "Start");
-  assert.equal(stops[1].name, "");
-  assert.ok(stops[1].lng > from.lng && stops[1].lng < to.lng);
-  assert.equal(stops[2].name, "Finish");
+  assert.equal(stops[1].name, "Finish");
+});
+
+test("transit controls are signed separately and never offered as meeting stops", async () => {
+  const { sqlite, env } = fixture();
+  try {
+    const from = point("Start", 0),
+      to = point("End", 0.03);
+    const via = [{ lat: 0, lng: 0.01 }];
+    const preview = await previewMeetingRoute(
+      env,
+      "driver",
+      from,
+      to,
+      [from, to],
+      via,
+    );
+    assert.equal(preview.meetingStops.length, 2);
+    assert.deepEqual(preview.route.viaPoints, via);
+    assert.ok(preview.route.coordinates.some(([lng]) => lng === 0.01));
+    await assert.rejects(() =>
+      consumeMeetingPreview(
+        env,
+        "driver",
+        preview.previewToken,
+        from,
+        to,
+        [from, to],
+        [],
+      ),
+    );
+    await assert.rejects(() =>
+      consumeMeetingPreview(env, "driver", preview.previewToken, from, to, [
+        from,
+        to,
+      ]),
+    );
+    const bound = await consumeMeetingPreview(
+      env,
+      "driver",
+      preview.previewToken,
+      from,
+      to,
+      [from, to],
+      via,
+    );
+    assert.deepEqual(bound.route.viaPoints, via);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("meeting edits reuse the chosen shape and reject off-route pins or reversed stops", async () => {
+  const { sqlite, env } = fixture();
+  try {
+    const from = point("Start", 0),
+      to = point("End", 0.03);
+    const via = [{ lat: 0, lng: 0.01 }];
+    const base = await previewMeetingRoute(
+      env,
+      "driver",
+      from,
+      to,
+      [from, to],
+      via,
+    );
+    let calls = 0;
+    const fetcher = env.ROUTING_FETCH;
+    env.ROUTING_FETCH = (...args) => {
+      calls++;
+      return fetcher(...args);
+    };
+    const result = await previewMeetingRoute(
+      env,
+      "driver",
+      from,
+      to,
+      [from, point("Stop", 0.015), to],
+      via,
+    );
+    assert.deepEqual(result.route.coordinates, base.route.coordinates);
+    assert.equal(calls, 0);
+    assert.equal(result.meetingStops[1].travelSeconds, 150);
+    await assert.rejects(() =>
+      previewMeetingRoute(
+        env,
+        "driver",
+        from,
+        to,
+        [from, { ...point("Far", 0.015), lat: 0.01 }, to],
+        via,
+      ),
+    );
+    await assert.rejects(() =>
+      previewMeetingRoute(
+        env,
+        "driver",
+        from,
+        to,
+        [from, point("Later", 0.02), point("Earlier", 0.005), to],
+        via,
+      ),
+    );
+    await assert.rejects(() =>
+      previewMeetingRoute(
+        env,
+        "driver",
+        from,
+        to,
+        [from, point("Later", 0.015), point("Just behind", 0.0149), to],
+        via,
+      ),
+    );
+    for (const invalid of [
+      null,
+      {},
+      [{ lat: NaN, lng: 1 }],
+      Array(9).fill({ lat: 0, lng: 0.01 }),
+      [
+        { lat: 0, lng: 0.01 },
+        { lat: 0, lng: 0.01 },
+      ],
+    ]) {
+      await assert.rejects(() =>
+        previewMeetingRoute(env, "driver", from, to, [from, to], invalid),
+      );
+    }
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("ordered meeting places can use a later pass on a looping shaped route", async () => {
+  const { sqlite, env } = fixture();
+  try {
+    const from = point("Start", 0),
+      to = point("End", 0.03);
+    const result = await previewMeetingRoute(
+      env,
+      "driver",
+      from,
+      to,
+      [from, point("First", 0.018), point("Later pass", 0.005), to],
+      [
+        { lat: 0, lng: 0.02 },
+        { lat: 0, lng: 0.001 },
+      ],
+    );
+    assert.ok(
+      result.meetingStops[2].travelSeconds >
+        result.meetingStops[1].travelSeconds,
+    );
+    assert.ok(result.meetingStops[2].travelSeconds < result.route.duration);
+  } finally {
+    sqlite.close();
+  }
 });
 function fixture() {
   const sqlite = new DatabaseSync(":memory:");

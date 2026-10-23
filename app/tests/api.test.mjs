@@ -131,6 +131,51 @@ function ride() {
     note: "Bez pušenja",
   };
 }
+test("published and repeated-offer data retain transit controls without exposing them as pickup stops", async () => {
+  const driver = await signup("Driver", "via-driver@example.test");
+  const offer = { ...ride(), routeViaPoints: [{ lat: 43.86, lng: 18.39 }] };
+  const shape = await call("/routes/preview", offer, driver.cookie);
+  assert.equal(shape.status, 200, JSON.stringify(shape.data));
+  assert.equal(shape.data.meetingStops.length, 2);
+  assert.deepEqual(shape.data.routeViaPoints, offer.routeViaPoints);
+  const preview = await call(
+    "/routes/preview",
+    { ...offer, meetingStops: shape.data.meetingStops },
+    driver.cookie,
+  );
+  assert.equal(preview.status, 200, JSON.stringify(preview.data));
+  assert.deepEqual(
+    preview.data.route.coordinates,
+    shape.data.route.coordinates,
+  );
+  const publishBody = {
+    ...offer,
+    meetingStops: preview.data.meetingStops,
+    previewToken: preview.data.previewToken,
+    routeConfirmed: true,
+    stopsConfirmed: true,
+  };
+  assert.equal(
+    (
+      await call(
+        "/rides",
+        { ...publishBody, routeViaPoints: [] },
+        driver.cookie,
+      )
+    ).status,
+    400,
+  );
+  const missing = { ...publishBody };
+  delete missing.routeViaPoints;
+  assert.equal((await call("/rides", missing, driver.cookie)).status, 400);
+  const published = await call("/rides", publishBody, driver.cookie);
+  assert.equal(published.status, 201, JSON.stringify(published.data));
+  assert.deepEqual(published.data.ride.routeViaPoints, offer.routeViaPoints);
+  assert.equal(published.data.ride.meetingStops.length, 2);
+  assert.deepEqual(published.data.ride.geometry, shape.data.route.coordinates);
+  const mine = await call("/my-rides", null, driver.cookie);
+  assert.deepEqual(mine.data.rides[0].routeViaPoints, offer.routeViaPoints);
+});
 test("automatic route edits have room for repeated previews within a bounded user budget", async () => {
   let providerCalls = 0;
   env.ROUTING_FETCH = (...args) => {
