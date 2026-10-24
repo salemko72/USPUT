@@ -532,6 +532,58 @@ export function RideDetails({
           </p>
         </div>
       </header>
+      {!own && confirmed && (
+        <section
+          className="action-card arrival-priority"
+          aria-label={t("Javi da si na mjestu.")}
+        >
+          <span className="eyebrow">
+            <MapPin size={14} />
+            {booking.status === "ready"
+              ? t("SPREMNI ZA SUSRET")
+              : t("KAD STIGNEŠ DO MJESTA SUSRETA")}
+          </span>
+          <h2>
+            {booking.status === "ready"
+              ? t("Vozač zna da si tu.")
+              : t("Javi da si na mjestu.")}
+          </h2>
+          <p>
+            {booking.status === "ready"
+              ? t("Sačekaj na dogovorenom, sigurnom mjestu.")
+              : t(
+                  "Potvrdi tek kad stigneš. GPS ne označava automatski da si na mjestu.",
+                )}
+          </p>
+          {booking.status === "accepted" ? (
+            <Button
+              variant="lime"
+              busy={busy}
+              onClick={() =>
+                action(
+                  () => service.booking(booking.id, "ready"),
+                  t("Spremnost je potvrđena."),
+                )
+              }
+            >
+              <Check size={20} />
+              {t(" Na mjestu sam ")}
+            </Button>
+          ) : (
+            <div className="ready-confirmation">
+              <CheckCheck size={20} />
+              {t(" Na mjestu si. ")}
+            </div>
+          )}
+          <button
+            className="cancel-link"
+            onClick={() => setCancel(true)}
+            disabled={busy}
+          >
+            {t(" Otkaži vožnju ")}
+          </button>
+        </section>
+      )}
       <div className="details-layout">
         <section className="detail-map" id="agreed-meeting-map" tabIndex={-1}>
           {!own && !booking && selectedQuery ? (
@@ -906,54 +958,6 @@ export function RideDetails({
               <Button variant="lime" onClick={onBack}>
                 {t(" Nazad na pretragu ")}
               </Button>
-            </section>
-          ) : confirmed ? (
-            <section className="action-card">
-              <span className="eyebrow">
-                <MapPin size={14} />
-                {booking.status === "ready"
-                  ? t("SPREMNI ZA SUSRET")
-                  : t("KAD STIGNEŠ DO MJESTA SUSRETA")}
-              </span>
-              <h2>
-                {booking.status === "ready"
-                  ? t("Vozač zna da si tu.")
-                  : t("Javi da si na mjestu.")}
-              </h2>
-              <p>
-                {booking.status === "ready"
-                  ? t("Sačekaj na dogovorenom, sigurnom mjestu.")
-                  : t(
-                      "Potvrdi tek kad stigneš. GPS ne označava automatski da si na mjestu.",
-                    )}
-              </p>
-              {booking.status === "accepted" ? (
-                <Button
-                  variant="lime"
-                  busy={busy}
-                  onClick={() =>
-                    action(
-                      () => service.booking(booking.id, "ready"),
-                      t("Spremnost je potvrđena."),
-                    )
-                  }
-                >
-                  <Check size={20} />
-                  {t(" Na mjestu sam ")}
-                </Button>
-              ) : (
-                <div className="ready-confirmation">
-                  <CheckCheck size={20} />
-                  {t(" Na mjestu si. ")}
-                </div>
-              )}
-              <button
-                className="cancel-link"
-                onClick={() => setCancel(true)}
-                disabled={busy}
-              >
-                {t(" Otkaži vožnju ")}
-              </button>
             </section>
           ) : booking?.status === "pending" ? (
             <section className="action-card">

@@ -4557,3 +4557,11 @@ b {
     animation: none;
   }
 }
+
+/* Arrival confirmation precedes map, driver details and GPS controls. */
+.arrival-priority {
+  margin-bottom: 24px;
+}
+.arrival-priority .button {
+  width: 100%;
+}
