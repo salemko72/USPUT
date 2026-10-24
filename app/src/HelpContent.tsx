@@ -18,6 +18,16 @@ export function HelpContent() {
         </p>
         <p>
           {t(
+            "Vozač ne može objaviti dvije aktivne ponude za isti datum i vrijeme. Upozorenje vodi na postojeću vožnju.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Od 10 minuta do 24 sata nakon dogovorenog susreta možeš prijaviti da druga osoba nije došla. Prijava se čuva uz dogovor i nije automatska presuda ni kazna. Druga strana može također podnijeti prijavu.",
+          )}
+        </p>
+        <p>
+          {t(
             "Odaberi 5, 10 ili 15 minuta hodanja na svakom kraju. U ponudi provjeri dogovorena mjesta, procijenjeno hodanje i vrijeme susreta. Možeš birati između vozačevih ponuđenih tačaka. Zahtjev čeka dok ga vozač ne prihvati; slanje zahtjeva još nije potvrda mjesta u autu.",
           )}
         </p>
@@ -49,7 +59,7 @@ export function HelpContent() {
         </p>
         <p>
           {t(
-            "Ako je vozač dodao fotografiju auta, poslije potvrde dogovora vidiš je u malom krugu uz vozilo; dodir je povećava. Profilnu i fotografiju vozila dodaješ ili uklanjaš u Profilu. Fotografije služe lakšem prepoznavanju i nisu provjera identiteta.",
+            "Fotografiju auta vidiš i na ponuđenim vožnjama, prije dogovora. Fotografije osoba dostupne su saputnicima tek uz aktivan potvrđen dogovor.",
           )}
         </p>
       </details>

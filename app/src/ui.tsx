@@ -1,3 +1,4 @@
+import { DemoImage, hasDemoImage } from "./DemoImage";
 import { t } from "./i18n";
 import {
   ArrowUpRight,
@@ -87,6 +88,8 @@ export function Avatar({
             borderRadius: "inherit",
           }}
         />
+      ) : hasDemoImage(userId) ? (
+        <DemoImage userId={userId!} />
       ) : (
         name
           .split(" ")

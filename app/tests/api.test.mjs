@@ -1004,13 +1004,17 @@ test("multi-seat photo access follows each accepted passenger while the offer re
     );
   }
   for (const denied of [pending, outsider]) {
+    const offerPhoto = await call(`/photos/offer/${id}`, null, denied.cookie);
+    assert.equal(offerPhoto.status, 200);
+    assert.equal(offerPhoto.data.vehicle.id, photo.data.photo.id);
+    assert.equal(offerPhoto.data.driverAvatar, undefined);
     assert.equal(
       (await call(`/photos/ride/${id}`, null, denied.cookie)).status,
       404,
     );
     assert.equal(
       (await imageGet(photo.data.photo.id, denied.cookie)).status,
-      404,
+      200,
     );
   }
   await call(`/bookings/${a.data.booking.id}/cancel`, {}, first.cookie);
@@ -1018,7 +1022,7 @@ test("multi-seat photo access follows each accepted passenger while the offer re
     (await call(`/photos/ride/${id}`, null, first.cookie)).status,
     404,
   );
-  assert.equal((await imageGet(photo.data.photo.id, first.cookie)).status, 404);
+  assert.equal((await imageGet(photo.data.photo.id, first.cookie)).status, 200);
   assert.equal(
     (await imageGet(photo.data.photo.id, second.cookie)).status,
     200,
@@ -1217,6 +1221,7 @@ test("cost-sharing flag defaults to false, persists true and rejects non-boolean
   for (const value of [undefined, false, true]) {
     const offer = {
       ...ride(),
+      time: `${String(7 + [undefined, false, true].indexOf(value)).padStart(2, "0")}:30`,
       ...(value === undefined ? {} : { costSharing: value }),
     };
     const result = await publish(offer, driver.cookie);

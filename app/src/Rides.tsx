@@ -2,6 +2,7 @@ import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
+import { NoShowReport, bookingLabel } from "./NoShowReport";
 import { RideVehiclePhoto } from "./RideVehiclePhoto";
 import { MeetingFeedback } from "./MeetingFeedback";
 import {
@@ -148,7 +149,7 @@ export function RideCard({
           </span>
         </div>
         <span className="car-illustration">
-          <Car strokeWidth={1.35} size={64} />
+          <RideVehiclePhoto ride={ride} offer compact />
           <small>{displayVehicleLabel(ride.car)}</small>
         </span>
       </div>
@@ -407,6 +408,18 @@ export function RideDetails({
       setCancel(false);
     }
   }
+  const focusMeeting =
+    new URLSearchParams(window.location.hash.split("?")[1] || "").get(
+      "focus",
+    ) === "meeting";
+  useEffect(() => {
+    if (ride && focusMeeting)
+      requestAnimationFrame(() =>
+        document
+          .getElementById("agreed-meeting-map")
+          ?.scrollIntoView({ block: "start" }),
+      );
+  }, [ride?.id, focusMeeting]);
   if (!ride)
     return (
       <>
@@ -471,10 +484,11 @@ export function RideDetails({
         </div>
       </header>
       <div className="details-layout">
-        <section className="detail-map">
+        <section className="detail-map" id="agreed-meeting-map" tabIndex={-1}>
           <RouteMap
             from={pickup}
             to={dropoff}
+            focusPoint={focusMeeting ? pickup : undefined}
             geometry={agreed?.geometry || ride.geometry}
             provider={agreed?.provider || ride.routeProvider}
             stops={ride.meetingStops}
@@ -736,7 +750,7 @@ export function RideDetails({
                     />
                     <span>
                       <strong>{b.passenger.name}</strong>
-                      <small>{t(statusText[b.status])}</small>
+                      <small>{bookingLabel(b, statusText[b.status])}</small>
                     </span>
                   </div>
                   {b.match && <MatchSummary match={b.match} demo={ride.demo} />}
@@ -775,6 +789,16 @@ export function RideDetails({
                       </Button>
                     </div>
                   )}
+                  <NoShowReport
+                    booking={b}
+                    viewerId={user.id}
+                    onReport={() =>
+                      action(
+                        () => service.booking(b.id, "no-show"),
+                        t("Prijava nedolaska je zabilježena."),
+                      )
+                    }
+                  />
                   {["accepted", "ready"].includes(b.status) && (
                     <Button
                       variant="lime"
@@ -952,6 +976,18 @@ export function RideDetails({
               </small>
             </section>
           )}
+          {!own && booking && (
+            <NoShowReport
+              booking={booking}
+              viewerId={user.id}
+              onReport={() =>
+                action(
+                  () => service.booking(booking.id, "no-show"),
+                  t("Prijava nedolaska je zabilježena."),
+                )
+              }
+            />
+          )}
         </div>
       </div>
       {cancel && (
@@ -1084,8 +1120,15 @@ export function Trips({
                 >
                   <div className="trip-card-top">
                     <span className={"status status-" + b.status}>
-                      {t(statusText[b.status])}
+                      {bookingLabel(b, statusText[b.status])}
                     </span>
+                    <RideVehiclePhoto
+                      ride={b.ride}
+                      viewerId={user.id}
+                      bookingStatus={b.status}
+                      offer
+                      compact
+                    />
                     <ArrowUpRight size={20} />
                   </div>
                   <h2>
@@ -1109,11 +1152,6 @@ export function Trips({
                       <small>{displayVehicleLabel(b.ride.car)}</small>
                     </span>
                   </button>
-                  <RideVehiclePhoto
-                    ride={b.ride}
-                    viewerId={user.id}
-                    bookingStatus={b.status}
-                  />
                 </div>
               </article>
             ))}
@@ -1144,6 +1182,12 @@ export function Trips({
                   onClick={() => onRide(r.id)}
                 >
                   <div className="trip-card-top">
+                    <RideVehiclePhoto
+                      ride={r}
+                      viewerId={user.id}
+                      offer
+                      compact
+                    />
                     <span className={"status status-" + r.status}>
                       {t(statusText[r.status])}
                     </span>

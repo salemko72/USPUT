@@ -128,9 +128,12 @@ export function UpcomingRide({
         <div className="upcoming-ride-pickup">
           <MapPin size={18} aria-hidden="true" />
           <div>
-            <strong>
+            <a
+              className="upcoming-meeting-map-link"
+              href={"#ride/" + upcoming.ride.id + "?focus=meeting"}
+            >
               <MeetingPointLabel point={pickup} demo={upcoming.ride.demo} />
-            </strong>
+            </a>
             <span>
               {dateLabel(pickupDate)} · {t("Susret oko ")}
               {pickupTime}

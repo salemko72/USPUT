@@ -11,6 +11,18 @@ mkdirSync(data, { recursive: true });
 const sqlite = new DatabaseSync(resolve(data, "usput.sqlite"));
 sqlite.exec("PRAGMA journal_mode=WAL;");
 sqlite.exec(readFileSync(resolve(root, "server/schema.sql"), "utf8"));
+for (const table of ["rides", "bookings"]) {
+  if (
+    !sqlite
+      .prepare(`PRAGMA table_info(${table})`)
+      .all()
+      .some((c) => c.name === "cancelled_at")
+  ) {
+    sqlite.exec(
+      `ALTER TABLE ${table} ADD COLUMN cancelled_at INTEGER; UPDATE ${table} SET cancelled_at=unixepoch()*1000 WHERE status='cancelled';`,
+    );
+  }
+}
 if (
   !sqlite
     .prepare("PRAGMA table_info(rides)")

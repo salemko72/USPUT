@@ -26,7 +26,7 @@ Fotografije su privatne i opcionalne. Preglednik priprema malu WebP kopiju i ukl
 
 Profilna slika je do 320 × 320 piksela i 50 KiB; fotografija auta do 960 piksela po većoj strani i 150 KiB. Kopije su u privatnom Cloudflare R2 skladištu s EU jurisdikcijom; D1 čuva njihove metapodatke i pravila pristupa. To ne znači da je svim ostalim podacima ili vanjskim servisima ugovoreno čuvanje samo u EU.
 
-Vlasnik vidi svoju sliku u Profilu. Saputnik dobija pristup tek nakon potvrde aktivnog dogovora, najduže do 24 sata nakon polaska. Otkazivanje ili završetak ukida pristup preko tog dogovora. Zamjena ili uklanjanje slike opoziva stari pristup i pokreće uklanjanje stare kopije iz skladišta; čišćenje se ponavlja ako prvi pokušaj ne uspije. Već preuzetu kopiju ili snimak ekrana nije moguće povući. Fotografije nisu provjera identiteta ili vlasništva vozila.
+Vlasnik vidi svoju sliku u Profilu. Fotografija auta prikazuje se prijavljenim korisnicima uz aktivnu buduću ponudu, prije prihvatanja. Saputnik fotografiji osobe dobija pristup tek nakon potvrde aktivnog dogovora, najduže do 24 sata nakon polaska. Otkazivanje ili završetak ukida pristup preko tog dogovora. Zamjena ili uklanjanje slike opoziva stari pristup i pokreće uklanjanje stare kopije iz skladišta; čišćenje se ponavlja ako prvi pokušaj ne uspije. Već preuzetu kopiju ili snimak ekrana nije moguće povući. Fotografije nisu provjera identiteta ili vlasništva vozila.
 
 Izvori: `app/src/photo-client.ts`, `app/server/photos.mjs`, `app/wrangler.jsonc` (`PHOTOS`, `jurisdiction: "eu"`).
 
@@ -64,3 +64,6 @@ Ovo je tehnički opis bete, a ne dovršena pravna politika. Prije stvarne probe 
 - završna beta pravila, podršku i uslove otvaranja stvarne probe.
 
 Ovaj dokument ne tvrdi da su ta pitanja već riješena ili da je provedena pravna provjera usklađenosti.
+
+## Prijave nedolaska
+Učesnik potvrđenog dogovora može prijaviti nedolazak druge osobe od 10 minuta do 24 sata nakon susreta. Čuvaju se dogovor, identitet prijavitelja, prijavljena uloga i vrijeme prijave, dostupno učesnicima tog dogovora. To je navod učesnika, bez automatskog bodovanja ili kazne; obje strane mogu prijaviti svoju verziju. Trenutno nema automatskog roka brisanja ovih zapisa, niti javnog prikaza prijava.

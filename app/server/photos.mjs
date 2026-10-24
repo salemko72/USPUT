@@ -176,6 +176,17 @@ async function acceptedRide(db, rideId, userId) {
 }
 async function allowedPeer(db, photo, userId) {
   if (photo.owner_id === userId) return true;
+  // Vehicle images accompany active offers; recognition portraits remain agreement-only.
+  if (
+    photo.kind === "vehicle" &&
+    (await db
+      .prepare(
+        "SELECT id FROM rides WHERE driver_id=? AND car=? AND status IN ('open','matched') AND departure>? LIMIT 1",
+      )
+      .bind(photo.owner_id, photo.vehicle_label, Date.now())
+      .first())
+  )
+    return true;
   const rows = (
     await db
       .prepare(
@@ -241,6 +252,23 @@ export async function handlePhotoApi(request, env, user, path) {
         ...(await ownPhotos(db, user.id)),
         available: !!env.PHOTOS,
       });
+    const offerMatch = path.match(/^\/photos\/offer\/([\w-]+)$/);
+    if (offerMatch && method === "GET") {
+      const ride = await db
+        .prepare(
+          "SELECT * FROM rides WHERE id=? AND (driver_id=? OR (status IN ('open','matched') AND departure>?))",
+        )
+        .bind(offerMatch[1], user.id, Date.now())
+        .first();
+      if (!ride) fail(404, "Fotografija nije dostupna.");
+      const photo = await db
+        .prepare(
+          "SELECT * FROM photos WHERE owner_id=? AND kind='vehicle' AND vehicle_label=? AND state='active'",
+        )
+        .bind(ride.driver_id, ride.car)
+        .first();
+      return json({ vehicle: meta(photo) });
+    }
     const rideMatch = path.match(/^\/photos\/ride\/([\w-]+)$/);
     if (rideMatch && method === "GET") {
       const ride = await acceptedRide(db, rideMatch[1], user.id);

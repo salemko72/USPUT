@@ -2,7 +2,7 @@ import { MeetingStopsEditor } from "./MeetingStopsEditor";
 import { SavedSearches } from "./SavedSearches";
 import { savePassengerSearch } from "./saved-searches";
 import { LocationScopeControl, type LocationScope } from "./LocationScope";
-import { api } from "./api";
+import { api, HttpError } from "./api";
 import { RoutePlanner } from "./RoutePlanner";
 import { StreetPicker } from "./StreetPicker";
 import { PlacePicker } from "./PlacePicker";
@@ -185,6 +185,7 @@ export function Home({
   repeatRide?: Ride;
   onRepeatConsumed?: () => void;
 }) {
+  const [duplicateRideId, setDuplicateRideId] = useState<string>();
   const [role, setRole] = useState<"passenger" | "driver">("passenger"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -465,6 +466,11 @@ export function Home({
                 </>
               )}
               <ErrorBox error={error} />
+              {duplicateRideId && (
+                <a className="text-button" href={"#ride/" + duplicateRideId}>
+                  {t("Pogledaj postojeću vožnju")}
+                </a>
+              )}
             </>
           }
           action={
@@ -517,6 +523,9 @@ export function Home({
                     setRepeatDraft(false);
                   } catch (e) {
                     setError((e as Error).message);
+                    setDuplicateRideId(
+                      e instanceof HttpError ? e.existingRideId : undefined,
+                    );
                   } finally {
                     setBusy(false);
                   }

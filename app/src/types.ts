@@ -75,6 +75,11 @@ export type Ride = {
   createdAt: number;
 };
 export type Booking = {
+  noShowReports?: {
+    reporterId: string;
+    reportedRole: "driver" | "passenger";
+    createdAt: number;
+  }[];
   match?: RouteMatch;
   id: string;
   status:

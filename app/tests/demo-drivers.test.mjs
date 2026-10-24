@@ -325,3 +325,13 @@ test("reapplying a seed preserves booked ride snapshots and never creates usable
     0,
   );
 });
+test('three additional fictional drivers offer Asima Ferhatovića to Ilidža at 07:30 without accounts usable for login',async()=>{
+  const {buildDemoSeed}=await import('../scripts/seed-demo-drivers.mjs');
+  const result=buildDemoSeed({today:'2026-10-24',now:Date.now(),keys:['amar','lejla','damir']});
+  sqlite.exec(result.statements.join('\n'));
+  assert.equal(result.summary.length,3);
+  assert.ok(result.summary.every(d=>d.offers===365));
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM rides WHERE time='07:30' AND from_json LIKE '%Asima Ferhatovića%' AND to_id='ilidza'").get().n,1095);
+  assert.equal(sqlite.prepare("SELECT COUNT(DISTINCT car) n FROM rides").get().n,3);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM users WHERE id IN ('usput-demo-amar-v1','usput-demo-lejla-v1','usput-demo-damir-v1') AND password IS NULL AND google_id IS NULL").get().n,3);
+});

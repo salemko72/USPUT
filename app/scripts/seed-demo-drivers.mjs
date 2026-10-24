@@ -13,6 +13,7 @@ export function buildDemoSeed({
     timeZone: "Europe/Sarajevo",
   }).format(new Date()),
   now = Date.now(),
+  keys = ["senad", "vesna"],
 } = {}) {
   if (!Number.isFinite(departureMs(today, "07:30")))
     throw Error("Invalid seed date");
@@ -22,9 +23,7 @@ export function buildDemoSeed({
   end.setUTCFullYear(end.getUTCFullYear() + 1);
   const statements = [],
     summary = [];
-  for (const d of demoDrivers.filter((d) =>
-    ["senad", "vesna"].includes(d.key),
-  )) {
+  for (const d of demoDrivers.filter((d) => keys.includes(d.key))) {
     const vehicle = validateVehicle(d.vehicle);
     // Canonical catalogue model in the profile, familiar casing in the offer.
     const car = vehicleLabel({ ...vehicle, model: d.vehicle.model });
@@ -69,7 +68,10 @@ if (
     throw Error(
       "Usage: node scripts/seed-demo-drivers.mjs /tmp/usput-demo.sql [YYYY-MM-DD]",
     );
-  const { statements, summary } = buildDemoSeed({ today: process.argv[3] });
+  const { statements, summary } = buildDemoSeed({
+    today: process.argv[3],
+    ...(process.argv[4] ? { keys: process.argv[4].split(",") } : {}),
+  });
   writeFileSync(output, statements.join("\n") + "\n");
   console.log(JSON.stringify({ drivers: summary, output }));
 }

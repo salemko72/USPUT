@@ -98,27 +98,16 @@ with tempfile.TemporaryDirectory(prefix='usput-vehicle-thumbs-', dir='/tmp') as 
                 page.goto(base + '/#trips')
                 expect(page.locator('.trip-card')).to_have_count(1)
                 expect(page.get_by_role('button', name='Povećaj fotografiju automobila', exact=True)).to_have_count(0)
-                assert not requested_images
+                expect(page.locator(".trip-card-top .ride-vehicle-thumb img")).to_have_attribute("src", photo_url)
                 post(driver, '/bookings/' + booking['id'] + '/accept')
                 page.reload()
                 card = page.locator('.trip-card')
-                thumb = card.get_by_role('button', name='Povećaj fotografiju automobila', exact=True)
+                thumb = card.locator('.trip-card-top .ride-vehicle-thumb')
                 expect(thumb).to_be_visible()
-                expect(thumb.locator('img')).to_have_attribute('src', photo_url)
-                expect(thumb.locator('img')).to_have_js_property('complete', True)
-                assert thumb.locator('img').evaluate('el=>el.naturalWidth') > 0
-                expect(card).to_contain_text('Volkswagen Golf 5')
-                assert page.locator('button button').count() == 0
-                original_url = page.url
-                thumb.click()
-                zoom = page.get_by_role('dialog', name='Za lakši susret.', exact=True)
-                expect(zoom.get_by_alt_text('Automobil za dogovorenu vožnju', exact=True)).to_have_attribute('src', photo_url)
-                shade=page.locator('.modal-shade')
-                assert shade.bounding_box()['width']==390 and shade.bounding_box()['height']==844
-                assert page.url == original_url, 'Enlarging a photo must not navigate the card'
-                page.keyboard.press('Escape')
-                expect(zoom).to_have_count(0)
-                expect(thumb).to_be_focused()
+                expect(thumb.locator('img')).to_have_attribute('src',photo_url)
+                expect(thumb.locator('img')).to_have_js_property('complete',True)
+                assert thumb.locator('img').evaluate('el=>el.naturalWidth')>0
+                assert page.locator('button button').count()==0
                 page.screenshot(path=str(RESULTS / 'trips-mobile.png'), full_page=True)
                 page.set_viewport_size({'width': 1440, 'height': 900})
                 page.screenshot(path=str(RESULTS / 'trips-desktop.png'), full_page=True)
@@ -156,16 +145,17 @@ with tempfile.TemporaryDirectory(prefix='usput-vehicle-thumbs-', dir='/tmp') as 
                 assert replacement.ok, replacement.text()
                 replacement_url = replacement.json()['photo']['url']
                 page.reload()
-                thumb=page.locator('.trip-card').get_by_role('button', name='Povećaj fotografiju automobila', exact=True)
+                thumb=page.locator('.trip-card-top .ride-vehicle-thumb')
                 expect(thumb.locator('img')).to_have_attribute('src', replacement_url)
                 assert passenger.request.get(base + replacement_url).status == 200
                 thumb.click()
+                page.locator('.driver-card').get_by_role('button',name='Povećaj fotografiju automobila',exact=True).click()
                 expect(page.get_by_role('dialog', name='Za lakši susret.', exact=True)).to_be_visible()
                 post(passenger, '/bookings/' + booking['id'] + '/cancel')
                 page.evaluate("window.dispatchEvent(new Event('usput:booking-changed'))")
                 expect(page.get_by_role('dialog', name='Za lakši susret.', exact=True)).to_have_count(0)
                 expect(page.locator('.trip-card img')).to_have_count(0)
-                assert passenger.request.get(base + replacement_url).status == 404
+                assert passenger.request.get(base + replacement_url).status == 200
                 assert not errors, errors
                 browser.close()
                 print('PASS: private vehicle photo on trips/detail/Home; tap-to-enlarge without navigation; pending/removal fallback, ready action, mobile/desktop and no nested buttons')

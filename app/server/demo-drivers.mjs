@@ -81,6 +81,60 @@ export const demoDrivers = [
       manualModel: false,
     },
   ),
+  ...[
+    [
+      "amar",
+      "Amar",
+      {
+        id: "usput-demo-amar-octavia",
+        makeId: "skoda",
+        make: "Škoda",
+        model: "Octavia",
+        color: "tamnoplava_metalik",
+        manualModel: true,
+      },
+    ],
+    [
+      "lejla",
+      "Lejla",
+      {
+        id: "usput-demo-lejla-tiguan",
+        makeId: "volkswagen",
+        make: "Volkswagen",
+        model: "Tiguan",
+        color: "bijela",
+        manualModel: true,
+      },
+    ],
+    [
+      "damir",
+      "Damir",
+      {
+        id: "usput-demo-damir-golf",
+        makeId: "volkswagen",
+        make: "Volkswagen",
+        model: "Golf",
+        color: "crvena",
+        manualModel: true,
+      },
+    ],
+  ].map(([key, name, vehicle]) => {
+    const from = street("Asima Ferhatovića, Sarajevo", 43.87016, 18.41302);
+    return driver(
+      key,
+      name,
+      from,
+      getPlace("ilidza"),
+      [
+        from,
+        getPlace("marijin"),
+        getPlace("cengic"),
+        getPlace("nedzarici"),
+        getPlace("ilidza"),
+      ],
+      vehicle,
+    );
+  }),
 ];
 
 // Neither a client flag, a display name nor a note containing "demo" grants

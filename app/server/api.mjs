@@ -66,13 +66,14 @@ const json = (data, status = 200, headers = {}) =>
     },
   });
 class ApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, details = {}) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
-const fail = (status, message) => {
-  throw new ApiError(status, message);
+const fail = (status, message, details) => {
+  throw new ApiError(status, message, details);
 };
 const publicUser = (u) => ({ id: u.id, name: u.name });
 const selfUser = (u, env = {}) => ({
@@ -702,20 +703,27 @@ export async function handleApi(request, env) {
     }
     if (path === "/places/label" && method === "GET") {
       const coordinates = url.searchParams;
-      if (coordinates.getAll("lat").length !== 1 || coordinates.getAll("lng").length !== 1)
+      if (
+        coordinates.getAll("lat").length !== 1 ||
+        coordinates.getAll("lng").length !== 1
+      )
         fail(400, "Lokacija nije ispravna.");
       await rateLimit(db, "meeting-label:" + user.id, 120);
       let address;
       try {
         address = await meetingAddress(env, {
-          lat: coordinates.get("lat"), lng: coordinates.get("lng"),
+          lat: coordinates.get("lat"),
+          lng: coordinates.get("lng"),
         });
       } catch (e) {
         if (e instanceof TypeError) fail(400, e.message);
         throw e;
       }
       if (!address) fail(503, "Ulica uz pin trenutno nije dostupna.");
-      return json({ ...address, attribution: "© OpenStreetMap contributors · Nominatim" });
+      return json({
+        ...address,
+        attribution: "© OpenStreetMap contributors · Nominatim",
+      });
     }
     if (path === "/locations/suggest" && method === "POST") {
       await rateLimit(db, "autocomplete:" + user.id, 90);
@@ -804,6 +812,21 @@ export async function handleApi(request, env) {
           400,
           "Odaberi različita mjesta, budući polazak u narednih 90 dana i podatke o vozilu.",
         );
+      async function rejectDuplicate() {
+        const existing = await db
+          .prepare(
+            "SELECT id FROM rides WHERE driver_id=? AND date=? AND time=? AND status IN ('open','matched') ORDER BY created_at LIMIT 1",
+          )
+          .bind(user.id, date, time)
+          .first();
+        if (existing)
+          fail(
+            409,
+            "Ponuda sa tom satnicom od tebe već postoji. Pogledaj postojeću vožnju.",
+            { existingRideId: existing.id },
+          );
+      }
+      await rejectDuplicate();
       let confirmedRoute = null,
         meetingStops = null;
       await rateLimit(db, "publish:" + user.id, 20);
@@ -857,9 +880,9 @@ export async function handleApi(request, env) {
         fail(400, "Prvo odaberi i potvrdi mjesta susreta na svojoj trasi.");
       }
       const id = crypto.randomUUID();
-      await db
+      const inserted = await db
         .prepare(
-          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,seats,from_json,to_json,route_json,meeting_stops_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO rides(id,driver_id,from_id,to_id,date,time,departure,car,note,cost_sharing,seats,from_json,to_json,route_json,meeting_stops_json,created_at) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM rides WHERE driver_id=? AND date=? AND time=? AND status IN ('open','matched'))",
         )
         .bind(
           id,
@@ -878,8 +901,15 @@ export async function handleApi(request, env) {
           confirmedRoute ? JSON.stringify(confirmedRoute) : null,
           meetingStops ? JSON.stringify(meetingStops) : null,
           Date.now(),
+          user.id,
+          date,
+          time,
         )
         .run();
+      if (!inserted.meta.changes) {
+        await rejectDuplicate();
+        fail(409, "Ponuda se promijenila. Osvježi vožnje.");
+      }
       return json({ ride: rideView(await readRide(db, id)) }, 201);
     }
     if (
@@ -995,17 +1025,17 @@ export async function handleApi(request, env) {
         await db
           .prepare(
             rideSelect +
-              " WHERE r.driver_id=? ORDER BY r.departure DESC LIMIT 100",
+              " WHERE r.driver_id=? AND (r.status<>'cancelled' OR COALESCE(r.cancelled_at,r.departure)>?) ORDER BY (r.status='cancelled'),r.departure DESC LIMIT 100",
           )
-          .bind(user.id)
+          .bind(user.id, Date.now() - 3 * 86400000)
           .all()
       ).results;
       const rows = (
         await db
           .prepare(
-            "SELECT b.*,br.match_json,u.name AS passenger_name FROM bookings b JOIN users u ON u.id=b.passenger_id JOIN rides r ON r.id=b.ride_id LEFT JOIN booking_routes br ON br.booking_id=b.id WHERE b.passenger_id=? OR r.driver_id=? ORDER BY b.created_at DESC LIMIT 200",
+            "SELECT b.*,br.match_json,u.name AS passenger_name FROM bookings b JOIN users u ON u.id=b.passenger_id JOIN rides r ON r.id=b.ride_id LEFT JOIN booking_routes br ON br.booking_id=b.id WHERE (b.passenger_id=? OR r.driver_id=?) AND (b.status<>'cancelled' OR COALESCE(b.cancelled_at,r.departure)>?) ORDER BY (b.status='cancelled'),b.created_at DESC LIMIT 200",
           )
-          .bind(user.id, user.id)
+          .bind(user.id, user.id, Date.now() - 3 * 86400000)
           .all()
       ).results;
       const bookings = [];
@@ -1014,6 +1044,14 @@ export async function handleApi(request, env) {
         bookings.push({
           id: b.id,
           status: b.status,
+          noShowReports: (
+            await db
+              .prepare(
+                "SELECT reporter_id AS reporterId, reported_role AS reportedRole, created_at AS createdAt FROM booking_no_shows WHERE booking_id=? ORDER BY created_at",
+              )
+              .bind(b.id)
+              .all()
+          ).results,
           passenger: { id: b.passenger_id, name: b.passenger_name },
           match: b.match_json ? JSON.parse(b.match_json) : undefined,
           ride: rideView(r),
@@ -1075,12 +1113,12 @@ export async function handleApi(request, env) {
         const results = await db.batch([
           db
             .prepare(
-              "UPDATE rides SET status='cancelled' WHERE id=? AND status IN ('open','matched')",
+              "UPDATE rides SET status='cancelled',cancelled_at=COALESCE(cancelled_at,unixepoch()*1000) WHERE id=? AND status IN ('open','matched')",
             )
             .bind(r.id),
           db
             .prepare(
-              "UPDATE bookings SET status='cancelled' WHERE ride_id=? AND status IN ('pending','accepted','ready') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status='cancelled')",
+              "UPDATE bookings SET status='cancelled',cancelled_at=COALESCE(cancelled_at,unixepoch()*1000) WHERE ride_id=? AND status IN ('pending','accepted','ready') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status='cancelled')",
             )
             .bind(r.id, r.id),
         ]);
@@ -1180,6 +1218,63 @@ export async function handleApi(request, env) {
         );
       }
     }
+    const noShow = path.match(/^\/bookings\/([^/]+)\/no-show$/);
+    if (noShow && method === "POST") {
+      const b = await readBooking(db, noShow[1]);
+      if (!b) fail(404, "Dogovor nije pronađen.");
+      const isDriver = b.driver_id === user.id;
+      if (!isDriver && b.passenger_id !== user.id)
+        fail(403, "Ovaj dogovor nije tvoj.");
+      const previous = await db
+        .prepare("SELECT * FROM booking_no_shows WHERE booking_id=?")
+        .bind(b.id)
+        .all();
+      if (
+        !["accepted", "ready"].includes(b.status) &&
+        !(b.status === "cancelled" && previous.results.length)
+      )
+        fail(409, "Nedolazak se prijavljuje samo za dogovorenu vožnju.");
+      const route = await db
+        .prepare("SELECT match_json FROM booking_routes WHERE booking_id=?")
+        .bind(b.id)
+        .first();
+      const pickupAt = route
+        ? JSON.parse(route.match_json).pickupAt
+        : b.departure;
+      const now = Date.now();
+      if (
+        !Number.isFinite(pickupAt) ||
+        now < pickupAt + 10 * 60000 ||
+        now > pickupAt + 86400000
+      )
+        fail(
+          409,
+          "Nedolazak možeš prijaviti od 10 minuta do 24 sata nakon dogovorenog susreta.",
+        );
+      const role = isDriver ? "passenger" : "driver";
+      await db.batch([
+        db
+          .prepare(
+            "INSERT OR IGNORE INTO booking_no_shows(booking_id,reporter_id,reported_role,created_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM bookings WHERE id=? AND (status IN ('accepted','ready') OR (status='cancelled' AND EXISTS(SELECT 1 FROM booking_no_shows WHERE booking_id=bookings.id))))",
+          )
+          .bind(b.id, user.id, role, now, b.id),
+        db
+          .prepare(
+            "UPDATE bookings SET status='cancelled',cancelled_at=COALESCE(cancelled_at,unixepoch()*1000) WHERE id=? AND status IN ('accepted','ready') AND EXISTS(SELECT 1 FROM booking_no_shows WHERE booking_id=?)",
+          )
+          .bind(b.id, b.id),
+      ]);
+      if (
+        !(await db
+          .prepare(
+            "SELECT booking_id FROM booking_no_shows WHERE booking_id=? AND reporter_id=?",
+          )
+          .bind(b.id, user.id)
+          .first())
+      )
+        fail(409, "Dogovor više nije aktivan.");
+      return json({ ok: true });
+    }
     const bm = path.match(
       /^\/bookings\/([^/]+)\/(accept|simulate-accept|decline|ready|complete|cancel)$/,
     );
@@ -1276,7 +1371,7 @@ export async function handleApi(request, env) {
         const results = await db.batch([
           db
             .prepare(
-              "UPDATE bookings SET status='cancelled' WHERE id=? AND status IN ('pending','accepted','ready')",
+              "UPDATE bookings SET status='cancelled',cancelled_at=COALESCE(cancelled_at,unixepoch()*1000) WHERE id=? AND status IN ('pending','accepted','ready')",
             )
             .bind(b.id),
           db
@@ -1297,7 +1392,7 @@ export async function handleApi(request, env) {
     fail(404, "Stranica nije pronađena.");
   } catch (error) {
     if (error instanceof ApiError)
-      return json({ error: error.message }, error.status);
+      return json({ error: error.message, ...error.details }, error.status);
     if (/UNIQUE constraint failed/.test(error.message))
       return json(
         { error: "Ovaj zahtjev je već obrađen. Osvježi stranicu." },

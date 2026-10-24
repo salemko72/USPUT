@@ -4,6 +4,7 @@ export class HttpError extends Error {
   constructor(
     public status: number,
     message: string,
+    public existingRideId?: string,
   ) {
     super(message);
   }
@@ -29,6 +30,7 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
     throw new HttpError(
       response.status,
       data.error || t("Nešto nije uspjelo."),
+      data.existingRideId,
     );
   return data;
 }

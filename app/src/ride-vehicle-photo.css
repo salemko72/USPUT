@@ -124,3 +124,17 @@ button.ride-vehicle-thumb:focus-visible {
   font-size: 12px;
   font-weight: 800;
 }
+
+.trip-card-top .ride-vehicle-thumb,
+.car-illustration .ride-vehicle-thumb {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+}
+.no-show-report {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.no-show-report:empty {
+  display: none;
+}

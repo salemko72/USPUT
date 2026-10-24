@@ -32,7 +32,7 @@ Trasa i vremena su procjene bez podataka o gužvi. U novom toku vrijeme susreta 
 
 Detalje otvori iz Vožnji. Putniku se sljedeća prihvaćena vožnja prikazuje i na Početnoj. **Na mjestu sam** pritisni tek kada dođeš na dogovoreni pin; time ručno javljaš vozaču da si tu. Aplikacija ne potvrđuje GPS-om ili Bluetoothom da ste zajedno.
 
-Ako je vozač dodao fotografiju auta, nakon prihvatanja pojavljuje se u malom krugu uz vozilo. Dodir je povećava. Profilna i fotografija auta dostupne su saputniku samo uz aktivan potvrđen dogovor, najduže do 24 sata nakon polaska; otkazivanje ili završetak ukida pristup preko tog dogovora. Svoje fotografije dodaješ, mijenjaš ili uklanjaš u Profilu.
+Ako je vozač dodao fotografiju auta, pojavljuje se u malom krugu na vrhu ponuđene vožnje, prije prihvatanja. Dodir je povećava. Fotografija auta dostupna je prijavljenim korisnicima uz aktivnu buduću ponudu; profilna fotografija dostupna je saputniku samo uz aktivan potvrđen dogovor, najduže do 24 sata nakon polaska; otkazivanje ili završetak ukida pristup preko tog dogovora. Svoje fotografije dodaješ, mijenjaš ili uklanjaš u Profilu.
 
 ## Završetak, historija i nova pretraga
 
@@ -53,3 +53,10 @@ Pod dodatnim postavkama objave možeš odabrati dijeljenje imenovanih javnih mje
 Nakon završene vožnje možeš dati povratnu informaciju za korišteno mjesto iz kataloga. To je iskustvo s mjestom, a ne ocjena vozača ili putnika. Ocjene osoba još nisu dostupne.
 
 Za podatke koje aplikacija obrađuje pogledaj [Privatnost](PRIVATNOST.md), dostupnu i pri registraciji i u Profilu.
+
+## Duple ponude i nedolazak
+Isti vozač ne može imati dvije aktivne ponude za isti datum i vrijeme, čak ni s drugim vozilom ili trasom. Upozorenje sadrži link na postojeću vožnju. Otkazana ponuda ne blokira novu objavu.
+
+U detaljima dogovorene vožnje, od 10 minuta do 24 sata nakon susreta možeš prijaviti da druga osoba nije došla. Potvrdi prijavu u prozoru. Dogovor s tim putnikom se deaktivira, drugi putnici ostaju nepromijenjeni. Prijava ostaje označena kao navod učesnika, bez automatske kazne. Druga strana može također podnijeti prijavu.
+
+Otkazane vožnje su na dnu i nakon tri dana nestaju iz glavne liste, uz zadržavanje historije dogovora. Dodir mjesta susreta na kartici Početne otvara detalje i približava mapu na dogovoreni pin. Demo fotografije su AI ilustracije izmišljenih osoba i auta, nisu provjera modela ili identiteta.

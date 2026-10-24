@@ -6,6 +6,8 @@ import type { PhotoMeta } from "./photo-client";
 import type { Booking, Ride } from "./types";
 import { displayVehicleLabel } from "./VehicleManager";
 import { Modal } from "./ui";
+import { DemoImage, hasDemoImage } from "./DemoImage";
+import { api } from "./api";
 import { t } from "./i18n";
 import "./ride-vehicle-photo.css";
 
@@ -13,16 +15,24 @@ export function RideVehiclePhoto({
   ride,
   viewerId,
   bookingStatus,
+  offer = false,
+  compact = false,
 }: {
   ride: Ride;
-  viewerId: string;
+  viewerId?: string;
+  offer?: boolean;
+  compact?: boolean;
   bookingStatus?: Booking["status"];
 }) {
   const permitted =
-    ride.driver.id !== viewerId &&
-    (bookingStatus === "accepted" || bookingStatus === "ready") &&
-    (ride.status === "open" || ride.status === "matched") &&
-    ride.departure > Date.now() - 86400000;
+    (offer &&
+      (ride.driver.id === viewerId ||
+        (["open", "matched"].includes(ride.status) &&
+          ride.departure > Date.now()))) ||
+    (ride.driver.id !== viewerId &&
+      (bookingStatus === "accepted" || bookingStatus === "ready") &&
+      (ride.status === "open" || ride.status === "matched") &&
+      ride.departure > Date.now() - 86400000);
   // Scope the loaded image and open preview to this account and agreement.
   // A cancelled booking or account change hides it during render, before cleanup.
   const scope = JSON.stringify([
@@ -32,6 +42,7 @@ export function RideVehiclePhoto({
     bookingStatus,
     ride.status,
     permitted,
+    offer,
   ]);
   const [loaded, setLoaded] = useState<{
     scope: string;
@@ -47,7 +58,10 @@ export function RideVehiclePhoto({
       const current = ++version;
       controller?.abort();
       controller = new AbortController();
-      getRidePhotos(ride.id, controller.signal)
+      (offer
+        ? api<{ vehicle: PhotoMeta | null }>("/photos/offer/" + ride.id)
+        : getRidePhotos(ride.id, controller.signal)
+      )
         .then((photos) => {
           if (alive && current === version)
             setLoaded({ scope, photo: photos.vehicle });
@@ -75,6 +89,12 @@ export function RideVehiclePhoto({
     );
     setZoom((current) => (current?.scope === scope ? undefined : current));
   }
+  if (ride.demo && hasDemoImage(ride.driver.id))
+    return (
+      <span className="ride-vehicle-thumb">
+        <DemoImage userId={ride.driver.id} car />
+      </span>
+    );
   if (!photo)
     return (
       <span
@@ -84,6 +104,18 @@ export function RideVehiclePhoto({
         title={label + ". " + unavailable}
       >
         <Car size={25} aria-hidden="true" />
+      </span>
+    );
+  if (compact)
+    return (
+      <span className="ride-vehicle-thumb">
+        <img
+          src={photo.url}
+          alt={t("Automobil za ovu vožnju")}
+          loading="lazy"
+          decoding="async"
+          onError={failed}
+        />
       </span>
     );
   return (

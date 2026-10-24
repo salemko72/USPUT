@@ -110,7 +110,10 @@ async function publish(patch = {}) {
 
 test("published capacity defaults to one passenger and exposes the offered free seats", async () => {
   for (const seats of [undefined, 1, 3, 7]) {
-    const response = await publish(seats === undefined ? {} : { seats });
+    const response = await publish({
+      ...(seats === undefined ? {} : { seats }),
+      time: `${String(7 + [undefined, 1, 3, 7].indexOf(seats)).padStart(2, "0")}:30`,
+    });
     assert.equal(response.status, 201, JSON.stringify(response.data));
     assert.equal(response.data.ride.seats, seats ?? 1);
     assert.equal(response.data.ride.seatsAvailable, seats ?? 1);
@@ -533,4 +536,105 @@ test("capacity migration preserves legacy offers as one passenger place and remo
   } finally {
     legacy.close();
   }
+});
+
+test("same driver cannot publish two active offers at the same date and time, even with another route", async () => {
+  const first = await publish();
+  assert.equal(first.status, 201);
+  const duplicate = await publish({ from: "marijin", to: "cengic" });
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.data.existingRideId, first.data.ride.id);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM rides").get().n, 1);
+  assert.equal((await publish({ time: "07:31" })).status, 201);
+  await call("/rides/" + first.data.ride.id + "/cancel", "driver", {});
+  assert.equal((await publish()).status, 201);
+});
+test("simultaneous publishes create one offer and link the duplicate to it", async () => {
+  const results = await Promise.all([publish(), publish()]);
+  assert.deepEqual(results.map((r) => r.status).sort(), [201, 409]);
+  assert.equal(
+    results.find((r) => r.status === 409).data.existingRideId,
+    results.find((r) => r.status === 201).data.ride.id,
+  );
+});
+test("different drivers may offer the same schedule", async () => {
+  seedRide(1, { driver_id: "other-driver" });
+  assert.equal((await publish()).status, 201);
+});
+test("no-show is participant-only, time-gated, persistent and can be reported by both sides", async () => {
+  const ride = seedRide(3, { departure: Date.now() - 11 * 60000 });
+  const b = seedBooking(ride, "one", "accepted");
+  const other = seedBooking(ride, "two", "accepted");
+  assert.equal((await action(b, "no-show", "three")).status, 403);
+  assert.equal((await action(b, "no-show")).status, 200);
+  assert.equal(status("bookings", b), "cancelled");
+  assert.equal(status("bookings", other), "accepted");
+  assert.equal((await action(b, "no-show")).status, 200);
+  assert.equal(
+    sqlite.prepare("SELECT COUNT(*) n FROM booking_no_shows").get().n,
+    1,
+  );
+  assert.equal((await action(b, "no-show", "one")).status, 200);
+  const mine = await call("/my-rides", "one");
+  const reports = mine.data.bookings.find((x) => x.id === b).noShowReports;
+  assert.deepEqual(reports.map((r) => r.reportedRole).sort(), [
+    "driver",
+    "passenger",
+  ]);
+  assert.ok(reports.every((r) => Number.isFinite(r.createdAt)));
+});
+test("no-show uses the agreed pickup time, not the earlier driver departure", async () => {
+  const ride = seedRide(1, { departure: Date.now() - 30 * 60000 });
+  const b = seedBooking(ride, "one", "ready");
+  sqlite
+    .prepare("INSERT INTO booking_routes(booking_id,match_json) VALUES(?,?)")
+    .run(b, JSON.stringify({ pickupAt: Date.now() - 5 * 60000 }));
+  assert.equal((await action(b, "no-show", "one")).status, 409);
+  assert.equal(status("bookings", b), "ready");
+  sqlite
+    .prepare("UPDATE booking_routes SET match_json=? WHERE booking_id=?")
+    .run(JSON.stringify({ pickupAt: Date.now() - 11 * 60000 }), b);
+  assert.equal((await action(b, "no-show", "one")).status, 200);
+});
+test("no-show rejects pending, completed, ordinary cancellation and old agreements", async () => {
+  for (const state of ["pending", "completed", "cancelled"]) {
+    const ride = seedRide(1, { departure: Date.now() - 11 * 60000 });
+    const b = seedBooking(ride, "one", state);
+    assert.equal((await action(b, "no-show")).status, 409);
+  }
+  const ride = seedRide(1, { departure: Date.now() - 25 * 3600000 });
+  const b = seedBooking(ride, "one", "accepted");
+  assert.equal((await action(b, "no-show")).status, 409);
+});
+
+test("cancelled offers and requests are last for three days, then hidden without deleting history", async () => {
+  const active = seedRide();
+  const cancelled = seedRide();
+  const booking = seedBooking(cancelled, "one", "accepted");
+  await call("/rides/" + cancelled.id + "/cancel", "driver", {});
+  const recent = await call("/my-rides");
+  assert.equal(recent.data.rides.at(-1).id, cancelled.id);
+  assert.ok(
+    sqlite
+      .prepare("SELECT cancelled_at FROM rides WHERE id=?")
+      .get(cancelled.id).cancelled_at >
+      Date.now() - 60000,
+  );
+  sqlite
+    .prepare("UPDATE rides SET cancelled_at=? WHERE id=?")
+    .run(Date.now() - 4 * 86400000, cancelled.id);
+  sqlite
+    .prepare("UPDATE bookings SET cancelled_at=? WHERE id=?")
+    .run(Date.now() - 4 * 86400000, booking);
+  const archived = await call("/my-rides");
+  assert.deepEqual(
+    archived.data.rides.map((r) => r.id),
+    [active.id],
+  );
+  assert.equal(archived.data.bookings.length, 0);
+  assert.equal((await call("/my-rides", "one")).data.bookings.length, 0);
+  assert.ok(
+    sqlite.prepare("SELECT id FROM rides WHERE id=?").get(cancelled.id),
+  );
+  assert.equal((await call("/rides/" + cancelled.id)).status, 200);
 });

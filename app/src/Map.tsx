@@ -22,6 +22,7 @@ type RouteSnapshot = {
   viaPoints?: RouteViaPoint[];
   onViaMove?: (index: number, point: RouteViaPoint) => void;
   onMapAdd?: (point: RouteViaPoint) => void;
+  focusPoint?: RouteViaPoint;
   meetingDraft?: RouteViaPoint;
   onMeetingMove?: (point: RouteViaPoint) => void;
 };
@@ -130,10 +131,12 @@ function drawRoute(view: LiveRoute, data: RouteSnapshot) {
     ...line,
     ...stops.map((p) => [p.lat, p.lng] as [number, number]),
   ]);
-  const routeKey = JSON.stringify([line, insets]);
+  const routeKey = JSON.stringify([line, insets, data.focusPoint]);
   // A label or stop edit updates the overlay without discarding the user's zoom/pan.
   if (view.routeKey !== routeKey) {
-    map.fitBounds(view.bounds, fitOptions(insets));
+    if (data.focusPoint)
+      map.setView([data.focusPoint.lat, data.focusPoint.lng], 17);
+    else map.fitBounds(view.bounds, fitOptions(insets));
     view.routeKey = routeKey;
   }
 }
@@ -161,6 +164,7 @@ export function RouteMap({
   onViaMove,
   onMapAdd,
   meetingDraft,
+  focusPoint,
   onMeetingMove,
   onReady,
 }: {
@@ -175,6 +179,7 @@ export function RouteMap({
   viaPoints?: RouteViaPoint[];
   onViaMove?: (index: number, point: RouteViaPoint) => void;
   onMapAdd?: (point: RouteViaPoint) => void;
+  focusPoint?: RouteViaPoint;
   meetingDraft?: RouteViaPoint;
   onMeetingMove?: (point: RouteViaPoint) => void;
   onReady?: (ready: boolean) => void;
@@ -195,6 +200,7 @@ export function RouteMap({
     onViaMove,
     onMapAdd,
     meetingDraft,
+    focusPoint,
     onMeetingMove,
   };
   useEffect(() => {
@@ -267,6 +273,8 @@ export function RouteMap({
     Boolean(onViaMove),
     Boolean(onMapAdd),
     meetingDraft,
+    focusPoint?.lat,
+    focusPoint?.lng,
   ]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
