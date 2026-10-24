@@ -254,6 +254,11 @@ export const demoService: Service = {
     persist();
     await result(null);
   },
+  gpsPreference: async (enabled) => {
+    state.user = { ...state.user, gpsAuto: enabled };
+    persist();
+    return result(state.user);
+  },
   profile: async (name) => {
     state.user = { ...state.user, name };
     persist();

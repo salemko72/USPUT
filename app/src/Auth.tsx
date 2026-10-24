@@ -1,3 +1,4 @@
+import { GPSPreference } from "./GPSPreference";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { PrivacyContent } from "./PrivacyContent";
 import { t } from "./i18n";
@@ -138,6 +139,7 @@ export function Auth({
 }) {
   const [mode, setMode] = useState(initial),
     [show, setShow] = useState(false),
+    [gpsAuto, setGpsAuto] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [modal, setModal] = useState("");
@@ -159,6 +161,7 @@ export function Auth({
           city: f.get("city"),
           email: f.get("email"),
           password: f.get("password"),
+          gpsAuto,
           adult: f.get("adult") === "on",
           terms: f.get("terms") === "on",
         },
@@ -346,6 +349,13 @@ export function Auth({
                   </div>
                 </label>
               </>
+            )}
+            {register && (
+              <GPSPreference
+                enabled={gpsAuto}
+                unknown
+                onChange={async (value) => setGpsAuto(value)}
+              />
             )}
             {register && (
               <div className="consent">

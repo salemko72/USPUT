@@ -1,3 +1,4 @@
+import { GPSPreference } from "./GPSPreference";
 import { t } from "./i18n";
 import { OwnPhoto } from "./Photos";
 import { vehicleDescription } from "./VehicleManager";
@@ -89,6 +90,16 @@ export function Profile({
               </span>
             </div>
           </div>
+          <GPSPreference
+            enabled={user.gpsAuto === true}
+            unknown={user.gpsAuto == null}
+            onChange={async (enabled) => {
+              const updated = await service.gpsPreference(enabled);
+              onUser(updated);
+              window.dispatchEvent(new Event("usput:gps-preference-changed"));
+              onToast(t("GPS postavka je sačuvana."));
+            }}
+          />
           <form onSubmit={save}>
             <label className="field-label">
               {t(" Tvoje ime ")}

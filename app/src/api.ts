@@ -77,6 +77,8 @@ export const realService: Service = {
   cancelRide: async (id) => {
     await api("/rides/" + id + "/cancel", {});
   },
+  gpsPreference: async (enabled) =>
+    (await api<{ user: User }>("/profile/location-sharing", { enabled })).user,
   profile: async (name, city) =>
     (await api<{ user: User }>("/profile", { name, city })).user,
 };

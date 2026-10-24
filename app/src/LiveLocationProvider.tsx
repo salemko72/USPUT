@@ -27,6 +27,7 @@ type Job = {
   controller?: AbortController;
 };
 type LiveContext = {
+  automatic: boolean;
   activeIds: string[];
   startingIds: string[];
   notice: string;
@@ -37,11 +38,18 @@ const Context = createContext<LiveContext | null>(null);
 const pageIsHidden = () => document.visibilityState === "hidden";
 export function LiveLocationProvider({
   userId,
+  gpsAuto = false,
+  demo = false,
   children,
 }: {
   userId: string;
+  gpsAuto?: boolean;
+  demo?: boolean;
   children: ReactNode;
 }) {
+  const autoEnabled = useRef(gpsAuto),
+    paused = useRef(new Set<string>());
+  autoEnabled.current = gpsAuto;
   const jobs = useRef(new Map<string, Job>()),
     starting = useRef(new Map<string, symbol>()),
     alive = useRef(true),
@@ -93,21 +101,28 @@ export function LiveLocationProvider({
           );
       });
   }
-  const stop = useCallback(async (id: string, token?: string) => {
-    const job = jobs.current.get(id);
-    if (token && (!job || job.sharingId !== token)) {
-      await revoke(id, token);
-      return;
-    }
-    job?.controller?.abort();
-    jobs.current.delete(id);
-    starting.current.delete(id);
-    if (!jobs.current.size) clearWatch();
-    sync();
-    await revoke(id, token || job?.sharingId);
-  }, []);
+  const stop = useCallback(
+    async (id: string, token?: string, manual = true) => {
+      const job = jobs.current.get(id);
+      if (token && (!job || job.sharingId !== token)) {
+        await revoke(id, token);
+        return;
+      }
+      if (manual) paused.current.add(id);
+      job?.controller?.abort();
+      jobs.current.delete(id);
+      starting.current.delete(id);
+      if (!jobs.current.size) clearWatch();
+      sync();
+      await revoke(id, token || job?.sharingId);
+    },
+    [],
+  );
   function stopAll(message = "", keepalive = false) {
     const old = [...jobs.current.values()];
+    if (!keepalive)
+      for (const id of [...jobs.current.keys(), ...starting.current.keys()])
+        paused.current.add(id);
     for (const job of old) job.controller?.abort();
     jobs.current.clear();
     starting.current.clear();
@@ -125,7 +140,7 @@ export function LiveLocationProvider({
     )
       return;
     if (Date.now() + job.offset >= job.endsAt) {
-      await stop(job.bookingId, job.sharingId);
+      await stop(job.bookingId, job.sharingId, false);
       return;
     }
     if (Date.now() - position.timestamp > 45000) return;
@@ -160,7 +175,7 @@ export function LiveLocationProvider({
         error instanceof HttpError &&
         [401, 403, 404, 409].includes(error.status)
       )
-        await stop(job.bookingId, job.sharingId);
+        await stop(job.bookingId, job.sharingId, false);
     } finally {
       clearTimeout(timeout);
       job.controller = undefined;
@@ -185,14 +200,18 @@ export function LiveLocationProvider({
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
     );
   }
-  async function start(id: string) {
+  async function start(id: string, automatic = false) {
+    if (automatic && (!autoEnabled.current || paused.current.has(id))) return;
+    if (!automatic) paused.current.delete(id);
     if (starting.current.has(id) || jobs.current.has(id)) return;
     if (pageIsHidden())
       throw new Error("Otvori aplikaciju da uključiš lokaciju.");
     const attempt = Symbol(id);
     starting.current.set(id, attempt);
     const ownsAttempt = () =>
-      alive.current && starting.current.get(id) === attempt;
+      alive.current &&
+      starting.current.get(id) === attempt &&
+      (!automatic || autoEnabled.current);
     setNotice("");
     sync();
     let token: string | undefined;
@@ -213,6 +232,7 @@ export function LiveLocationProvider({
       try {
         state = await api<Enabled>("/bookings/" + id + "/location-sharing", {
           enabled: true,
+          automatic,
           expectedSharingId: expected,
         });
       } catch (error) {
@@ -231,6 +251,7 @@ export function LiveLocationProvider({
         expected = current.ownSharingId ?? null;
         state = await api<Enabled>("/bookings/" + id + "/location-sharing", {
           enabled: true,
+          automatic,
           expectedSharingId: expected,
         });
       }
@@ -269,6 +290,85 @@ export function LiveLocationProvider({
       sync();
     }
   }
+  const automaticStart = useRef(start);
+  automaticStart.current = start;
+  useEffect(() => {
+    if (!gpsAuto) {
+      stopAll();
+      return;
+    }
+    paused.current.clear();
+    if (demo) return;
+    let disposed = false,
+      running = false;
+    const retryAfter = new Map<string, number>();
+    async function discover() {
+      if (disposed || running || pageIsHidden()) return;
+      running = true;
+      try {
+        const data = await api<{ gpsAuto: boolean; bookingIds: string[] }>(
+          "/location-agreements",
+        );
+        if (disposed || pageIsHidden()) return;
+        if (!data.gpsAuto) {
+          stopAll();
+          return;
+        }
+        const eligible = new Set(data.bookingIds);
+        for (const job of jobs.current.values())
+          if (!eligible.has(job.bookingId))
+            void stop(job.bookingId, job.sharingId, false);
+        for (const id of data.bookingIds) {
+          if (disposed || !autoEnabled.current || pageIsHidden()) break;
+          if (
+            jobs.current.has(id) ||
+            starting.current.has(id) ||
+            paused.current.has(id) ||
+            (retryAfter.get(id) || 0) > Date.now()
+          )
+            continue;
+          // Do not repeatedly prompt if device permission was revoked after setup.
+          let permitted = false;
+          try {
+            permitted =
+              (await navigator.permissions?.query({ name: "geolocation" }))
+                ?.state === "granted";
+          } catch {
+            /* Require explicit permission confirmation; never prompt automatically. */
+          }
+          if (disposed || pageIsHidden()) break;
+          if (!permitted) {
+            setNotice(
+              "Dozvoli GPS u profilu da se automatsko dijeljenje nastavi.",
+            );
+            break;
+          }
+          retryAfter.set(id, Date.now() + 60000);
+          await automaticStart.current(id, true).catch(() => {});
+          if (jobs.current.has(id)) retryAfter.delete(id);
+        }
+      } catch {
+        /* Offline discovery never starts GPS. */
+      } finally {
+        running = false;
+      }
+    }
+    void discover();
+    const timer = setInterval(() => void discover(), 15000);
+    const visible = () => {
+      if (!pageIsHidden()) void discover();
+    };
+    window.addEventListener("focus", visible);
+    document.addEventListener("visibilitychange", visible);
+    window.addEventListener("usput:booking-changed", visible);
+    return () => {
+      disposed = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", visible);
+      document.removeEventListener("visibilitychange", visible);
+      window.removeEventListener("usput:booking-changed", visible);
+    };
+  }, [gpsAuto, userId, demo, stop]);
   useEffect(() => {
     alive.current = true;
     let refreshing = false;
@@ -279,9 +379,9 @@ export function LiveLocationProvider({
           setNotice(
             "Dijeljenje je zaustavljeno jer GPS ili veza nisu osvježeni.",
           );
-          void stop(job.bookingId, job.sharingId);
+          void stop(job.bookingId, job.sharingId, false);
         } else if (Date.now() + job.offset >= job.endsAt)
-          void stop(job.bookingId, job.sharingId);
+          void stop(job.bookingId, job.sharingId, false);
       }
       if (last.current && Date.now() - last.current.timestamp < 30000) {
         for (const job of jobs.current.values())
@@ -319,7 +419,7 @@ export function LiveLocationProvider({
               !state.ownSharing ||
               state.ownSharingId !== job.sharingId
             )
-              void stop(job.bookingId, job.sharingId);
+              void stop(job.bookingId, job.sharingId, false);
           })
           .catch(() => {});
     };
@@ -336,7 +436,16 @@ export function LiveLocationProvider({
     };
   }, [userId, stop]);
   return (
-    <Context.Provider value={{ activeIds, startingIds, notice, start, stop }}>
+    <Context.Provider
+      value={{
+        automatic: gpsAuto,
+        activeIds,
+        startingIds,
+        notice,
+        start,
+        stop,
+      }}
+    >
       {children}
       {(activeIds.length > 0 || notice) && (
         <aside className="live-sharing-banner" aria-live="polite">

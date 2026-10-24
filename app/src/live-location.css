@@ -110,14 +110,64 @@
   cursor: pointer;
 }
 
-.gps-location-marker::after {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #fff;
+.gps-location-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #151815;
+}
+.gps-location-marker svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gps-preference {
+  border: 1px solid #dfe4d4;
+  background: #f1f4e9;
+  padding: 20px;
+  border-radius: 22px;
+  margin: 18px 0;
+}
+.gps-preference h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  margin: 0 0 16px;
+}
+.gps-preference label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+.gps-preference input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--ink);
+}
+.gps-preference p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.gps-preference small {
+  font-size: 11px;
+  line-height: 1.6;
+  display: block;
+  color: #68745b;
+}
+
+.gps-preference-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.gps-preference-actions .button {
+  font-size: 14px;
+  padding: 12px 20px;
 }

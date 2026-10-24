@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN gps_auto INTEGER DEFAULT NULL CHECK(gps_auto IN (0,1));

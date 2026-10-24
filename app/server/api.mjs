@@ -82,6 +82,7 @@ const selfUser = (u, env = {}) => ({
   ...publicUser(u),
   email: u.email,
   city: u.city || "",
+  gpsAuto: u.gps_auto == null ? null : !!u.gps_auto,
   provider: u.google_id ? "google" : "email",
   admin: isMeetingAdmin(u, env),
 });
@@ -431,6 +432,7 @@ export async function handleApi(request, env) {
         name: safeText(body.name || p.name, 60),
         email: p.email,
         google_id: p.sub,
+        gps_auto: body.gpsAuto === true ? 1 : 0,
         city: safeText(body.city, 80),
       };
       if (u.city.length < 2) fail(400, "Unesi grad ili mjesto.");
@@ -438,9 +440,17 @@ export async function handleApi(request, env) {
       await db.batch([
         db
           .prepare(
-            "INSERT INTO users(id,name,email,google_id,city,created_at) VALUES(?,?,?,?,?,?)",
+            "INSERT INTO users(id,name,email,google_id,city,gps_auto,created_at) VALUES(?,?,?,?,?,?,?)",
           )
-          .bind(u.id, u.name, u.email, u.google_id, u.city, Date.now()),
+          .bind(
+            u.id,
+            u.name,
+            u.email,
+            u.google_id,
+            u.city,
+            u.gps_auto,
+            Date.now(),
+          ),
         db
           .prepare("DELETE FROM oauth_states WHERE id=?")
           .bind(await hash(token)),
@@ -485,10 +495,16 @@ export async function handleApi(request, env) {
         )
           fail(409, "Račun s ovim emailom već postoji. Prijavi se.");
         const salt = random(),
-          u = { id: crypto.randomUUID(), name, email, city };
+          u = {
+            id: crypto.randomUUID(),
+            name,
+            email,
+            city,
+            gps_auto: body.gpsAuto === true ? 1 : 0,
+          };
         await db
           .prepare(
-            "INSERT INTO users(id,name,email,password,salt,city,created_at) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO users(id,name,email,password,salt,city,gps_auto,created_at) VALUES(?,?,?,?,?,?,?,?)",
           )
           .bind(
             u.id,
@@ -497,6 +513,7 @@ export async function handleApi(request, env) {
             await passwordHash(password, salt),
             salt,
             city,
+            u.gps_auto,
             Date.now(),
           )
           .run();
@@ -625,6 +642,39 @@ export async function handleApi(request, env) {
             .bind(user.id)
             .first(),
         ),
+      });
+    }
+    if (path === "/profile/location-sharing" && method === "POST") {
+      if (typeof body.enabled !== "boolean")
+        fail(400, "Odaberi uključivanje ili prekid dijeljenja.");
+      await db.batch([
+        db
+          .prepare("UPDATE users SET gps_auto=? WHERE id=?")
+          .bind(body.enabled ? 1 : 0, user.id),
+        db
+          .prepare("DELETE FROM location_shares WHERE user_id=? AND ?=0")
+          .bind(user.id, body.enabled ? 1 : 0),
+      ]);
+      return json({
+        user: selfUser({ ...user, gps_auto: body.enabled ? 1 : 0 }, env),
+      });
+    }
+    if (path === "/location-agreements" && method === "GET") {
+      const now = Date.now();
+      const rows =
+        user.gps_auto === 1
+          ? (
+              await db
+                .prepare(
+                  `SELECT b.id FROM bookings b JOIN rides r ON r.id=b.ride_id LEFT JOIN booking_routes br ON br.booking_id=b.id WHERE (b.passenger_id=? OR r.driver_id=?) AND b.status IN ('accepted','ready') AND r.status IN ('open','matched') AND ?>=COALESCE(json_extract(br.match_json,'$.pickupAt'),r.departure)-300000 AND ?<COALESCE(json_extract(br.match_json,'$.pickupAt'),r.departure)+21600000 ORDER BY b.id`,
+                )
+                .bind(user.id, user.id, now, now)
+                .all()
+            ).results
+          : [];
+      return json({
+        gpsAuto: user.gps_auto === 1,
+        bookingIds: rows.map((b) => b.id),
       });
     }
     if (path === "/profile" && method === "POST") {

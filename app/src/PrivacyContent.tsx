@@ -16,7 +16,7 @@ export function PrivacyContent() {
       </p>
       <p>
         {t(
-          "Lokacija se prikuplja tek nakon tvog klika i dozvole preglednika. Odlazak u pozadinu zaustavlja prikupljanje i pokušava opozvati dijeljenje. Ako mreža nije dostupna, server automatski ukida pristup po isteku kratke dozvole; već primljenu lokaciju nije moguće povući s tuđeg uređaja. GPS ne dokazuje susret ni identitet.",
+          "Automatski GPS zahtijeva tvoj dobrovoljni izbor pri registraciji ili u profilu i dozvolu preglednika. Pri postavljanju dozvole mjerenje se odbacuje i ne šalje serveru. Dijeljenje počinje samo u periodu prihvaćenog dogovora dok je aplikacija otvorena. Odlazak u pozadinu ga pauzira; povratak ga nastavlja prema tvom izboru u profilu. Isključivanje u profilu odmah opoziva sve tvoje sesije. Bez mreže server ukida pristup po isteku kratke dozvole. GPS ne dokazuje susret ni identitet.",
         )}
       </p>
       <h3>{t("Račun i prijava")}</h3>

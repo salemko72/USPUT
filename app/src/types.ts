@@ -14,6 +14,7 @@ export type User = {
   admin?: boolean;
   email?: string;
   provider?: string;
+  gpsAuto?: boolean | null;
 };
 export type Place = {
   city?: string;
@@ -137,6 +138,7 @@ export type Service = {
   ) => Promise<void>;
   cancelRide: (id: string) => Promise<void>;
   profile: (name: string, city?: string) => Promise<User>;
+  gpsPreference: (enabled: boolean) => Promise<User>;
 };
 export const tomorrow = () => {
   const d = new Date(today() + "T12:00:00Z");

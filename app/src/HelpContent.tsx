@@ -21,12 +21,12 @@ export function HelpContent() {
       </p>
       <p>
         {t(
-          "GPS dijeljenje uključuješ posebno za svakog saputnika, tek u prihvaćenom dogovoru od pet minuta prije susreta. GPS lokacije se vide na istoj mapi. Dugme „Prekini dijeljenje lokacije“ i prekidač na svim ekranima odmah zaustavljaju GPS na uređaju. Završetak ili otkazivanje ukidaju pristup; ako dogovor ostane nezavršen, dijeljenje prestaje najkasnije šest sati nakon susreta.",
+          "GPS možeš dobrovoljno uključiti pri registraciji ili u profilu. Preporučujemo ga za lakši susret. Ako pristaneš, dijeljenje se automatski uključuje od pet minuta prije prihvaćenog susreta i traje do završetka ili otkazivanja, najduže šest sati. Izvan tog perioda nema prikupljanja. Isključivanje u profilu odmah ukida sva tvoja dijeljenja; prekidač tokom vožnje pauzira samo trenutni dogovor.",
         )}
       </p>
       <p>
         {t(
-          "Svaka osoba mora zasebno dozvoliti lokaciju. Možeš vidjeti drugu osobu koja dijeli lokaciju i bez uključivanja svoje. Svježina i preciznost su prikazane; stariji pin je siv, a nakon 90 sekundi bez svježeg mjerenja više se ne prikazuje. Web GPS može biti pauziran u pozadini ili kada zaključaš telefon. Ponovno otvaranje ne uključuje dijeljenje bez tvog klika.",
+          "Svaka osoba zasebno daje dozvolu. Možeš vidjeti saputnika i bez dijeljenja svoje lokacije. Automobil označava vozača, a osoba putnika. Stariji pin je siv i nestaje nakon 90 sekundi. U pozadini ili na zaključanom telefonu GPS se pauzira. Povratkom se automatski nastavlja samo ako je opcija uključena u profilu i dogovor još traje; ručno prekinuto dijeljenje ostaje pauzirano tokom ove sesije aplikacije.",
         )}
       </p>
       <details open>

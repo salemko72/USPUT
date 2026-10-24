@@ -22,6 +22,7 @@ export type LiveMapPoint = {
   label: string;
   own: boolean;
   stale: boolean;
+  role?: "driver" | "passenger";
 };
 const emptyPositions: LiveMapPoint[] = [];
 type RouteSnapshot = {
@@ -172,11 +173,16 @@ function drawLocations(view: LiveRoute, points: LiveMapPoint[], from: Place) {
       alt: p.label,
       icon: L.divIcon({
         className:
-          "gps-location-marker" +
+          "gps-location-marker gps-role-" +
+          (p.role === "driver" ? "car" : "person") +
           (p.own ? " own" : "") +
           (p.stale ? " stale" : ""),
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        html:
+          p.role === "driver"
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 6-2 6v7h3v-3h12v3h3v-7l-2-6Z"/><path d="M3 12h18M7 6h10"/><circle cx="7" cy="13.5" r="1"/><circle cx="17" cy="13.5" r="1"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
       }),
     })
       .addTo(locationLayers)

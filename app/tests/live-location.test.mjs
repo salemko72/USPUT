@@ -299,3 +299,88 @@ test("a delayed superseded enable cannot rotate the replacement sharing token", 
   assert.equal(current.data.ownSharingId, replacement);
   assert.equal(current.data.ownLocation.lat, 43.85);
 });
+
+test("GPS profile preference is explicit, persistent, and opting out revokes all own shares", async () => {
+  let r = await call("/auth/me");
+  assert.equal(r.data.user.gpsAuto, null);
+  r = await call("/profile/location-sharing", "one", { enabled: true });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.user.gpsAuto, true);
+  assert.equal((await enable("one", "b1")).status, 200);
+  r = await call("/profile/location-sharing", "one", { enabled: false });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.user.gpsAuto, false);
+  assert.equal(
+    sqlite
+      .prepare("SELECT count(*) n FROM location_shares WHERE user_id='one'")
+      .get().n,
+    0,
+  );
+  assert.equal((await call("/auth/me")).data.user.gpsAuto, false);
+  assert.equal(
+    (await call("/profile/location-sharing", "one", { enabled: "yes" })).status,
+    400,
+  );
+});
+test("automatic GPS discovery is scoped to own accepted agreements in the active window", async () => {
+  await call("/profile/location-sharing", "one", { enabled: true });
+  let r = await call("/location-agreements");
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.data.bookingIds, ["b1"]);
+  sqlite.prepare("UPDATE rides SET departure=?").run(clock + 3600000);
+  assert.deepEqual((await call("/location-agreements")).data.bookingIds, []);
+  sqlite.prepare("UPDATE rides SET departure=?").run(clock + 120000);
+  sqlite.prepare("UPDATE bookings SET status='completed' WHERE id='b1'").run();
+  assert.deepEqual((await call("/location-agreements")).data.bookingIds, []);
+});
+test("automatic start requires current saved consent, including after preference changes", async () => {
+  assert.equal(
+    (
+      await call("/bookings/b1/location-sharing", "one", {
+        enabled: true,
+        automatic: true,
+      })
+    ).status,
+    403,
+  );
+  await call("/profile/location-sharing", "one", { enabled: true });
+  assert.equal(
+    (
+      await call("/bookings/b1/location-sharing", "one", {
+        enabled: true,
+        automatic: true,
+      })
+    ).status,
+    200,
+  );
+  await call("/profile/location-sharing", "one", { enabled: false });
+  assert.equal(
+    (
+      await call("/bookings/b1/location-sharing", "one", {
+        enabled: true,
+        automatic: true,
+      })
+    ).status,
+    403,
+  );
+});
+
+test('registration keeps automatic GPS off unless explicitly chosen',async()=>{
+ for(const [email,gpsAuto] of [['no@test.invalid',false],['yes@test.invalid',true]]){
+  const result=await call('/auth/register',null,{name:'Test Person',city:'Sarajevo',email,password:'long-fixture-password',adult:true,terms:true,...(gpsAuto?{gpsAuto:true}:{})});
+  assert.equal(result.status,201);assert.equal(result.data.user.gpsAuto,gpsAuto);
+  assert.equal(sqlite.prepare('SELECT gps_auto FROM users WHERE email=?').get(email).gps_auto,gpsAuto?1:0);
+ }
+});
+test('a profile opt-out wins against an already in-flight automatic enable',async()=>{
+ await call('/profile/location-sharing','one',{enabled:true});
+ const batch=env.DB.batch.bind(env.DB);let release,arrive;
+ const gate=new Promise(r=>release=r),reached=new Promise(r=>arrive=r);
+ env.DB.batch=async statements=>{
+  if(statements[0]._sql.startsWith('INSERT INTO location_shares')){arrive();await gate;}
+  return batch(statements);
+ };
+ const pending=call('/bookings/b1/location-sharing','one',{enabled:true,automatic:true});
+ await reached;await call('/profile/location-sharing','one',{enabled:false});release();
+ assert.equal((await pending).status,409);assert.equal((await read()).data.ownSharing,false);
+});

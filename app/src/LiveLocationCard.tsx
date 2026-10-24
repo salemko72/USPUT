@@ -95,6 +95,7 @@ export function LiveLocationCard({
           ...fix,
           label,
           own: isOwn,
+          role: fix.userId === b.ride.driver.id ? "driver" : "passenger",
           stale: serverNow - fix.capturedAt > GPS_FRESH_MS,
         });
     publish.current?.(b.id, positions);
@@ -158,6 +159,13 @@ export function LiveLocationCard({
           name: peerName,
         })}
       </p>
+      {sharing.automatic && (
+        <p>
+          {t(
+            "Automatski GPS je uključen u profilu. Izvan dogovorenog perioda nema praćenja.",
+          )}
+        </p>
+      )}
       {state && !available && !terminal && (
         <p role="status">
           {serverNow < state.opensAt
@@ -211,7 +219,7 @@ export function LiveLocationCard({
       </small>
       <small>
         {t(
-          "Plavo: ti. Zeleno: druga osoba. Sivo: starija lokacija. GPS ne potvrđuje da ste se sreli.",
+          "Automobil: vozač. Osoba: putnik. Plavo: ti. Zeleno: druga osoba. Sivo: starija lokacija.",
         )}
       </small>
       <ErrorBox error={error} />

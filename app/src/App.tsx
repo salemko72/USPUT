@@ -212,7 +212,12 @@ export default function App() {
     path === "profile" ? "profile" : path === "trips" ? "trips" : "home";
   return (
     <CurrentUserPhotoProvider userId={user.id}>
-      <LiveLocationProvider key={user.id} userId={user.id}>
+      <LiveLocationProvider
+        key={user.id}
+        userId={user.id}
+        gpsAuto={user.gpsAuto === true}
+        demo={demo}
+      >
         <Notifications key={user.id} userId={user.id}>
           <div className="app-shell">
             <aside className="sidebar">

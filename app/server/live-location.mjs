@@ -91,6 +91,8 @@ export async function handleLocationApi(
           409,
           "Lokacija se dijeli od pet minuta prije susreta do završetka dogovora.",
         );
+      if (body.automatic === true && user.gps_auto !== 1)
+        fail(403, "Automatsko dijeljenje lokacije nije uključeno u profilu.");
       const expected = body.expectedSharingId ?? null;
       if (
         expected !== null &&
@@ -103,7 +105,7 @@ export async function handleLocationApi(
       const result = await db.batch([
         db
           .prepare(
-            `INSERT INTO location_shares(booking_id,user_id,token,lease_until,window_end,started_at) SELECT ?,?,?,?,?,? WHERE EXISTS(${ACTIVE}) ON CONFLICT(booking_id,user_id) DO UPDATE SET token=excluded.token,lease_until=excluded.lease_until,window_end=excluded.window_end,started_at=excluded.started_at WHERE location_shares.token=? OR location_shares.lease_until<=?`,
+            `INSERT INTO location_shares(booking_id,user_id,token,lease_until,window_end,started_at) SELECT ?,?,?,?,?,? WHERE EXISTS(${ACTIVE}) AND (?=0 OR EXISTS(SELECT 1 FROM users WHERE id=? AND gps_auto=1)) ON CONFLICT(booking_id,user_id) DO UPDATE SET token=excluded.token,lease_until=excluded.lease_until,window_end=excluded.window_end,started_at=excluded.started_at WHERE location_shares.token=? OR location_shares.lease_until<=?`,
           )
           .bind(
             c.id,
@@ -115,6 +117,8 @@ export async function handleLocationApi(
             c.id,
             now,
             now,
+            body.automatic === true ? 1 : 0,
+            user.id,
             expected,
             now,
           ),
