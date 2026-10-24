@@ -27,7 +27,7 @@ class Discussion(h.AutoRoutePreview):
    with p.expect_response(lambda r:'/api/rides/'+ride['id']+'?' in r.url and 'pickupLocation=' in r.url) as moved:
     p.mouse.move(x,y);p.mouse.down();p.mouse.move(x+20,y,steps=8);p.mouse.up()
    self.assertTrue(moved.value.ok,moved.value.text());self.assertIsNotNone(moved.value.json()['ride']['match'])
-   p.get_by_role('button',name='Pošalji zahtjev',exact=True).click()
+   p.get_by_role('button',name='Pošalji mjesto susreta vozaču',exact=True).click()
    expect(p.get_by_role('heading',name='Zahtjev je poslan.',exact=True)).to_be_visible()
    p.get_by_role('textbox',name='Kratka poruka',exact=True).fill('Mogu sići do tramvajske. <b>Ovdje</b>')
    p.get_by_role('button',name='Pošalji poruku',exact=True).click()

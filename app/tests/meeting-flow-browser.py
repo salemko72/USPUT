@@ -89,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='usput-meeting-flow-', dir='/tmp') as da
                 s.get_by_role('button',name='English',exact=True).click()
                 expect(s.locator('.cost-sharing-yes')).to_have_text('YES')
                 s.get_by_role('button',name='Bosanski',exact=True).click()
-                s.get_by_role('button',name='Pošalji zahtjev',exact=True).click()
+                s.get_by_role('button',name='Pošalji mjesto susreta vozaču',exact=True).click()
                 expect(s.get_by_role('heading',name='Zahtjev je poslan.',exact=True)).to_be_visible()
                 expect(s.locator('.request-sent-caption')).to_have_text('Zahtjev je\nposlan')
                 d.reload(); d.get_by_role('button',name='Prihvati',exact=True).click()

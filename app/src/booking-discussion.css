@@ -78,3 +78,28 @@
 .action-card .booking-discussion .text-button {
   color: #d7f56a;
 }
+
+.meeting-map-submit {
+  margin: 0 0 16px;
+}
+.meeting-map-submit .button {
+  width: 100%;
+}
+.meeting-map-submit small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.meeting-send-status {
+  background: #d7f56a;
+  color: #151815;
+  border-radius: 16px;
+  padding: 14px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.passenger-meeting-picker + .meeting-label,
+.meeting-send-status + .meeting-label {
+  margin-top: 16px;
+}

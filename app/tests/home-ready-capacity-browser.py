@@ -292,7 +292,7 @@ with tempfile.TemporaryDirectory(prefix='usput-home-ready-capacity-', dir='/tmp'
                 other_page.get_by_role('button', name='Bosanski', exact=True).click()
                 other_page.locator('.ride-card').filter(has_text='2 slobodna mjesta').get_by_role('button', name='Pogledaj vožnju', exact=True).click()
                 expect(other_page.locator('.ride-facts')).to_contain_text('2 od 3 mjesta slobodno')
-                other_page.get_by_role('button', name='Pošalji zahtjev', exact=True).click()
+                other_page.get_by_role('button', name='Pošalji mjesto susreta vozaču', exact=True).click()
                 second = next(b for b in other.request.get(base + '/api/my-rides').json()['bookings'] if b['ride']['id'] == remaining_ride['id'])
                 post(driver, '/bookings/' + second['id'] + '/accept')
                 other_page.evaluate("window.dispatchEvent(new Event('usput:booking-changed'))")

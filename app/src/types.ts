@@ -35,6 +35,7 @@ export type MeetingStop = Place & {
 };
 export type RouteViaPoint = { lat: number; lng: number };
 export type RouteMatch = {
+  pickupWalkUnknown?: boolean;
   exitOptional?: boolean;
   meetingProposal?: boolean;
   pickup: Place & { stopId?: string; catalogId?: string };
@@ -95,6 +96,7 @@ export type Search = {
   to: string;
   date: string;
   time: string;
+  meetingPointOnly?: string;
   meetingProposal?: string;
   pickupLocation?: string;
   dropoffLocation?: string;

@@ -101,7 +101,7 @@ export async function proposalFromSearch(env, ride, q) {
     : undefined;
   if ((q.pickupLocation && !pickup) || (q.dropoffLocation && !dropoff))
     return null;
-  return proposalMatch(
+  const result = await proposalMatch(
     env,
     ride,
     normalizeLocation(q.fromLocation) || getPlace(q.from),
@@ -111,4 +111,7 @@ export async function proposalFromSearch(env, ride, q) {
     pickup,
     dropoff,
   );
+  return result && !result.unavailable && q.meetingPointOnly === "1"
+    ? { ...result, pickupWalkUnknown: true }
+    : result;
 }

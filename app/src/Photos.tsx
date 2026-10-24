@@ -1,3 +1,4 @@
+import { DemoImage, hasDemoImage } from "./DemoImage";
 import { t } from "./i18n";
 import { useEffect, useState } from "react";
 import {
@@ -271,6 +272,7 @@ export function OwnPhoto({
 }
 export function ConnectionPhotos({
   rideId,
+  demoDriverId,
   demo,
   ownDriver,
   vehicleLabel,
@@ -278,6 +280,7 @@ export function ConnectionPhotos({
   showVehicle = true,
 }: {
   rideId: string;
+  demoDriverId?: string;
   demo: boolean;
   ownDriver: boolean;
   vehicleLabel: string;
@@ -304,8 +307,9 @@ export function ConnectionPhotos({
       alive = false;
     };
   }, [rideId, demo, ownDriver, vehicleLabel, phase]);
-  if (!photos) return null;
-  const face = ownDriver ? photos.passengerAvatar : photos.driverAvatar;
+  const demoPortrait = !ownDriver && hasDemoImage(demoDriverId);
+  if (!photos && !demoPortrait) return null;
+  const face = ownDriver ? photos?.passengerAvatar : photos?.driverAvatar;
   return (
     <section className="connection-photos">
       <header>
@@ -325,6 +329,10 @@ export function ConnectionPhotos({
               }
             />
           </button>
+        ) : demoPortrait ? (
+          <span className="photo-placeholder round">
+            <DemoImage userId={demoDriverId!} />
+          </span>
         ) : (
           <span className="photo-placeholder round">
             <UserRound size={25} />
@@ -335,13 +343,15 @@ export function ConnectionPhotos({
           <p>
             {face
               ? t("Fotografija dostupna samo za potvrđen dogovor.")
-              : t("Profilna fotografija još nije dodana.")}
+              : demoPortrait
+                ? t("AI ilustracija izmišljene osobe")
+                : t("Profilna fotografija još nije dodana.")}
           </p>
         </div>
       </div>
       {showVehicle &&
         !ownDriver &&
-        (photos.vehicle ? (
+        (photos?.vehicle ? (
           <button
             className="recognition-car"
             onClick={() => setZoom(photos.vehicle)}

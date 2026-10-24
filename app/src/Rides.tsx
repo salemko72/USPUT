@@ -2,6 +2,12 @@ import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
+import {
+  completePassengerQuery,
+  preparePassengerQuery,
+  hasPassengerOrigin,
+  hasPassengerDestination,
+} from "./passenger-query";
 import { PassengerMeetingPicker } from "./PassengerMeetingPicker";
 import { BookingDiscussion } from "./BookingDiscussion";
 import "./booking-discussion.css";
@@ -112,7 +118,10 @@ function MatchSummary({
         {t(" min · zajedno oko ")}
         {match.rideMinutes} min
       </span>
-      {match.walkToMinutes !== undefined && (
+      {match.pickupWalkUnknown && (
+        <span>{t("Bez početne adrese ne računamo hodanje do susreta.")}</span>
+      )}
+      {!match.pickupWalkUnknown && match.walkToMinutes !== undefined && (
         <span>
           {t("Hodanje do susreta")}: {match.walkToMinutes} min ·{" "}
           {t("od izlaska do cilja")}: {match.walkFromMinutes} min
@@ -349,10 +358,15 @@ export function RideDetails({
   onToast: (s: string) => void;
 }) {
   const [stopSelection, setStopSelection] = useState<Partial<Search>>({});
+  const [preparedQuery, setPreparedQuery] = useState<Search | undefined>(() =>
+    completePassengerQuery(query) ? query : undefined,
+  );
   const selectedQuery = useMemo(
     () =>
-      query ? { ...query, meetingProposal: "1", ...stopSelection } : undefined,
-    [query, stopSelection],
+      preparedQuery
+        ? { ...preparedQuery, meetingProposal: "1", ...stopSelection }
+        : undefined,
+    [preparedQuery, stopSelection],
   );
   const loadVersion = useRef(0);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -370,12 +384,18 @@ export function RideDetails({
     ]);
     if (version !== loadVersion.current) return;
     setRide(r);
+    const existingBooking = m.bookings.find(
+      (b) => b.ride.id === id && b.passenger.id === user.id,
+    );
+    if (r.driver.id !== user.id && !existingBooking && !preparedQuery) {
+      setPreparedQuery(preparePassengerQuery(query, r));
+      setMatchBusy(true);
+    } else setMatchBusy(false);
     setBooking(
       m.bookings.find((b) => b.ride.id === id && b.passenger.id === user.id),
     );
     setRequests(m.bookings.filter((b) => b.ride.id === id));
-    setMatchBusy(false);
-  }, [id, service, user.id, selectedQuery]);
+  }, [id, service, user.id, selectedQuery, preparedQuery]);
   useEffect(() => {
     let alive = true;
     load().catch((e) => {
@@ -490,6 +510,35 @@ export function RideDetails({
             <PassengerMeetingPicker
               ride={ride}
               query={selectedQuery}
+              sourceIsMeetingPoint={!hasPassengerOrigin(query)}
+              destinationIsMeetingPoint={!hasPassengerDestination(query)}
+              checking={matchBusy}
+              sending={busy}
+              canSend={
+                ride.status === "open" &&
+                availableSeats(ride) > 0 &&
+                !!ride.match &&
+                !matchBusy &&
+                !busy
+              }
+              error={
+                error ||
+                (ride.status !== "open" || availableSeats(ride) < 1
+                  ? t("Ova vožnja više nije dostupna.")
+                  : "") ||
+                (!matchBusy && !ride.match
+                  ? t(
+                      "Pin mora biti uz trasu, u smjeru vožnje i unutar odabranog hodanja.",
+                    )
+                  : "")
+              }
+              onSend={() => {
+                if (busy || matchBusy || !ride.match) return;
+                return action(
+                  () => service.request(ride.id, selectedQuery),
+                  t("Mjesto susreta je poslano vozaču. Čekamo potvrdu."),
+                );
+              }}
               onChange={(change) => {
                 setMatchBusy(true);
                 setStopSelection((old) => ({ ...old, ...change }));
@@ -506,6 +555,15 @@ export function RideDetails({
               stops={ride.meetingStops}
               large
             />
+          )}
+          {booking?.status === "pending" && (
+            <p className="meeting-send-status" role="status">
+              {t(
+                booking.proposal?.authorId === ride.driver.id
+                  ? "Druga osoba predlaže mjesto susreta. Pregledaj pin prije potvrde."
+                  : "Mjesto susreta je poslano vozaču. Čekamo potvrdu.",
+              )}
+            </p>
           )}
           <div className="meeting-label">
             <MapPin size={19} />
@@ -656,6 +714,7 @@ export function RideDetails({
               ))) && (
             <ConnectionPhotos
               rideId={ride.id}
+              demoDriverId={ride.demo ? ride.driver.id : undefined}
               demo={demo}
               ownDriver={own}
               vehicleLabel={ride.car}
@@ -904,38 +963,7 @@ export function RideDetails({
                 {t(" Povuci zahtjev ")}
               </button>
             </section>
-          ) : (
-            <section className="action-card">
-              <span className="eyebrow">{t("PRVI KORAK JE TVOJ")}</span>
-              <h2>{t("Ideš u istom smjeru?")}</h2>
-              <p>
-                {t(
-                  "Pošalji zahtjev. Vožnja vrijedi tek kada je vozač prihvati.",
-                )}
-              </p>
-              <Button
-                variant="lime"
-                busy={busy}
-                disabled={
-                  matchBusy ||
-                  ride.status !== "open" ||
-                  availableSeats(ride) < 1 ||
-                  (!!ride.meetingStops && (!selectedQuery || !ride.match))
-                }
-                onClick={() =>
-                  action(async () => {
-                    await service.request(ride.id, selectedQuery);
-                  }, t("Zahtjev je poslan vozaču."))
-                }
-                arrow
-              >
-                {t(" Pošalji zahtjev ")}
-              </Button>
-              <small>
-                {t("Jedan zahtjev po putniku · povratak se dogovara posebno")}
-              </small>
-            </section>
-          )}
+          ) : null}
           {!own && booking && (
             <BookingDiscussion
               booking={booking}

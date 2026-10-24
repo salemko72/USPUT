@@ -10,11 +10,13 @@ export function addBasemap(
   const attribution =
     '<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> · <a href="https://openmaptiles.org" target="_blank" rel="noreferrer">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a> · <a href="/maps/LICENSE.txt" target="_blank" rel="noreferrer">Positron</a>';
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let transitionFrame: number | undefined;
   Promise.all([
     import("@maplibre/maplibre-gl-leaflet"),
     import("maplibre-gl/dist/maplibre-gl.css"),
+    import("leaflet"),
   ])
-    .then(([{ maplibreGL }]) => {
+    .then(([{ maplibreGL }, , L]) => {
       if (disposed) return;
       try {
         layer = maplibreGL({
@@ -24,7 +26,37 @@ export function addBasemap(
           maxZoom: 20,
           canvasContextAttributes: { antialias: false },
           renderWorldCopies: false,
-        }).addTo(map);
+        });
+        // Adapter 0.1.4 schedules resize work without cancelling it on removal.
+        // Keep its transition behavior, but cancel the frame and guard its GL
+        // moveend callback when React replaces a map after sending a request.
+        const transitionLayer = layer as MaplibreGL & {
+          _transitionEnd: () => void;
+          _resizeContainer: () => void;
+          _zoomEnd: () => void;
+        };
+        transitionLayer._transitionEnd = () => {
+          if (transitionFrame !== undefined)
+            cancelAnimationFrame(transitionFrame);
+          transitionFrame = requestAnimationFrame(() => {
+            transitionFrame = undefined;
+            if (disposed || !layer || !map.hasLayer(layer)) return;
+            const gl = layer.getMaplibreMap(),
+              center = map.getCenter(),
+              zoom = map.getZoom();
+            const offset = map.latLngToContainerPoint(
+              map.getBounds().getNorthWest(),
+            );
+            transitionLayer._resizeContainer();
+            L.DomUtil.setTransform(gl.getCanvas(), offset, 1);
+            gl.once("moveend", () => {
+              if (!disposed && layer && map.hasLayer(layer))
+                transitionLayer._zoomEnd();
+            });
+            gl.jumpTo({ center, zoom: zoom - 1 });
+          });
+        };
+        layer.addTo(map);
         map.attributionControl?.addAttribution(attribution);
         const gl = layer.getMaplibreMap();
         let ready = false,
@@ -61,6 +93,7 @@ export function addBasemap(
   return () => {
     disposed = true;
     clearTimeout(timeout);
+    if (transitionFrame !== undefined) cancelAnimationFrame(transitionFrame);
     if (layer && map.hasLayer(layer)) map.removeLayer(layer);
     map.attributionControl?.removeAttribution(attribution);
   };

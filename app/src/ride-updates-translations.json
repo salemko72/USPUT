@@ -55,7 +55,12 @@
     "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Historija dogovora i prijave nedolaska ostaju u bazi.": "Cancelled rides appear last and leave the main list after three days. Agreement history and no-show reports remain stored.",
     "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.": "Choose 5, 10 or 15 minutes of walking. Propose a pickup on the map, review walking and send a request. Drop-off selection is optional; otherwise an approximate point near your destination is suggested. The driver accepts your pin or proposes another for you to confirm.",
     "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su saputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.": "Signed-in users can see a car photo on an active future offer. Personal photos are available to a fellow traveller only with an active confirmed agreement, up to 24 hours after departure. Photos are optional, compressed and stripped of original GPS metadata, in private EU Cloudflare R2 storage.",
-    "Okvirni izlazak:": "Approximate drop-off:"
+    "Okvirni izlazak:": "Approximate drop-off:",
+    "Pošalji mjesto susreta vozaču": "Send meeting place to driver",
+    "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Your meeting proposal was sent to the driver. Waiting for confirmation.",
+    "Provjeravam mjesto susreta…": "Checking meeting place…",
+    "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "The ride is agreed only when the driver confirms the meeting place.",
+    "Bez početne adrese ne računamo hodanje do susreta.": "Without a starting address, walking to the meeting place is not calculated."
   },
   "hr": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -113,7 +118,12 @@
     "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Historija dogovora i prijave nedolaska ostaju u bazi.": "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Povijest dogovora i prijave nedolaska ostaju u bazi.",
     "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.": "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.",
     "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su saputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.": "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su suputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.",
-    "Okvirni izlazak:": "Okvirni izlazak:"
+    "Okvirni izlazak:": "Okvirni izlazak:",
+    "Pošalji mjesto susreta vozaču": "Pošalji mjesto susreta vozaču",
+    "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Mjesto susreta je poslano vozaču. Čekamo potvrdu.",
+    "Provjeravam mjesto susreta…": "Provjeravam mjesto susreta…",
+    "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.",
+    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta."
   },
   "sr-Latn": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -171,6 +181,11 @@
     "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Historija dogovora i prijave nedolaska ostaju u bazi.": "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Istorija dogovora i prijave nedolaska ostaju u bazi.",
     "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.": "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni predlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.",
     "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su saputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.": "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su saputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.",
-    "Okvirni izlazak:": "Okvirni izlazak:"
+    "Okvirni izlazak:": "Okvirni izlazak:",
+    "Pošalji mjesto susreta vozaču": "Pošalji mesto susreta vozaču",
+    "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Mesto susreta je poslato vozaču. Čekamo potvrdu.",
+    "Provjeravam mjesto susreta…": "Proveravam mesto susreta…",
+    "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "Vožnja je dogovorena tek kada vozač potvrdi mesto susreta.",
+    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta."
   }
 }

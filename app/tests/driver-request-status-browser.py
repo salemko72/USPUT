@@ -131,7 +131,7 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                 page.clock.install()
                 open_ride(ride_id)
                 no_request_visuals()
-                page.get_by_role('button', name='Pošalji zahtjev', exact=True).click()
+                page.get_by_role('button', name='Pošalji mjesto susreta vozaču', exact=True).click()
                 expect(page.get_by_role('heading', name='Zahtjev je poslan.', exact=True)).to_be_visible()
                 expect(page.locator('.driver-request-avatar[data-request-state="pending"]')).to_be_visible()
                 expect(page.locator('.driver-request-avatar img')).to_have_count(0)
@@ -224,7 +224,7 @@ with tempfile.TemporaryDirectory(prefix='usput-driver-request-', dir='/tmp') as 
                 assert found.ok, found.text()
                 assert any(offer['id'] == demo_ride_id for offer in found.json()['rides']), found.text()
                 page.goto(base + '/#ride/' + demo_ride_id + '?' + urlencode(demo_query))
-                page.get_by_role('button', name='Pošalji zahtjev', exact=True).click()
+                page.get_by_role('button', name='Pošalji mjesto susreta vozaču', exact=True).click()
                 expect(page.locator('.driver-request-avatar[data-request-state="pending"]')).to_be_visible()
                 expect(page.locator('.demo-simulation')).to_contain_text('Samo demo vožnja — izmišljeni vozač.')
                 assert booking_for(demo_ride_id)['status'] == 'pending'
