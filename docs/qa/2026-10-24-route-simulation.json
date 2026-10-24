@@ -1,0 +1,237 @@
+{
+  "method": "Real proposalMatch + isolated SQLite; deterministic foot service at 1.2m/s unless specified. No live map data.",
+  "results": [
+    {
+      "scenario": "vrijeme -3601s od željenog susreta",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "vrijeme -3600s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": -3600,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme -1200s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": -1200,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme -901s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": -901,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme -900s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": -900,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 0s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 900s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 900,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 901s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 901,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 1200s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 1200,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 3600s od željenog susreta",
+      "result": "PONUDA",
+      "walkToMinutes": 0,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 3600,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "vrijeme 3601s od željenog susreta",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "hodanje 299s / limit 5min",
+      "result": "PONUDA",
+      "walkToMinutes": 5,
+      "walkFromMinutes": 5,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 300s / limit 5min",
+      "result": "PONUDA",
+      "walkToMinutes": 5,
+      "walkFromMinutes": 5,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 301s / limit 5min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "hodanje 599s / limit 10min",
+      "result": "PONUDA",
+      "walkToMinutes": 10,
+      "walkFromMinutes": 10,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 600s / limit 10min",
+      "result": "PONUDA",
+      "walkToMinutes": 10,
+      "walkFromMinutes": 10,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 601s / limit 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "hodanje 899s / limit 15min",
+      "result": "PONUDA",
+      "walkToMinutes": 15,
+      "walkFromMinutes": 15,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 900s / limit 15min",
+      "result": "PONUDA",
+      "walkToMinutes": 15,
+      "walkFromMinutes": 15,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "hodanje 901s / limit 15min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "ručni pin 49m od trase",
+      "result": "PONUDA",
+      "walkToMinutes": 1,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "ručni pin 50m od trase",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "ručni pin 51m od trase",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "ručni pin 100m od trase",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "ručni pin 500m od trase",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "adresa 300m od trase / hodanje 10min",
+      "result": "PONUDA",
+      "walkToMinutes": 5,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "adresa 360m od trase / hodanje 10min",
+      "result": "PONUDA",
+      "walkToMinutes": 6,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "adresa 500m od trase / hodanje 10min",
+      "result": "PONUDA",
+      "walkToMinutes": 7,
+      "walkFromMinutes": 0,
+      "pickupDeltaSeconds": 0,
+      "extraMinutes": 0
+    },
+    {
+      "scenario": "adresa 720m od trase / hodanje 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "adresa 1000m od trase / hodanje 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "adresa 1080m od trase / hodanje 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "adresa 1500m od trase / hodanje 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "adresa 2000m od trase / hodanje 10min",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "obrnuti smjer",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "prepreka: 60m zračno, pješački 1800m",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "pješački servis nedostupan",
+      "result": "NEPROVJERENO"
+    },
+    {
+      "scenario": "pješačka ruta neprohodna",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "ista tačka ulaska i izlaska",
+      "result": "NEMA PONUDE"
+    },
+    {
+      "scenario": "petlja: ulazak na povratku, izlazak na ranije prođenoj lokaciji",
+      "result": "NEMA PONUDE"
+    }
+  ]
+}
