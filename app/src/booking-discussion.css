@@ -1,0 +1,80 @@
+.booking-discussion {
+  padding: 16px 0;
+  border-top: 1px solid var(--line, #e1e4d9);
+  width: 100%;
+}
+.booking-discussion h3 {
+  font-size: 16px;
+}
+.booking-messages {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  max-height: 260px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.booking-messages li {
+  padding: 10px 12px;
+  background: #f0f2e9;
+  border-radius: 14px;
+  max-width: 90%;
+  overflow-wrap: anywhere;
+}
+.booking-messages li.mine {
+  align-self: flex-end;
+  background: #d7f56a;
+}
+.booking-messages p {
+  white-space: pre-wrap;
+  margin: 4px 0;
+  font-size: 14px;
+}
+.booking-messages time {
+  font-size: 10px;
+}
+.booking-discussion textarea {
+  width: 100%;
+  min-height: 70px;
+  font-size: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.passenger-map-controls {
+  padding: 14px;
+  background: #fff;
+  border-radius: 0 0 20px 20px;
+}
+.passenger-map-controls p {
+  font-size: 13px;
+}
+.passenger-map-controls details {
+  margin: 12px 0;
+}
+.passenger-map-controls summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.passenger-map-controls .active {
+  background: #d7f56a;
+}
+.request-row .booking-discussion {
+  flex-basis: 100%;
+}
+.booking-discussion .booking-messages li,
+.booking-discussion .booking-messages p,
+.booking-discussion .booking-messages strong,
+.booking-discussion .booking-messages time {
+  color: #151815;
+}
+.booking-discussion textarea {
+  background: #fff;
+  color: #151815;
+  border: 1px solid #cbd0c2;
+  border-radius: 12px;
+}
+.action-card .booking-discussion .text-button {
+  color: #d7f56a;
+}

@@ -13,10 +13,10 @@ U Profilu mijenjaš ime i grad, dodaješ vozilo i opcionalne fotografije. Za voz
 1. Na **Početnoj** odaberi **Tražim vožnju**. Otvori novu ili sačuvanu pretragu.
 2. Odaberi grad, polazište, odredište, datum i vrijeme. Izaberi ulicu iz prijedloga i provjeri pin na karti.
 3. Odaberi **5, 10 ili 15 minuta hodanja**. Ograničenje važi zasebno za hodanje do ulaska i od izlaska do odredišta.
-4. U ponudi provjeri konkretna mjesta ulaska i izlaska, procijenjeno hodanje, vrijeme susreta, vozilo i dijeljenje troškova. Možeš birati između mjesta koja je vozač već odobrio.
+4. U ponudi provjeri konkretna mjesta ulaska i izlaska, procijenjeno hodanje, vrijeme susreta, vozilo i dijeljenje troškova. Ulazak pomjeri direktno na mapi; vozač ga prihvata ili šalje novi prijedlog za tvoju potvrdu. Izlazak je dodatna opcija.
 5. Pošalji zahtjev. Mjesto u autu je potvrđeno tek kada ga vozač prihvati. Stanje prati u **Vožnje → Putujem**.
 
-Tvoj početni i završni pin služe za računanje hodanja. Vozač staje na dogovorenim, odobrenim mjestima susreta; ne mora doći do tvog početnog pina. Zahtjev trenutno ne uključuje predlaganje novog mjesta ni chat.
+Tvoj početni i završni pin služe za računanje hodanja. Vozač staje na dogovorenim, odobrenim mjestima susreta; ne mora doći do tvog početnog pina. Uz zahtjev možeš predlagati mjesto i razmijeniti kratke poruke. Poruka ne mijenja dogovoreni pin.
 
 ## Ako nudiš vožnju
 
@@ -60,3 +60,8 @@ Isti vozač ne može imati dvije aktivne ponude za isti datum i vrijeme, čak ni
 U detaljima dogovorene vožnje, od 10 minuta do 24 sata nakon susreta možeš prijaviti da druga osoba nije došla. Potvrdi prijavu u prozoru. Dogovor s tim putnikom se deaktivira, drugi putnici ostaju nepromijenjeni. Prijava ostaje označena kao navod učesnika, bez automatske kazne. Druga strana može također podnijeti prijavu.
 
 Otkazane vožnje su na dnu i nakon tri dana nestaju iz glavne liste, uz zadržavanje historije dogovora. Dodir mjesta susreta na kartici Početne otvara detalje i približava mapu na dogovoreni pin. Demo fotografije su AI ilustracije izmišljenih osoba i auta, nisu provjera modela ili identiteta.
+
+## Dogovor ulaska i poruke
+Na mapi je zelena tačka predloženog ulaska. Povuci je ili klikni uz vozačevu trasu. Proračun provjerava hodanje i smjer; pin mora biti do 50 m od trase. Mjesto još nije potvrđeno za zaustavljanje. „Dodaj mjesto izlaska (opcionalno)“ otvara dodatni odabir. Bez njega sistem računa okvirno mjesto uz odredište.
+
+Slanjem zahtjeva predlažeš tačku. Vozač može prihvatiti ili preko „Predloži drugi ulazak na mapi“ poslati drugi pin. Tada putnik bira „Potvrdi predloženi susret“. Promjena zahtijeva novu saglasnost; stara verzija ne može biti potvrđena. Chat ostaje između ta dva učesnika: do 280 znakova po poruci i 100 poruka po dogovoru. Slanje se zatvara otkazivanjem ili završetkom, najkasnije 24 sata nakon polaska; istorija ostaje učesnicima.

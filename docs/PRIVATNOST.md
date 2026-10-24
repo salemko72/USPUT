@@ -67,3 +67,6 @@ Ovaj dokument ne tvrdi da su ta pitanja već riješena ili da je provedena pravn
 
 ## Prijave nedolaska
 Učesnik potvrđenog dogovora može prijaviti nedolazak druge osobe od 10 minuta do 24 sata nakon susreta. Čuvaju se dogovor, identitet prijavitelja, prijavljena uloga i vrijeme prijave, dostupno učesnicima tog dogovora. To je navod učesnika, bez automatskog bodovanja ili kazne; obje strane mogu prijaviti svoju verziju. Trenutno nema automatskog roka brisanja ovih zapisa, niti javnog prikaza prijava.
+
+## Poruke i prijedlozi susreta
+D1 čuva tekst poruka, pošiljaoca, vrijeme, trenutnu verziju predloženog mjesta i privatne ulazne podatke potrebne za ponovni pješački obračun. Samo vozač i putnik tog zahtjeva mogu čitati poruke i prijedloge; izvorne privatne adrese nisu prikazane drugoj strani. Poruka nije saglasnost za pin. Trenutno nema automatskog brisanja poruka niti samostalnog brisanja razgovora. Otkazivanje zatvara slanje; čitanje vlastite historije ostaje dostupno. Predloženi pinovi ne ulaze automatski u javni gradski katalog.

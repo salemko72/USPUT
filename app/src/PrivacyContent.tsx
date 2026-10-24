@@ -15,6 +15,11 @@ export function PrivacyContent() {
           "Podaci probnog računa čuvaju se na serveru u Cloudflare D1 bazi: ime, grad, email, vozilo, ponude, zahtjevi, dogovori i sačuvane pretrage. Lozinka se čuva kao hash sa solju, a prijava koristi HttpOnly sesijski kolačić koji ističe nakon 30 dana. Ako izabereš Google prijavu, koristimo Googleov identifikator računa, potvrđeni email i ime iz profila.",
         )}
       </p>
+      <p>
+        {t(
+          "Poruke, verzije prijedloga mjesta i privatni ulazni podaci proračuna čuvaju se u D1 bazi uz dogovor. Poruke i prijedloge vide samo njegova dva učesnika; početne privatne adrese se ne prikazuju drugoj strani. Trenutno nema automatskog brisanja razgovora.",
+        )}
+      </p>
       <h3>{t("Ko vidi rutu i dogovor")}</h3>
       <p>
         {t(
@@ -24,7 +29,7 @@ export function PrivacyContent() {
       <h3>{t("Fotografije za prepoznavanje")}</h3>
       <p>
         {t(
-          "Fotografije su opcionalne. Preglednik šalje malu kompresovanu kopiju bez originalnih GPS i ostalih metapodataka u privatno Cloudflare R2 skladište u EU. Svoju sliku vidiš u Profilu; saputnik joj pristupa nakon potvrde aktivnog dogovora, najduže do 24 sata nakon polaska. Otkazivanje ili završetak tog dogovora ukida pristup preko njega. Sliku možeš ukloniti u Profilu, ali već preuzetu kopiju nije moguće povući.",
+          "Fotografiju auta uz aktivnu buduću ponudu vide prijavljeni korisnici. Fotografije osoba dostupne su saputniku samo uz aktivan potvrđen dogovor, do 24 sata nakon polaska. Slike su opcionalne, kompresovane i bez izvornih GPS metapodataka, u privatnom Cloudflare R2 skladištu u EU.",
         )}
       </p>
       <h3>{t("Pretraga ulica, rute i karta")}</h3>
@@ -42,7 +47,7 @@ export function PrivacyContent() {
       <h3>{t("Tvoj izbor u beta verziji")}</h3>
       <p>
         {t(
-          "Nema stalnog GPS praćenja, Bluetooth potvrđivanja susreta, privatnog chata, naplate u aplikaciji ni provjere identiteta. Fotografije i sačuvane pretrage uklanjaš u aplikaciji. Za uklanjanje probnog računa obrati se administratoru projekta. Prije stvarne probe bit će objavljeni odgovorna osoba, kontakt, rokovi čuvanja i završna pravila.",
+          "Nema stalnog GPS praćenja, Bluetooth potvrđivanja susreta, naplate u aplikaciji ni provjere identiteta. Fotografije i sačuvane pretrage uklanjaš u aplikaciji. Za uklanjanje probnog računa obrati se administratoru projekta.",
         )}
       </p>
     </div>

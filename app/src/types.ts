@@ -35,6 +35,8 @@ export type MeetingStop = Place & {
 };
 export type RouteViaPoint = { lat: number; lng: number };
 export type RouteMatch = {
+  exitOptional?: boolean;
+  meetingProposal?: boolean;
   pickup: Place & { stopId?: string; catalogId?: string };
   dropoff: Place & { stopId?: string; catalogId?: string };
   fixedMeetingPoints?: boolean;
@@ -75,6 +77,7 @@ export type Ride = {
   createdAt: number;
 };
 export type Booking = {
+  proposal?: { version: number; authorId: string };
   noShowReports?: {
     reporterId: string;
     reportedRole: "driver" | "passenger";
@@ -92,6 +95,9 @@ export type Search = {
   to: string;
   date: string;
   time: string;
+  meetingProposal?: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
   fromLocation?: string;
   toLocation?: string;
   walkMinutes?: string;
@@ -122,7 +128,11 @@ export type Service = {
   mine: () => Promise<MyRides>;
   publish: (q: Offer) => Promise<Ride>;
   request: (id: string, query?: Search) => Promise<Booking>;
-  booking: (id: string, action: string) => Promise<void>;
+  booking: (
+    id: string,
+    action: string,
+    details?: Record<string, unknown>,
+  ) => Promise<void>;
   cancelRide: (id: string) => Promise<void>;
   profile: (name: string, city?: string) => Promise<User>;
 };

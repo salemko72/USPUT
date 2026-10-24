@@ -26,7 +26,7 @@ Postojeći testovi `corridor.test.mjs` dodatno pokrivaju Sarajevo, Marijin Dvor�
 
 ## Nalazi i granice
 
-1. Sadašnji sistem spaja preko vozačevih odobrenih mjesta. Sama blizina geometriji trase ne stvara novo mjesto susreta. To može sakriti korisnu ponudu ako vozač ima samo početak i kraj. Sljedeća iteracija je prijedlog putnikovog pina i izričita saglasnost vozača.
+1. Prethodni model (`matchMeetingStops`, koji ove probe mjere) spaja preko vozačevih odobrenih mjesta. Sama blizina geometriji trase ne stvara novo mjesto susreta. To može sakriti korisnu ponudu ako vozač ima samo početak i kraj. Dopuna 24.10: novi `proposalMatch` u aplikaciji predlaže usputni pin uz geometriju, dok stari put ostaje kompatibilan. `pickup-proposals.test.mjs` provjerava automatski ulazak, ograničenje 50 m i smjer; testovi zahtjeva provjeravaju saglasnost i stare verzije.
 2. Prozor pretrage je do ±60 minuta od traženog susreta. Rezultat nije obećanje da je vrijeme unutar korisnikovih strožih želja; klasifikacija rezultata je zaseban sloj.
 3. Pješačka dostupnost je važnija od kruga na karti. Mostovi, ograde, podvožnjaci i pogrešna strana ceste zahtijevaju stvarnu terensku probu.
 4. U ovim testovima nema saobraćajne gužve ni GPS praćenja. Za terensku probu predlažemo najmanje deset stvarnih parova putanja u Sarajevu, uz zapis očekivanih tačaka i vremena hodanja, pa isti skup u gradu s nelinearnim ulicama.

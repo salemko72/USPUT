@@ -1,6 +1,6 @@
 # USPUT: prijedlog jednostavnijeg dogovora o susretu
 
-Ovo je razrađen prijedlog za sljedeću iteraciju, a ne tvrdnja da su chat, dijeljenje GPS-a i pregovaranje već implementirani. Trenutna aplikacija povezuje vožnju s mjestima susreta koja je vozač odobrio, uz proračun hodanja putnika.
+Ovo je razvojni prijedlog s historijskim pregledom od 22.10.2026. Dopuna 24.10: u grani su implementirani ulazak direktno na mapi, opcionalni izlazak, geometrijski prijedlog uz trasu, verzionisana obostrana potvrda i kratke privatne poruke. Dijeljenje GPS-a, automatsko učenje i ocjene osoba još nisu implementirani. Ranija tabela ispod ostaje historijski presjek, a dostupnost nove dopune provjerava se nakon objave.
 
 Usaglašeni smjer: gradska baza i učenje tačaka rade u pozadini. Običan korisnik bira gdje će se naći, bez obaveznog imenovanja tačke, popunjavanja gradskog kataloga ili ocjenjivanja svake lokacije. Detaljan unos ostaje opcija. Sljedeći odjeljci opisuju cilj naredne iteracije; ovo pojednostavljenje još zahtijeva promjene ugovaranja vožnje i algoritma.
 

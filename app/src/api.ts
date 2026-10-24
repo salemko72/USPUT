@@ -46,7 +46,7 @@ export const realService: Service = {
     const r = await api<{
       rides: Awaited<ReturnType<Service["search"]>>;
       routingUnavailable?: boolean;
-    }>("/rides/search", q);
+    }>("/rides/search", { ...q, meetingProposal: "1" });
     return Object.assign(r.rides, { routingUnavailable: r.routingUnavailable });
   },
   ride: async (id, query) =>
@@ -66,8 +66,8 @@ export const realService: Service = {
         query ? { search: query } : {},
       )
     ).booking,
-  booking: async (id, action) => {
-    await api("/bookings/" + id + "/" + action, {});
+  booking: async (id, action, details) => {
+    await api("/bookings/" + id + "/" + action, details || {});
   },
   cancelRide: async (id) => {
     await api("/rides/" + id + "/cancel", {});

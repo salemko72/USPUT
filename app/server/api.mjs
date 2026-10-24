@@ -20,6 +20,7 @@ import {
 } from "./meeting-catalog.mjs";
 import { normalizeLocation } from "./route-provider.mjs";
 import { readDriverRoute } from "./route-shape.mjs";
+import { proposalFromSearch } from "./pickup-proposals.mjs";
 import { corridorMatch } from "./corridor.mjs";
 import { geocode, locateCity } from "./geocoding.mjs";
 import { meetingAddress } from "./meeting-address.mjs";
@@ -960,18 +961,25 @@ export async function handleApi(request, env) {
               ...rideView(row),
               route: row.route_json ? JSON.parse(row.route_json) : null,
             },
-            match = await corridorMatch(
-              routingEnv,
-              ride,
-              start,
-              end,
-              wanted,
-              minutes,
-              {
-                pickupStopId: q.get("pickupStopId"),
-                dropoffStopId: q.get("dropoffStopId"),
-              },
-            );
+            match =
+              q.get("meetingProposal") === "1"
+                ? await proposalFromSearch(
+                    routingEnv,
+                    ride,
+                    Object.fromEntries(q),
+                  )
+                : await corridorMatch(
+                    routingEnv,
+                    ride,
+                    start,
+                    end,
+                    wanted,
+                    minutes,
+                    {
+                      pickupStopId: q.get("pickupStopId"),
+                      dropoffStopId: q.get("dropoffStopId"),
+                    },
+                  );
           if (match?.unavailable) {
             unavailable = true;
             if (
@@ -1044,6 +1052,13 @@ export async function handleApi(request, env) {
         bookings.push({
           id: b.id,
           status: b.status,
+          proposal:
+            (await db
+              .prepare(
+                "SELECT version,author_id AS authorId FROM booking_proposals WHERE booking_id=?",
+              )
+              .bind(b.id)
+              .first()) || undefined,
           noShowReports: (
             await db
               .prepare(
@@ -1059,39 +1074,77 @@ export async function handleApi(request, env) {
       }
       return json({ rides: rides.map(rideView), bookings });
     }
-    const rideMatch = path.match(/^\/rides\/([^/]+)(?:\/(request|cancel))?$/);
+    const rideMatch = path.match(
+      /^\/rides\/([^/]+)(?:\/(request|cancel|pickup-preview))?$/,
+    );
     if (rideMatch) {
       const r = await readRide(db, rideMatch[1]);
       if (!r) fail(404, "Vožnja nije pronađena.");
       await ensureDemoMeetingStops(env, r);
       const action = rideMatch[2];
+      if (action === "pickup-preview" && method === "POST") {
+        if (!body.search || r.status !== "open" || r.departure <= Date.now())
+          fail(409, "Ova vožnja više nije dostupna.");
+        await rateLimit(db, "pickup-preview:" + user.id, 120);
+        const match = await proposalFromSearch(
+          env,
+          {
+            ...rideView(r),
+            route: r.route_json ? JSON.parse(r.route_json) : null,
+          },
+          body.search,
+        );
+        if (match?.unavailable)
+          fail(
+            503,
+            "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.",
+          );
+        if (!match)
+          fail(
+            409,
+            "Pin mora biti uz trasu, u smjeru vožnje i unutar odabranog hodanja.",
+          );
+        return json({ match });
+      }
       if (!action && method === "GET") {
         const q = url.searchParams,
           wanted = departureMs(q.get("date"), q.get("time"));
         let match,
           resultUnavailable = false;
         if (q.has("walkMinutes")) {
+          if (q.get("meetingProposal") === "1")
+            await rateLimit(db, "pickup-preview:" + user.id, 120);
           const start =
               normalizeLocation(q.get("fromLocation")) ||
               getPlace(q.get("from")),
             end =
               normalizeLocation(q.get("toLocation")) || getPlace(q.get("to"));
           if (start && end && Number.isFinite(wanted)) {
-            const result = await corridorMatch(
-              env,
-              {
-                ...rideView(r),
-                route: r.route_json ? JSON.parse(r.route_json) : null,
-              },
-              start,
-              end,
-              wanted,
-              Number(q.get("walkMinutes")),
-              {
-                pickupStopId: q.get("pickupStopId"),
-                dropoffStopId: q.get("dropoffStopId"),
-              },
-            );
+            const result =
+              q.get("meetingProposal") === "1"
+                ? await proposalFromSearch(
+                    env,
+                    {
+                      ...rideView(r),
+                      route: r.route_json ? JSON.parse(r.route_json) : null,
+                    },
+                    Object.fromEntries(q),
+                  )
+                : await corridorMatch(
+                    env,
+                    {
+                      ...rideView(r),
+                      route: r.route_json ? JSON.parse(r.route_json) : null,
+                    },
+                    start,
+                    end,
+                    wanted,
+                    Number(q.get("walkMinutes")),
+                    {
+                      pickupStopId: q.get("pickupStopId"),
+                      dropoffStopId: q.get("dropoffStopId"),
+                    },
+                  );
             match = result?.unavailable ? null : result;
             resultUnavailable = !!result?.unavailable;
           }
@@ -1153,18 +1206,31 @@ export async function handleApi(request, env) {
           )
             fail(400, "Pretraga rute nije ispravna.");
           if (q.walkMinutes) {
-            const result = await corridorMatch(
-              env,
-              {
-                ...rideView(r),
-                route: r.route_json ? JSON.parse(r.route_json) : null,
-              },
-              normalizeLocation(q.fromLocation) || getPlace(q.from),
-              normalizeLocation(q.toLocation) || getPlace(q.to),
-              wanted,
-              Number(q.walkMinutes),
-              { pickupStopId: q.pickupStopId, dropoffStopId: q.dropoffStopId },
-            );
+            const result =
+              q.meetingProposal === "1"
+                ? await proposalFromSearch(
+                    env,
+                    {
+                      ...rideView(r),
+                      route: r.route_json ? JSON.parse(r.route_json) : null,
+                    },
+                    q,
+                  )
+                : await corridorMatch(
+                    env,
+                    {
+                      ...rideView(r),
+                      route: r.route_json ? JSON.parse(r.route_json) : null,
+                    },
+                    normalizeLocation(q.fromLocation) || getPlace(q.from),
+                    normalizeLocation(q.toLocation) || getPlace(q.to),
+                    wanted,
+                    Number(q.walkMinutes),
+                    {
+                      pickupStopId: q.pickupStopId,
+                      dropoffStopId: q.dropoffStopId,
+                    },
+                  );
             if (result?.unavailable)
               fail(
                 503,
@@ -1201,6 +1267,21 @@ export async function handleApi(request, env) {
               )
               .bind(id, JSON.stringify(routeMatch), id),
           );
+        if (routeMatch?.meetingProposal)
+          inserts.push(
+            db
+              .prepare(
+                "INSERT INTO booking_proposals(booking_id,version,author_id,input_json,match_json,updated_at) SELECT ?,1,?,?,?,? WHERE EXISTS(SELECT 1 FROM bookings WHERE id=?)",
+              )
+              .bind(
+                id,
+                user.id,
+                JSON.stringify(body.search),
+                JSON.stringify(routeMatch),
+                Date.now(),
+                id,
+              ),
+          );
         await db.batch(inserts);
         const b = await readBooking(db, id);
         if (!b) fail(409, "Vožnja više nije dostupna.");
@@ -1217,6 +1298,120 @@ export async function handleApi(request, env) {
           201,
         );
       }
+    }
+    const discussion = path.match(
+      /^\/bookings\/([^/]+)\/(messages|meeting-proposal)$/,
+    );
+    if (discussion) {
+      const b = await readBooking(db, discussion[1]);
+      if (!b) fail(404, "Dogovor nije pronađen.");
+      if (![b.driver_id, b.passenger_id].includes(user.id))
+        fail(403, "Ovaj dogovor nije tvoj.");
+      if (discussion[2] === "messages") {
+        if (method === "GET")
+          return json({
+            messages: (
+              await db
+                .prepare(
+                  "SELECT id,sender_id AS senderId,text,created_at AS createdAt FROM booking_messages WHERE booking_id=? ORDER BY created_at,id LIMIT 100",
+                )
+                .bind(b.id)
+                .all()
+            ).results,
+          });
+        if (method !== "POST") fail(405, "Radnja nije podržana.");
+        if (
+          typeof body.text !== "string" ||
+          !body.text.trim() ||
+          body.text.trim().length > 280 ||
+          /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(body.text)
+        )
+          fail(400, "Poruka treba imati od 1 do 280 znakova.");
+        if (
+          !["pending", "accepted", "ready"].includes(b.status) ||
+          !["open", "matched"].includes(b.ride_status) ||
+          Date.now() > b.departure + 86400000
+        )
+          fail(409, "Razgovor za ovaj dogovor je zatvoren.");
+        await rateLimit(db, "booking-message:" + user.id, 60);
+        const result = await db
+          .prepare(
+            "INSERT INTO booking_messages(id,booking_id,sender_id,text,created_at) SELECT ?,?,?,?,? WHERE (SELECT COUNT(*) FROM booking_messages WHERE booking_id=?)<100 AND EXISTS(SELECT 1 FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.id=? AND b.status IN ('pending','accepted','ready') AND r.status IN ('open','matched'))",
+          )
+          .bind(
+            crypto.randomUUID(),
+            b.id,
+            user.id,
+            body.text.trim(),
+            Date.now(),
+            b.id,
+            b.id,
+          )
+          .run();
+        if (!result.meta.changes)
+          fail(409, "Razgovor je zatvoren ili ima 100 poruka.");
+        return json({ ok: true }, 201);
+      }
+      if (method !== "POST") fail(405, "Radnja nije podržana.");
+      const proposal = await db
+        .prepare("SELECT * FROM booking_proposals WHERE booking_id=?")
+        .bind(b.id)
+        .first();
+      if (
+        !proposal ||
+        b.status !== "pending" ||
+        b.departure <= Date.now() ||
+        b.ride_status !== "open"
+      )
+        fail(409, "Mjesto se mijenja samo dok zahtjev čeka potvrdu.");
+      if (body.expectedVersion !== proposal.version)
+        fail(409, "Mjesto se promijenilo. Osvježi dogovor.");
+      await rateLimit(db, "pickup-preview:" + user.id, 120);
+      const incomingPickup = normalizeLocation(body.pickupLocation);
+      if (!incomingPickup) fail(400, "Potvrdi ispravne lokacije na karti.");
+      const input = {
+        ...JSON.parse(proposal.input_json),
+        pickupLocation: JSON.stringify(incomingPickup),
+      };
+      if (body.dropoffLocation)
+        input.dropoffLocation = JSON.stringify(body.dropoffLocation);
+      const row = await readRide(db, b.ride_id);
+      const match = await proposalFromSearch(
+        env,
+        {
+          ...rideView(row),
+          route: row.route_json ? JSON.parse(row.route_json) : null,
+        },
+        input,
+      );
+      if (!match || match.unavailable)
+        fail(
+          409,
+          "Pin mora biti uz trasu, u smjeru vožnje i unutar odabranog hodanja.",
+        );
+      const results = await db.batch([
+        db
+          .prepare(
+            "UPDATE booking_proposals SET version=version+1,author_id=?,input_json=?,match_json=?,updated_at=? WHERE booking_id=? AND version=? AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='pending')",
+          )
+          .bind(
+            user.id,
+            JSON.stringify(input),
+            JSON.stringify(match),
+            Date.now(),
+            b.id,
+            proposal.version,
+            b.id,
+          ),
+        db
+          .prepare(
+            "UPDATE booking_routes SET match_json=(SELECT match_json FROM booking_proposals WHERE booking_id=booking_routes.booking_id) WHERE booking_id=? AND EXISTS(SELECT 1 FROM booking_proposals WHERE booking_id=? AND version=? AND author_id=?) AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='pending')",
+          )
+          .bind(b.id, b.id, proposal.version + 1, user.id, b.id),
+      ]);
+      if (!results[0].meta.changes)
+        fail(409, "Mjesto se promijenilo. Osvježi dogovor.");
+      return json({ ok: true, version: proposal.version + 1 });
     }
     const noShow = path.match(/^\/bookings\/([^/]+)\/no-show$/);
     if (noShow && method === "POST") {
@@ -1276,16 +1471,36 @@ export async function handleApi(request, env) {
       return json({ ok: true });
     }
     const bm = path.match(
-      /^\/bookings\/([^/]+)\/(accept|simulate-accept|decline|ready|complete|cancel)$/,
+      /^\/bookings\/([^/]+)\/(accept|confirm-meeting|simulate-accept|decline|ready|complete|cancel)$/,
     );
     if (bm && method === "POST") {
       const b = await readBooking(db, bm[1]);
       if (!b) fail(404, "Dogovor nije pronađen.");
       const simulation = bm[2] === "simulate-accept",
-        action = simulation ? "accept" : bm[2],
+        confirming = bm[2] === "confirm-meeting",
+        action = simulation || confirming ? "accept" : bm[2],
         isDriver = b.driver_id === user.id,
         isPassenger = b.passenger_id === user.id;
       if (!isDriver && !isPassenger) fail(403, "Ovaj dogovor nije tvoj.");
+      const currentProposal = await db
+        .prepare(
+          "SELECT version,author_id FROM booking_proposals WHERE booking_id=?",
+        )
+        .bind(b.id)
+        .first();
+      if (
+        confirming &&
+        (!isPassenger ||
+          !currentProposal ||
+          currentProposal.author_id !== b.driver_id)
+      )
+        fail(403, "Ovaj prijedlog potvrđuje putnik.");
+      if (action === "accept" && currentProposal) {
+        if (body.expectedVersion !== currentProposal.version)
+          fail(409, "Mjesto se promijenilo. Osvježi dogovor.");
+        if (!simulation && !confirming && currentProposal.author_id === user.id)
+          fail(409, "Čekamo da druga osoba potvrdi predloženo mjesto.");
+      }
       if (
         simulation &&
         (!isPassenger ||
@@ -1295,6 +1510,7 @@ export async function handleApi(request, env) {
       if (
         ["accept", "decline", "complete"].includes(action) &&
         !isDriver &&
+        !confirming &&
         !simulation
       )
         fail(403, "Ovu radnju potvrđuje vozač.");
@@ -1310,9 +1526,15 @@ export async function handleApi(request, env) {
         const results = await db.batch([
           db
             .prepare(
-              "UPDATE bookings SET status='accepted' WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM rides r WHERE r.id=? AND r.status='open' AND r.departure>? AND (SELECT COUNT(*) FROM bookings b WHERE b.ride_id=r.id AND b.status IN ('accepted','ready','completed'))<r.seats)",
+              "UPDATE bookings SET status='accepted' WHERE id=? AND status='pending' AND (?=0 OR EXISTS(SELECT 1 FROM booking_proposals WHERE booking_id=bookings.id AND version=?)) AND EXISTS(SELECT 1 FROM rides r WHERE r.id=? AND r.status='open' AND r.departure>? AND (SELECT COUNT(*) FROM bookings b WHERE b.ride_id=r.id AND b.status IN ('accepted','ready','completed'))<r.seats)",
             )
-            .bind(b.id, b.ride_id, Date.now()),
+            .bind(
+              b.id,
+              currentProposal?.version || 0,
+              currentProposal?.version || 0,
+              b.ride_id,
+              Date.now(),
+            ),
           db
             .prepare(
               "UPDATE rides SET status='matched' WHERE id=? AND status='open' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='accepted') AND (SELECT COUNT(*) FROM bookings WHERE ride_id=? AND status IN ('accepted','ready','completed'))>=seats",

@@ -638,3 +638,208 @@ test("cancelled offers and requests are last for three days, then hidden without
   );
   assert.equal((await call("/rides/" + cancelled.id)).status, 200);
 });
+
+async function proposedBooking() {
+  const created = await publish();
+  assert.equal(created.status, 201, JSON.stringify(created.data));
+  const ride = created.data.ride;
+  const search = {
+    from: ride.from.id,
+    to: ride.to.id,
+    date: ride.date,
+    time: ride.time,
+    walkMinutes: "5",
+    meetingProposal: "1",
+  };
+  const requested = await call("/rides/" + ride.id + "/request", "one", {
+    search,
+  });
+  assert.equal(requested.status, 201, JSON.stringify(requested.data));
+  return { ride, id: requested.data.booking.id, search };
+}
+test("private conversation is limited to two participants and never interprets text as acceptance", async () => {
+  const { id } = await proposedBooking();
+  assert.equal(
+    (await call("/bookings/" + id + "/messages", "three")).status,
+    403,
+  );
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/messages", "one", {
+        text: "Mogu sići do tramvajske. <img src=x>",
+      })
+    ).status,
+    201,
+  );
+  const messages = await call("/bookings/" + id + "/messages");
+  assert.equal(messages.data.messages.length, 1);
+  assert.equal(messages.data.messages[0].senderId, "one");
+  assert.match(messages.data.messages[0].text, /<img/);
+  assert.equal(status("bookings", id), "pending");
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/messages", "one", {
+        text: "x".repeat(281),
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await call("/bookings/" + id + "/messages", "one", { text: "" })).status,
+    400,
+  );
+  await action(id, "cancel", "one");
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/messages", "driver", {
+        text: "Zakasnio sam",
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (await call("/bookings/" + id + "/messages", "one")).data.messages.length,
+    1,
+  );
+});
+test("driver counterproposal requires passenger confirmation of the exact revision", async () => {
+  const { id, ride } = await proposedBooking();
+  const original = (await call("/my-rides")).data.bookings.find(
+    (b) => b.id === id,
+  );
+  assert.equal(original.proposal.version, 1);
+  assert.equal(original.proposal.authorId, "one");
+  const pin = { ...original.match.pickup, name: "Predloženi ulazak" };
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/meeting-proposal", "three", {
+        expectedVersion: 1,
+        pickupLocation: pin,
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/meeting-proposal", "driver", {
+        expectedVersion: 1,
+        pickupLocation: pin,
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/accept", "driver", {
+        expectedVersion: 2,
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/confirm-meeting", "one", {
+        expectedVersion: 1,
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/confirm-meeting", "one", {
+        expectedVersion: 2,
+      })
+    ).status,
+    200,
+  );
+  assert.equal(status("bookings", id), "accepted");
+  assert.equal(
+    (
+      await call("/bookings/" + id + "/meeting-proposal", "one", {
+        expectedVersion: 2,
+        pickupLocation: pin,
+      })
+    ).status,
+    409,
+  );
+  const changed = (await call("/my-rides", "one")).data.bookings.find(
+    (b) => b.id === id,
+  );
+  assert.equal(changed.match.pickup.lat, pin.lat);
+  assert.equal(changed.match.pickup.lng, pin.lng);
+});
+test("new pin racing with acceptance invalidates the old acceptance without consuming a seat", async () => {
+  const { id } = await proposedBooking();
+  const original = (await call("/my-rides")).data.bookings.find(
+    (b) => b.id === id,
+  );
+  const gate = pauseBatch((statements) =>
+    statements[0]._sql.includes("UPDATE bookings SET status='accepted'"),
+  );
+  const accepting = call("/bookings/" + id + "/accept", "driver", {
+    expectedVersion: 1,
+  });
+  await gate.reached;
+  const changed = await call("/bookings/" + id + "/meeting-proposal", "one", {
+    expectedVersion: 1,
+    pickupLocation: { ...original.match.pickup, name: "Novi pin" },
+  });
+  assert.equal(changed.status, 200);
+  gate.release();
+  assert.equal((await accepting).status, 409);
+  assert.equal(status("bookings", id), "pending");
+});
+test("a losing same-author update cannot replace the winning proposal snapshot", async () => {
+  const { id } = await proposedBooking();
+  const original = (await call("/my-rides")).data.bookings.find(
+    (b) => b.id === id,
+  );
+  const gate = pauseBatch((statements) =>
+    statements[0]._sql.includes("UPDATE booking_proposals"),
+  );
+  const first = call("/bookings/" + id + "/meeting-proposal", "one", {
+    expectedVersion: 1,
+    pickupLocation: { ...original.match.pickup, name: "First pin" },
+  });
+  await gate.reached;
+  // Allow this request to run without pausing; its version wins before the original resumes.
+  const originalBatch = env.DB.batch;
+  env.DB.batch = adaptSqlite(sqlite).batch;
+  const winning = await call("/bookings/" + id + "/meeting-proposal", "one", {
+    expectedVersion: 1,
+    pickupLocation: { ...original.match.pickup, name: "Winning pin" },
+  });
+  assert.equal(winning.status, 200);
+  gate.release();
+  assert.equal((await first).status, 409);
+  const snapshot = JSON.parse(
+    sqlite
+      .prepare("SELECT match_json FROM booking_routes WHERE booking_id=?")
+      .get(id).match_json,
+  );
+  const proposal = JSON.parse(
+    sqlite
+      .prepare("SELECT match_json FROM booking_proposals WHERE booking_id=?")
+      .get(id).match_json,
+  );
+  assert.equal(snapshot.pickup.name, "Winning pin");
+  assert.deepEqual(snapshot, proposal);
+});
+test("message cap is atomic and does not delete existing conversation", async () => {
+  const { id } = await proposedBooking();
+  const insert = sqlite.prepare(
+    "INSERT INTO booking_messages(id,booking_id,sender_id,text,created_at) VALUES(?,?,?,?,?)",
+  );
+  for (let i = 0; i < 100; i++)
+    insert.run(String(i), id, "one", "Poruka", Date.now() + i);
+  assert.equal(
+    (await call("/bookings/" + id + "/messages", "one", { text: "Višak" }))
+      .status,
+    409,
+  );
+  assert.equal(
+    (await call("/bookings/" + id + "/messages", "driver")).data.messages
+      .length,
+    100,
+  );
+});

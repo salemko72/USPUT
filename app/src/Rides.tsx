@@ -2,6 +2,9 @@ import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
 import { ConnectionPhotos } from "./Photos";
+import { PassengerMeetingPicker } from "./PassengerMeetingPicker";
+import { BookingDiscussion } from "./BookingDiscussion";
+import "./booking-discussion.css";
 import { NoShowReport, bookingLabel } from "./NoShowReport";
 import { RideVehiclePhoto } from "./RideVehiclePhoto";
 import { MeetingFeedback } from "./MeetingFeedback";
@@ -100,7 +103,7 @@ function MatchSummary({
         {pickupTime(match.pickupAt)}
       </strong>
       <span>
-        {t("Izlazak: ")}
+        {t(match.exitOptional ? "Okvirni izlazak: " : "Izlazak: ")}
         <MeetingPointLabel point={match.dropoff} demo={demo} />
       </span>
       <span>
@@ -345,12 +348,10 @@ export function RideDetails({
   onTrips: () => void;
   onToast: (s: string) => void;
 }) {
-  const [stopSelection, setStopSelection] = useState<{
-    pickupStopId?: string;
-    dropoffStopId?: string;
-  }>({});
+  const [stopSelection, setStopSelection] = useState<Partial<Search>>({});
   const selectedQuery = useMemo(
-    () => (query ? { ...query, ...stopSelection } : undefined),
+    () =>
+      query ? { ...query, meetingProposal: "1", ...stopSelection } : undefined,
     [query, stopSelection],
   );
   const loadVersion = useRef(0);
@@ -485,15 +486,27 @@ export function RideDetails({
       </header>
       <div className="details-layout">
         <section className="detail-map" id="agreed-meeting-map" tabIndex={-1}>
-          <RouteMap
-            from={pickup}
-            to={dropoff}
-            focusPoint={focusMeeting ? pickup : undefined}
-            geometry={agreed?.geometry || ride.geometry}
-            provider={agreed?.provider || ride.routeProvider}
-            stops={ride.meetingStops}
-            large
-          />
+          {!own && !booking && selectedQuery ? (
+            <PassengerMeetingPicker
+              ride={ride}
+              query={selectedQuery}
+              onChange={(change) => {
+                setMatchBusy(true);
+                setStopSelection((old) => ({ ...old, ...change }));
+              }}
+            />
+          ) : (
+            <RouteMap
+              from={pickup}
+              to={dropoff}
+              animated={false}
+              focusPoint={focusMeeting ? pickup : undefined}
+              geometry={agreed?.geometry || ride.geometry}
+              provider={agreed?.provider || ride.routeProvider}
+              stops={ride.meetingStops}
+              large
+            />
+          )}
           <div className="meeting-label">
             <MapPin size={19} />
             <div>
@@ -598,87 +611,19 @@ export function RideDetails({
                 </ol>
               </details>
             )}
-            {!own &&
-              !booking &&
-              selectedQuery &&
-              ride.meetingStops &&
-              ride.meetingStops.length >= 2 && (
-                <div className="meeting-stop-choices">
-                  <label>
-                    {t("Gdje ulaziš?")}
-                    <select
-                      value={
-                        stopSelection.pickupStopId ||
-                        agreed?.pickup.stopId ||
-                        ""
-                      }
-                      onChange={(e) => {
-                        setMatchBusy(true);
-                        setRide((current) =>
-                          current ? { ...current, match: null } : current,
-                        );
-                        setStopSelection({
-                          ...stopSelection,
-                          pickupStopId: e.target.value,
-                        });
-                      }}
-                    >
-                      <option value="">
-                        {t("Najbliža odgovarajuća tačka")}
-                      </option>
-                      {ride.meetingStops.slice(0, -1).map((p) => (
-                        <MeetingStopOption key={p.stopId} point={p} />
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    {t("Gdje izlaziš?")}
-                    <select
-                      value={
-                        stopSelection.dropoffStopId ||
-                        agreed?.dropoff.stopId ||
-                        ""
-                      }
-                      onChange={(e) => {
-                        setMatchBusy(true);
-                        setRide((current) =>
-                          current ? { ...current, match: null } : current,
-                        );
-                        setStopSelection({
-                          ...stopSelection,
-                          dropoffStopId: e.target.value,
-                        });
-                      }}
-                    >
-                      <option value="">
-                        {t("Najbliža odgovarajuća tačka")}
-                      </option>
-                      {ride.meetingStops.slice(1).map((p) => (
-                        <MeetingStopOption key={p.stopId} point={p} />
-                      ))}
-                    </select>
-                  </label>
-                  <p>
-                    {t(
-                      "Vozač staje na svojim potvrđenim tačkama. Tvoj polazni pin služi za računanje hodanja.",
-                    )}
-                  </p>
-                  {matchBusy && (
-                    <p role="status">
-                      {t("Provjeravamo hodanje do odabranih tačaka…")}
-                    </p>
-                  )}
-                  {!matchBusy && !ride.match && (
-                    <ErrorBox
-                      error={t(
-                        ride.routingUnavailable
-                          ? "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu."
-                          : "Odabrane tačke ne uklapaju se u vrijeme ili dozvoljeno hodanje. Promijeni izbor ili pretragu.",
-                      )}
-                    />
-                  )}
-                </div>
-              )}
+            {!own && !booking && selectedQuery && !matchBusy && !ride.match && (
+              <ErrorBox
+                error={
+                  ride.routingUnavailable
+                    ? t(
+                        "Cestovni ili pješački proračun trenutno nije dostupan. Ponovi pretragu.",
+                      )
+                    : t(
+                        "Pin mora biti uz trasu, u smjeru vožnje i unutar odabranog hodanja.",
+                      )
+                }
+              />
+            )}
             {agreed && <MatchSummary match={agreed} demo={ride.demo} />}
             <div className="ride-facts">
               <span>
@@ -754,41 +699,51 @@ export function RideDetails({
                     </span>
                   </div>
                   {b.match && <MatchSummary match={b.match} demo={ride.demo} />}
-                  {b.status === "pending" && (
-                    <div className="request-actions">
-                      <button
-                        aria-label={t("Odbij zahtjev: ") + b.passenger.name}
-                        onClick={() =>
-                          action(
-                            () => service.booking(b.id, "decline"),
-                            t("Zahtjev je odbijen."),
-                          )
-                        }
-                        disabled={busy}
-                      >
-                        <X size={18} />
-                      </button>
-                      <Button
-                        variant="lime"
-                        busy={busy}
-                        disabled={
-                          availableSeats(ride) < 1 ||
-                          !["open", "matched"].includes(ride.status)
-                        }
-                        onClick={() =>
-                          action(
-                            () => service.booking(b.id, "accept"),
-                            t(
-                              "Vožnja je dogovorena. Uvijek sačekaj obostranu potvrdu.",
-                            ),
-                          )
-                        }
-                      >
-                        <Check size={18} />
-                        {t(" Prihvati ")}
-                      </Button>
-                    </div>
-                  )}
+                  {b.status === "pending" &&
+                    b.proposal?.authorId !== user.id && (
+                      <div className="request-actions">
+                        <button
+                          aria-label={t("Odbij zahtjev: ") + b.passenger.name}
+                          onClick={() =>
+                            action(
+                              () => service.booking(b.id, "decline"),
+                              t("Zahtjev je odbijen."),
+                            )
+                          }
+                          disabled={busy}
+                        >
+                          <X size={18} />
+                        </button>
+                        <Button
+                          variant="lime"
+                          busy={busy}
+                          disabled={
+                            availableSeats(ride) < 1 ||
+                            !["open", "matched"].includes(ride.status)
+                          }
+                          onClick={() =>
+                            action(
+                              () =>
+                                service.booking(b.id, "accept", {
+                                  expectedVersion: b.proposal?.version,
+                                }),
+                              t(
+                                "Vožnja je dogovorena. Uvijek sačekaj obostranu potvrdu.",
+                              ),
+                            )
+                          }
+                        >
+                          <Check size={18} />
+                          {t(" Prihvati ")}
+                        </Button>
+                      </div>
+                    )}
+                  <BookingDiscussion
+                    booking={b}
+                    viewerId={user.id}
+                    service={service}
+                    onRefresh={load}
+                  />
                   <NoShowReport
                     booking={b}
                     viewerId={user.id}
@@ -908,7 +863,11 @@ export function RideDetails({
           ) : booking?.status === "pending" ? (
             <section className="action-card">
               <span className="pending-pulse" />
-              <h2>{t("Zahtjev je poslan.")}</h2>
+              <h2>
+                {booking.proposal?.authorId === ride.driver.id
+                  ? t("Potvrdi predloženi susret")
+                  : t("Zahtjev je poslan.")}
+              </h2>
               <p>
                 {t(
                   " Čekamo potvrdu vozača. Ovo još nije dogovorena vožnja — imaj rezervni plan. ",
@@ -927,6 +886,7 @@ export function RideDetails({
                           service.booking(
                             booking.id,
                             ride.demo ? "simulate-accept" : "accept",
+                            { expectedVersion: booking.proposal?.version },
                           ),
                         t("Demo: vozač je potvrdio zahtjev."),
                       )
@@ -975,6 +935,14 @@ export function RideDetails({
                 {t("Jedan zahtjev po putniku · povratak se dogovara posebno")}
               </small>
             </section>
+          )}
+          {!own && booking && (
+            <BookingDiscussion
+              booking={booking}
+              viewerId={user.id}
+              service={service}
+              onRefresh={load}
+            />
           )}
           {!own && booking && (
             <NoShowReport

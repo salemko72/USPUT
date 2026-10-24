@@ -131,6 +131,18 @@ with tempfile.TemporaryDirectory(prefix='usput-vehicle-thumbs-', dir='/tmp') as 
                 expect(home.get_by_role('button', name='Na mjestu sam', exact=True)).to_be_in_viewport()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 page.screenshot(path=str(RESULTS / 'home-small.png'), full_page=True)
+                home.get_by_role('button',name='Na mjestu sam',exact=True).click()
+                expect(home.get_by_role('heading',name='Vozač zna da si tu.',exact=True)).to_be_visible()
+                home.locator('.upcoming-meeting-map-link').click()
+                expect(page).to_have_url(base+'/#ride/'+ride['id']+'?focus=meeting')
+                expect(page.locator('#agreed-meeting-map')).to_be_in_viewport()
+                canvas=page.locator('#agreed-meeting-map .leaflet-container-wrap')
+                expect(canvas).to_be_visible()
+                marker=page.locator('#agreed-meeting-map .leaflet-overlay-pane path').first
+                expect(marker).to_be_visible()
+                centre=canvas.bounding_box();point=marker.bounding_box()
+                assert abs(point['x']+point['width']/2-centre['x']-centre['width']/2)<3
+                assert abs(point['y']+point['height']/2-centre['y']-centre['height']/2)<3
                 # Removal/broken private images fall back without a broken image/zoom.
                 post(driver, '/photos/vehicle/remove')
                 page.goto(base + '/#trips')

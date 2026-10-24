@@ -9,6 +9,16 @@ export function HelpContent() {
           "USPUT je razvojna beta za punoljetne osobe. Ove upute opisuju trenutnu probnu verziju; stvarna proba vožnji još nije otvorena.",
         )}
       </p>
+      <p>
+        {t(
+          "Kratke poruke uz zahtjev vide samo putnik i vozač tog dogovora. Poruka ne potvrđuje vožnju niti pomjera pin. Piši do 280 znakova; razgovor se zatvara otkazivanjem ili završetkom, najkasnije 24 sata nakon polaska.",
+        )}
+      </p>
+      <p>
+        {t(
+          "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Historija dogovora i prijave nedolaska ostaju u bazi.",
+        )}
+      </p>
       <details open>
         <summary>{t("Putnik: od pretrage do dogovora")}</summary>
         <p>
@@ -28,7 +38,7 @@ export function HelpContent() {
         </p>
         <p>
           {t(
-            "Odaberi 5, 10 ili 15 minuta hodanja na svakom kraju. U ponudi provjeri dogovorena mjesta, procijenjeno hodanje i vrijeme susreta. Možeš birati između vozačevih ponuđenih tačaka. Zahtjev čeka dok ga vozač ne prihvati; slanje zahtjeva još nije potvrda mjesta u autu.",
+            "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.",
           )}
         </p>
       </details>
