@@ -1,3 +1,4 @@
+import { handleLocationApi, cleanupLiveLocations } from "./live-location.mjs";
 import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
 import {
   handleNotificationApi,
@@ -573,10 +574,12 @@ export async function handleApi(request, env) {
     if (path === "/auth/logout" && method === "POST") {
       const token = cookieValue(request, "usput_session");
       if (token)
-        await db
-          .prepare("DELETE FROM sessions WHERE id=?")
-          .bind(await hash(token))
-          .run();
+        await db.batch([
+          db.prepare("DELETE FROM sessions WHERE id=?").bind(await hash(token)),
+          db
+            .prepare("DELETE FROM location_shares WHERE user_id=?")
+            .bind(user.id),
+        ]);
       return json({ ok: true }, 200, {
         "Set-Cookie":
           "usput_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
@@ -1177,6 +1180,7 @@ export async function handleApi(request, env) {
         ]);
         if (!results[0].meta.changes)
           fail(409, "Vožnja je već završena ili otkazana.");
+        await cleanupLiveLocations(env);
         return json({ ok: true });
       }
       if (action === "request" && method === "POST") {
@@ -1299,6 +1303,8 @@ export async function handleApi(request, env) {
         );
       }
     }
+    if (/^\/bookings\/[^/]+\/(location|location-sharing)$/.test(path))
+      return handleLocationApi(request, env, user, path, body, rateLimit);
     const discussion = path.match(
       /^\/bookings\/([^/]+)\/(messages|meeting-proposal)$/,
     );
@@ -1468,6 +1474,7 @@ export async function handleApi(request, env) {
           .first())
       )
         fail(409, "Dogovor više nije aktivan.");
+      await cleanupLiveLocations(env);
       return json({ ok: true });
     }
     const bm = path.match(
@@ -1609,6 +1616,7 @@ export async function handleApi(request, env) {
         ]);
         if (!results[0].meta.changes) fail(409, "Dogovor više nije aktivan.");
       }
+      await cleanupLiveLocations(env);
       return json({ ok: true });
     }
     fail(404, "Stranica nije pronađena.");

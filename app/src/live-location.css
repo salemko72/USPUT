@@ -1,0 +1,123 @@
+.live-location-card {
+  padding: 20px;
+  border: 1px solid #dfe4d5;
+  border-radius: 22px;
+  background: #fff;
+  color: #151815;
+  margin: 14px 0;
+}
+.live-location-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+.live-location-card p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 10px 0;
+  color: #35402e;
+}
+.live-location-card .button {
+  width: 100%;
+  margin: 10px 0;
+}
+.live-location-card small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #62705b;
+  margin-top: 8px;
+}
+.live-location-card strong,
+.live-location-card .gps-peer-status span,
+.live-location-card .gps-own-status span {
+  display: block;
+}
+.live-location-card .gps-stale {
+  color: #7e6b44;
+}
+.live-location-card .gps-fresh {
+  color: #386b43;
+}
+.action-card .live-location-card p,
+.action-card .live-location-card small {
+  color: #35402e;
+}
+.live-sharing-banner {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  width: min(92vw, 500px);
+  box-sizing: border-box;
+  background: #151815;
+  color: #fff;
+  border: 1px solid #d7f56a;
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 18px #0003;
+  font-size: 13px;
+}
+.live-sharing-banner button {
+  background: #d7f56a;
+  color: #151815;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.live-sharing-banner small {
+  flex-basis: 100%;
+}
+.gps-location-marker {
+  border-radius: 50%;
+  border: 3px solid #151815;
+  background: #39ac72;
+  box-shadow: 0 2px 6px #0005;
+}
+.gps-location-marker.own {
+  background: #69baff;
+}
+.gps-location-marker.stale {
+  background: #a9aca5;
+  border-color: #666;
+}
+
+.map-live-fit {
+  position: absolute;
+  bottom: 45px;
+  left: 12px;
+  z-index: 800;
+  background: #fff;
+  color: #151815;
+  border: 1px solid #d7ddce;
+  border-radius: 14px;
+  padding: 10px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gps-location-marker::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+}

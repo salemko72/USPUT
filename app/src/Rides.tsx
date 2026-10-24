@@ -1,3 +1,5 @@
+import { LiveLocationCard } from "./LiveLocationCard";
+import type { LiveMapPoint } from "./Map";
 import { CostSharingBadge } from "./CostSharingBadge";
 import { displayVehicleLabel } from "./VehicleManager";
 import { t } from "./i18n";
@@ -357,6 +359,18 @@ export function RideDetails({
   onTrips: () => void;
   onToast: (s: string) => void;
 }) {
+  const [locationsByBooking, setLocationsByBooking] = useState<
+    Record<string, LiveMapPoint[]>
+  >({});
+  const updateLocations = useCallback(
+    (bookingId: string, positions: LiveMapPoint[]) =>
+      setLocationsByBooking((old) =>
+        JSON.stringify(old[bookingId] || []) === JSON.stringify(positions)
+          ? old
+          : { ...old, [bookingId]: positions },
+      ),
+    [],
+  );
   const [stopSelection, setStopSelection] = useState<Partial<Search>>({});
   const [preparedQuery, setPreparedQuery] = useState<Search | undefined>(() =>
     completePassengerQuery(query) ? query : undefined,
@@ -470,6 +484,20 @@ export function RideDetails({
           ["accepted", "ready", "completed"].includes(b.status),
         )?.match
       : ride.match);
+  const activeLocationBookings = own
+    ? requests.filter((b) => ["accepted", "ready"].includes(b.status))
+    : booking && ["accepted", "ready"].includes(booking.status)
+      ? [booking]
+      : [];
+  const newestLocations = new Map<string, LiveMapPoint>();
+  for (const point of activeLocationBookings.flatMap(
+    (b) => locationsByBooking[b.id] || [],
+  )) {
+    const previous = newestLocations.get(point.userId);
+    if (!previous || point.capturedAt > previous.capturedAt)
+      newestLocations.set(point.userId, point);
+  }
+  const livePositions = [...newestLocations.values()];
   const pickup = agreed?.pickup || ride.from,
     dropoff = agreed?.dropoff || ride.to;
   const title = finished
@@ -548,6 +576,7 @@ export function RideDetails({
             <RouteMap
               from={pickup}
               to={dropoff}
+              positions={livePositions}
               animated={false}
               focusPoint={focusMeeting ? pickup : undefined}
               geometry={agreed?.geometry || ride.geometry}
@@ -797,6 +826,13 @@ export function RideDetails({
                         </Button>
                       </div>
                     )}
+                  {["accepted", "ready"].includes(b.status) && (
+                    <LiveLocationCard
+                      booking={b}
+                      viewerId={user.id}
+                      onPositions={updateLocations}
+                    />
+                  )}
                   <BookingDiscussion
                     booking={b}
                     viewerId={user.id}
@@ -888,7 +924,7 @@ export function RideDetails({
                 {booking.status === "ready"
                   ? t("Sačekaj na dogovorenom, sigurnom mjestu.")
                   : t(
-                      "Potvrdi tek kad stigneš. Bez automatskog praćenja lokacije.",
+                      "Potvrdi tek kad stigneš. GPS ne označava automatski da si na mjestu.",
                     )}
               </p>
               {booking.status === "accepted" ? (
@@ -964,6 +1000,15 @@ export function RideDetails({
               </button>
             </section>
           ) : null}
+          {!own &&
+            booking &&
+            ["accepted", "ready"].includes(booking.status) && (
+              <LiveLocationCard
+                booking={booking}
+                viewerId={user.id}
+                onPositions={updateLocations}
+              />
+            )}
           {!own && booking && (
             <BookingDiscussion
               booking={booking}

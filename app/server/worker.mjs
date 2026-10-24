@@ -1,3 +1,4 @@
+import { cleanupLiveLocations } from "./live-location.mjs";
 import { cleanupPhotos } from "./photos.mjs";
 import { handleApi } from "./api.mjs";
 import {
@@ -7,6 +8,7 @@ import {
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(deliverPushNotifications(env));
+    ctx.waitUntil(cleanupLiveLocations(env));
     if (event.cron === "0 3 * * *") {
       ctx.waitUntil(cleanupPhotos(env));
       ctx.waitUntil(cleanupNotifications(env));
@@ -28,7 +30,7 @@ export default {
     }
     headers.set(
       "Permissions-Policy",
-      "camera=(), microphone=(), geolocation=()",
+      "camera=(), microphone=(), geolocation=(self)",
     );
     headers.set(
       "Content-Security-Policy",

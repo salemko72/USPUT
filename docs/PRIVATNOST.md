@@ -70,3 +70,10 @@ Učesnik potvrđenog dogovora može prijaviti nedolazak druge osobe od 10 minuta
 
 ## Poruke i prijedlozi susreta
 D1 čuva tekst poruka, pošiljaoca, vrijeme, trenutnu verziju predloženog mjesta i privatne ulazne podatke potrebne za ponovni pješački obračun. Samo vozač i putnik tog zahtjeva mogu čitati poruke i prijedloge; izvorne privatne adrese nisu prikazane drugoj strani. Poruka nije saglasnost za pin. Trenutno nema automatskog brisanja poruka niti samostalnog brisanja razgovora. Otkazivanje zatvara slanje; čitanje vlastite historije ostaje dostupno. Predloženi pinovi ne ulaze automatski u javni gradski katalog.
+
+## Dobrovoljna lokacija tokom dogovora
+Svako posebno dozvoljava GPS samo svom vozaču/putniku konkretnog prihvaćenog dogovora od pet minuta prije `pickupAt` do završetka ili otkazivanja, najduže šest sati. Putnici ne vide jedni druge. Prihvatanje za sutra ne otkriva današnju lokaciju. Za svako uključivanje koristi se novi token koji sprečava zakašnjela slanja prethodne sesije. Odjava ukida korisnikova aktivna dijeljenja.
+
+U D1 se čuva samo posljednja lokacija, preciznost, vrijeme mjerenja i prijema, uz kratku dozvolu dijeljenja. Nema historije kretanja, lokalnog trajnog pohranjivanja GPS-a, gradske baze ili obračuna rute pri GPS promjeni. Dozvola ističe nakon 60 sekundi bez obnove, fix nakon 90 sekundi, a minutno čišćenje uklanja istekle zapise. Završetak/otkazivanje odmah ukida API pristup i pokreće uklanjanje. Opoziv na lošoj mreži može čekati istek dozvole; prethodno primljenu kopiju nije moguće povući.
+
+Prikupljanje se zaustavlja kada aplikacija ode u pozadinu ili se zatvori. Web GPS, posebno Safari, ne garantuje rad u pozadini; korisnik ga po povratku uključuje ponovo. GPS nije potvrda susreta, identiteta ili dozvoljenog zaustavljanja.

@@ -19,6 +19,16 @@ export function HelpContent() {
           "Otkazane vožnje su na dnu liste i nakon tri dana se sklanjaju iz glavnog prikaza. Historija dogovora i prijave nedolaska ostaju u bazi.",
         )}
       </p>
+      <p>
+        {t(
+          "GPS dijeljenje uključuješ posebno za svakog saputnika, tek u prihvaćenom dogovoru od pet minuta prije susreta. GPS lokacije se vide na istoj mapi. Dugme „Prekini dijeljenje lokacije“ i prekidač na svim ekranima odmah zaustavljaju GPS na uređaju. Završetak ili otkazivanje ukidaju pristup; ako dogovor ostane nezavršen, dijeljenje prestaje najkasnije šest sati nakon susreta.",
+        )}
+      </p>
+      <p>
+        {t(
+          "Svaka osoba mora zasebno dozvoliti lokaciju. Možeš vidjeti drugu osobu koja dijeli lokaciju i bez uključivanja svoje. Svježina i preciznost su prikazane; stariji pin je siv, a nakon 90 sekundi bez svježeg mjerenja više se ne prikazuje. Web GPS može biti pauziran u pozadini ili kada zaključaš telefon. Ponovno otvaranje ne uključuje dijeljenje bez tvog klika.",
+        )}
+      </p>
       <details open>
         <summary>{t("Putnik: od pretrage do dogovora")}</summary>
         <p>

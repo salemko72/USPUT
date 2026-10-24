@@ -102,7 +102,7 @@ export const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "DENY",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
   "Content-Security-Policy":
     "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://tiles.openfreemap.org https://*.openfreemap.org https://assets.openfreemap.com; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 };

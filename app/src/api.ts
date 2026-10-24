@@ -9,9 +9,14 @@ export class HttpError extends Error {
     super(message);
   }
 }
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await fetch("/api" + path, {
     credentials: "same-origin",
+    signal,
     headers: { "Content-Type": "application/json" },
     ...(body !== undefined
       ? { method: "POST", body: JSON.stringify(body) }

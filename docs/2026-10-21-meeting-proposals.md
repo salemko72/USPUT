@@ -1,6 +1,6 @@
 # USPUT: prijedlog jednostavnijeg dogovora o susretu
 
-Ovo je razvojni prijedlog s historijskim pregledom od 22.10.2026. Dopuna 24.10: u grani su implementirani ulazak direktno na mapi, opcionalni izlazak, geometrijski prijedlog uz trasu, verzionisana obostrana potvrda i kratke privatne poruke. Dijeljenje GPS-a, automatsko učenje i ocjene osoba još nisu implementirani. Ranija tabela ispod ostaje historijski presjek, a dostupnost nove dopune provjerava se nakon objave.
+Ovo je razvojni prijedlog s historijskim pregledom od 22.10.2026. Dopuna 24.10: u grani su implementirani ulazak direktno na mapi, opcionalni izlazak, geometrijski prijedlog uz trasu, verzionisana obostrana potvrda i kratke privatne poruke. Dopuna iste iteracije: dobrovoljno dijeljenje GPS-a je implementirano u ograničenom prozoru od pet minuta prije susreta do završetka, uz šest sati zaštitnog maksimuma; nema rada zatvorene web aplikacije. Automatsko učenje i ocjene osoba još nisu implementirani. Ranija tabela ispod ostaje historijski presjek, a dostupnost nove dopune provjerava se nakon objave.
 
 Usaglašeni smjer: gradska baza i učenje tačaka rade u pozadini. Običan korisnik bira gdje će se naći, bez obaveznog imenovanja tačke, popunjavanja gradskog kataloga ili ocjenjivanja svake lokacije. Detaljan unos ostaje opcija. Sljedeći odjeljci opisuju cilj naredne iteracije; ovo pojednostavljenje još zahtijeva promjene ugovaranja vožnje i algoritma.
 

@@ -13,7 +13,19 @@ export type MapInsets = {
   bottom: number;
   left: number;
 };
+export type LiveMapPoint = {
+  userId: string;
+  lat: number;
+  lng: number;
+  accuracy: number;
+  capturedAt: number;
+  label: string;
+  own: boolean;
+  stale: boolean;
+};
+const emptyPositions: LiveMapPoint[] = [];
 type RouteSnapshot = {
+  positions?: LiveMapPoint[];
   from: Place;
   to: Place;
   geometry?: number[][];
@@ -30,6 +42,8 @@ type LiveRoute = {
   map: LeafletMap;
   L: typeof import("leaflet");
   layers: LayerGroup;
+  locationLayers: LayerGroup;
+  fittedLocations?: boolean;
   bounds?: LatLngBounds;
   routeKey?: string;
 };
@@ -140,6 +154,45 @@ function drawRoute(view: LiveRoute, data: RouteSnapshot) {
     view.routeKey = routeKey;
   }
 }
+function drawLocations(view: LiveRoute, points: LiveMapPoint[], from: Place) {
+  const { L, locationLayers } = view;
+  locationLayers.clearLayers();
+  for (const p of points) {
+    L.circle([p.lat, p.lng], {
+      radius: p.accuracy,
+      color: p.stale ? "#888" : p.own ? "#378ac7" : "#238d55",
+      weight: 1,
+      fillOpacity: 0.1,
+      interactive: false,
+    }).addTo(locationLayers);
+    const label = document.createElement("span");
+    label.textContent = p.label;
+    L.marker([p.lat, p.lng], {
+      title: p.label,
+      alt: p.label,
+      icon: L.divIcon({
+        className:
+          "gps-location-marker" +
+          (p.own ? " own" : "") +
+          (p.stale ? " stale" : ""),
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      }),
+    })
+      .addTo(locationLayers)
+      .bindTooltip(label);
+  }
+  if (points.length && !view.fittedLocations) {
+    view.map.fitBounds(
+      L.latLngBounds([
+        [from.lat, from.lng],
+        ...points.map((p) => [p.lat, p.lng] as [number, number]),
+      ]),
+      { padding: [40, 40], maxZoom: 17, animate: false },
+    );
+    view.fittedLocations = true;
+  }
+}
 function fitOptions(insets?: MapInsets) {
   return {
     paddingTopLeft: [insets?.left ?? 35, insets?.top ?? 45] as [number, number],
@@ -167,6 +220,7 @@ export function RouteMap({
   focusPoint,
   onMeetingMove,
   onReady,
+  positions = emptyPositions,
 }: {
   from: Place;
   to: Place;
@@ -183,6 +237,7 @@ export function RouteMap({
   meetingDraft?: RouteViaPoint;
   onMeetingMove?: (point: RouteViaPoint) => void;
   onReady?: (ready: boolean) => void;
+  positions?: LiveMapPoint[];
 }) {
   const [live, setLive] = useState(Boolean(geometry)),
     [failed, setFailed] = useState(false),
@@ -202,13 +257,14 @@ export function RouteMap({
     meetingDraft,
     focusPoint,
     onMeetingMove,
+    positions,
   };
   useEffect(() => {
     onReady?.(live && mapReady && !failed);
   }, [live, mapReady, failed, onReady]);
   useEffect(() => {
-    if (geometry) setLive(true);
-  }, [geometry]);
+    if (geometry || positions.length) setLive(true);
+  }, [geometry, positions.length]);
   useEffect(() => {
     if (!live || !container.current) return;
     let cancelled = false,
@@ -230,7 +286,8 @@ export function RouteMap({
           markerZoomAnimation: animated,
         });
         const layers = L.layerGroup().addTo(map),
-          current = { map, L, layers };
+          locationLayers = L.layerGroup().addTo(map),
+          current: LiveRoute = { map, L, layers, locationLayers };
         const basemap = addBasemap(map, {
           onReady: () => setFailed(false),
           onError: () => setFailed(true),
@@ -243,6 +300,11 @@ export function RouteMap({
           }),
         );
         drawRoute(current, latest.current);
+        drawLocations(
+          current,
+          latest.current.positions || [],
+          latest.current.from,
+        );
         const observer = new ResizeObserver(() =>
           map.invalidateSize({ pan: false }),
         );
@@ -276,8 +338,30 @@ export function RouteMap({
     focusPoint?.lat,
     focusPoint?.lng,
   ]);
+  useEffect(() => {
+    if (view.current) drawLocations(view.current, positions, from);
+  }, [positions]);
   return (
     <div className={`route-map ${large ? "large" : ""}`}>
+      {positions.length > 0 && (
+        <button
+          type="button"
+          className="map-live-fit"
+          onClick={() => {
+            const v = view.current;
+            if (v)
+              v.map.fitBounds(
+                v.L.latLngBounds([
+                  [from.lat, from.lng],
+                  ...positions.map((p) => [p.lat, p.lng] as [number, number]),
+                ]),
+                { padding: [40, 40], maxZoom: 17, animate: false },
+              );
+          }}
+        >
+          {t("Prikaži učesnike na mapi")}
+        </button>
+      )}
       <svg
         className="schematic-map"
         viewBox="0 0 600 380"

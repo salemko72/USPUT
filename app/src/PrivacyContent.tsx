@@ -9,6 +9,16 @@ export function PrivacyContent() {
           "USPUT je razvojna beta za punoljetne osobe, namijenjena testiranju. Stvarna proba vožnji još nije otvorena. Koristi testne podatke i lokacije.",
         )}
       </p>
+      <p>
+        {t(
+          "GPS je dobrovoljan i dostupan samo vozaču i putniku prihvaćenog dogovora, od pet minuta prije susreta do završetka ili otkazivanja, najduže šest sati. Putnici ne vide druge putnike. Čuva se samo posljednja lokacija i procijenjena preciznost, bez historije kretanja. Dozvola dijeljenja ističe nakon 60 sekundi bez obnove, a mjerenje nakon 90 sekundi; istekli zapisi se redovno uklanjaju. Lokacija se ne koristi za gradski katalog, rutiranje ili reklame.",
+        )}
+      </p>
+      <p>
+        {t(
+          "Lokacija se prikuplja tek nakon tvog klika i dozvole preglednika. Odlazak u pozadinu zaustavlja prikupljanje i pokušava opozvati dijeljenje. Ako mreža nije dostupna, server automatski ukida pristup po isteku kratke dozvole; već primljenu lokaciju nije moguće povući s tuđeg uređaja. GPS ne dokazuje susret ni identitet.",
+        )}
+      </p>
       <h3>{t("Račun i prijava")}</h3>
       <p>
         {t(
@@ -47,7 +57,7 @@ export function PrivacyContent() {
       <h3>{t("Tvoj izbor u beta verziji")}</h3>
       <p>
         {t(
-          "Nema stalnog GPS praćenja, Bluetooth potvrđivanja susreta, naplate u aplikaciji ni provjere identiteta. Fotografije i sačuvane pretrage uklanjaš u aplikaciji. Za uklanjanje probnog računa obrati se administratoru projekta.",
+          "Nema stalnog GPS praćenja izvan aktivnog dobrovoljnog dijeljenja, Bluetooth potvrđivanja susreta, naplate u aplikaciji ni provjere identiteta. Fotografije i sačuvane pretrage uklanjaš u aplikaciji. Za uklanjanje probnog računa obrati se administratoru projekta.",
         )}
       </p>
     </div>
