@@ -266,8 +266,8 @@ export function Results({
             <RouteMap
               from={rides[0].from}
               to={rides[0].to}
-              geometry={rides[0].match?.geometry}
-              provider={rides[0].match?.provider}
+              geometry={rides[0].match?.geometry || rides[0].geometry}
+              provider={rides[0].match?.provider || rides[0].routeProvider}
               large
             />
           ) : (

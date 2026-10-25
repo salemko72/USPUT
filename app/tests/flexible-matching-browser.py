@@ -51,4 +51,18 @@ class FlexibleMatching(h.AutoRoutePreview):
    b=passenger.request.get(self.base+'/api/my-rides').json()['bookings'][0]
    self.assertEqual(b['match']['walkingLimit'],10);self.assertGreater(b['match']['walkToMinutes'],10);self.assertLessEqual(b['match']['walkToMinutes'],15)
   finally:passenger.close()
-if __name__=='__main__':unittest.main(defaultTest=['FlexibleMatching.test_groups_and_explicit_extra_offers','FlexibleMatching.test_extra_walking_reason_and_request_remain_consistent'],verbosity=2)
+ def test_results_without_match_show_real_map_and_published_geometry(self):
+  ride,passenger,p,q=self.offer_and_passenger()
+  try:
+   # Direct/reloaded results currently have no active complete search; offer still owns geometry.
+   p.goto(self.base+'/#results')
+   expect(p.locator('.results-map-panel .leaflet-container')).to_be_visible()
+   expect(p.locator('.results-map-panel .map-note')).to_contain_text('Cestovna trasa')
+   expect(p.get_by_role('region',name='Podudaranje nije provjereno',exact=True)).to_be_visible()
+   # Without any recorded shape the map must still load, with an explicitly unverified line.
+   with sqlite3.connect(Path(self.data.name)/'usput.sqlite') as db:db.execute('UPDATE rides SET route_json=NULL')
+   p.reload()
+   expect(p.locator('.results-map-panel .leaflet-container')).to_be_visible()
+   expect(p.locator('.results-map-panel .map-note')).to_contain_text('linija nije cestovna ruta')
+  finally:passenger.close()
+if __name__=='__main__':unittest.main(defaultTest=['FlexibleMatching.test_groups_and_explicit_extra_offers','FlexibleMatching.test_extra_walking_reason_and_request_remain_consistent','FlexibleMatching.test_results_without_match_show_real_map_and_published_geometry'],verbosity=2)

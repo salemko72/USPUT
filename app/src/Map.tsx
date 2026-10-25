@@ -245,7 +245,7 @@ export function RouteMap({
   onReady?: (ready: boolean) => void;
   positions?: LiveMapPoint[];
 }) {
-  const [live, setLive] = useState(Boolean(geometry)),
+  const [live, setLive] = useState(true),
     [failed, setFailed] = useState(false),
     [mapReady, setMapReady] = useState(false);
   const container = useRef<HTMLDivElement>(null);
