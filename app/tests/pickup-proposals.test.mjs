@@ -104,3 +104,119 @@ test("opposite passenger direction cannot become a valid proposal", () =>
       null,
     );
   }));
+
+test("return journey uses a later pass instead of rejecting the passenger direction", () =>
+  setup(async (env, ride) => {
+    const loop = {
+      ...ride,
+      to: ride.from,
+      route: {
+        coordinates: [...ride.route.coordinates, ride.route.coordinates[0]],
+        distance: 12000,
+        duration: 2400,
+      },
+    };
+    const result = await proposalMatch(
+      env,
+      loop,
+      p("home", 4000),
+      p("work", 2000),
+      ride.departure + 1600000,
+      5,
+    );
+    assert.ok(result, "a return segment is a valid offer");
+    assert.equal(result.pickupAt, ride.departure + 1600000);
+    assert.equal(result.rideMinutes, 7);
+    assert.deepEqual(result.geometry, loop.route.coordinates);
+  }));
+test("flexible proposal allows five extra minutes without changing the chosen walking limit", () =>
+  setup(async (env, ride) => {
+    env.ROUTING_FETCH = async (input) => {
+      const coords = new URL(input).pathname
+        .split("/")
+        .at(-1)
+        .split(";")
+        .map((s) => s.split(",").map(Number));
+      return Response.json({
+        code: "Ok",
+        waypoints: coords.map(() => ({ distance: 0 })),
+        routes: [
+          {
+            duration: 601,
+            distance: 721,
+            geometry: { coordinates: coords },
+            legs: [{ duration: 601, distance: 721 }],
+          },
+        ],
+      });
+    };
+    const args = [
+      env,
+      ride,
+      p("home", 1000, 100),
+      p("work", 4000, 100),
+      ride.departure + 200000,
+      10,
+    ];
+    assert.equal(await proposalMatch(...args), null);
+    const result = await proposalMatch(...args, undefined, undefined, {
+      flexible: true,
+    });
+    assert.ok(result);
+    assert.equal(result.walkingLimit, 10);
+    assert.equal(result.walkToMinutes, 11);
+    assert.equal(result.assessment.category, "maybe");
+  }));
+test("a fitting later pass outranks a closer-time earlier maybe offer", () =>
+  setup(async (env, ride) => {
+    const loop = {
+      ...ride,
+      to: ride.from,
+      route: {
+        coordinates: [...ride.route.coordinates, ride.route.coordinates[0]],
+        distance: 12000,
+        duration: 2400,
+      },
+    };
+    const result = await proposalMatch(
+      env,
+      loop,
+      p("home", 4000),
+      p("work", 2000),
+      ride.departure + 801000,
+      5,
+    );
+    assert.ok(result);
+    assert.equal(result.assessment.category, "fits");
+    assert.equal(result.pickupAt, ride.departure + 1600000);
+  }));
+test("three repeated visits cannot pair the same along-position as a zero-length ride", () =>
+  setup(async (env, ride) => {
+    const loop = {
+      ...ride,
+      route: {
+        coordinates: [
+          ride.route.coordinates[0],
+          ride.route.coordinates[1],
+          ride.route.coordinates[0],
+          ride.route.coordinates[1],
+        ],
+        distance: 18000,
+        duration: 3600,
+      },
+    };
+    const pin = p("same-meeting", 3000);
+    const result = await proposalMatch(
+      env,
+      loop,
+      p("home", 2900),
+      p("work", 3100),
+      ride.departure + 1800000,
+      5,
+      pin,
+      pin,
+    );
+    assert.ok(result);
+    assert.ok(result.pickup.travelSeconds < result.dropoff.travelSeconds);
+    assert.equal(result.rideMinutes, 20);
+  }));

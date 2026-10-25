@@ -60,7 +60,21 @@
     "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Your meeting proposal was sent to the driver. Waiting for confirmation.",
     "Provjeravam mjesto susreta…": "Checking meeting place…",
     "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "The ride is agreed only when the driver confirms the meeting place.",
-    "Bez početne adrese ne računamo hodanje do susreta.": "Without a starting address, walking to the meeting place is not calculated."
+    "Bez početne adrese ne računamo hodanje do susreta.": "Without a starting address, walking to the meeting place is not calculated.",
+    "Odgovara": "Fits your plan",
+    "Možda ti odgovara": "May work for you",
+    "Dodatna ponuda": "Additional offer",
+    "Dodatne ponude": "Additional offers",
+    "Podudaranje nije provjereno": "Match not verified",
+    "Susret je {minutes} min kasnije od traženog vremena.": "Pickup is {minutes} min later than requested.",
+    "Susret je {minutes} min ranije od traženog vremena.": "Pickup is {minutes} min earlier than requested.",
+    "Do susreta: {minutes} min hoda; odabrano {limit} min.": "Walk to pickup: {minutes} min; selected limit {limit} min.",
+    "Od izlaska do cilja: {minutes} min hoda; odabrano {limit} min.": "Walk from dropoff: {minutes} min; selected limit {limit} min.",
+    "Ruta je u blizini, ali proračun nije pouzdan. Prije slanja zahtjeva ponovo provjeri susret.": "The route is nearby, but matching could not be reliably calculated. Recheck pickup before sending a request.",
+    "Prikaži još ponuda": "Show more offers",
+    "Sakrij dodatne ponude": "Hide additional offers",
+    "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Larger time differences, up to 60 minutes earlier or later.",
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Fits your plan: pickup is at the requested time or up to 15 minutes later, within your walking limit. May work for you: up to 30 minutes earlier or later and up to 5 extra walking minutes at each end, with an explanation. Larger time differences up to 60 minutes are behind Show more offers. Match not verified means reliable routing is missing; requests require a successful calculation."
   },
   "hr": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -123,7 +137,21 @@
     "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Mjesto susreta je poslano vozaču. Čekamo potvrdu.",
     "Provjeravam mjesto susreta…": "Provjeravam mjesto susreta…",
     "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.",
-    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta."
+    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta.",
+    "Odgovara": "Odgovara",
+    "Možda ti odgovara": "Možda ti odgovara",
+    "Dodatna ponuda": "Dodatna ponuda",
+    "Dodatne ponude": "Dodatne ponude",
+    "Podudaranje nije provjereno": "Podudaranje nije provjereno",
+    "Susret je {minutes} min kasnije od traženog vremena.": "Susret je {minutes} min kasnije od traženog vremena.",
+    "Susret je {minutes} min ranije od traženog vremena.": "Susret je {minutes} min ranije od traženog vremena.",
+    "Do susreta: {minutes} min hoda; odabrano {limit} min.": "Do susreta: {minutes} min hoda; odabrano {limit} min.",
+    "Od izlaska do cilja: {minutes} min hoda; odabrano {limit} min.": "Od izlaska do cilja: {minutes} min hoda; odabrano {limit} min.",
+    "Ruta je u blizini, ali proračun nije pouzdan. Prije slanja zahtjeva ponovo provjeri susret.": "Ruta je u blizini, ali izračun nije pouzdan. Prije slanja zahtjeva ponovno provjeri susret.",
+    "Prikaži još ponuda": "Prikaži još ponuda",
+    "Sakrij dodatne ponude": "Sakrij dodatne ponude",
+    "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.",
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan izračun; zahtjev šalješ tek nakon uspješne provjere."
   },
   "sr-Latn": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -186,6 +214,20 @@
     "Mjesto susreta je poslano vozaču. Čekamo potvrdu.": "Mesto susreta je poslato vozaču. Čekamo potvrdu.",
     "Provjeravam mjesto susreta…": "Proveravam mesto susreta…",
     "Vožnja je dogovorena tek kada vozač potvrdi mjesto susreta.": "Vožnja je dogovorena tek kada vozač potvrdi mesto susreta.",
-    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta."
+    "Bez početne adrese ne računamo hodanje do susreta.": "Bez početne adrese ne računamo hodanje do susreta.",
+    "Odgovara": "Odgovara",
+    "Možda ti odgovara": "Možda ti odgovara",
+    "Dodatna ponuda": "Dodatna ponuda",
+    "Dodatne ponude": "Dodatne ponude",
+    "Podudaranje nije provjereno": "Podudaranje nije provereno",
+    "Susret je {minutes} min kasnije od traženog vremena.": "Susret je {minutes} min kasnije od traženog vremena.",
+    "Susret je {minutes} min ranije od traženog vremena.": "Susret je {minutes} min ranije od traženog vremena.",
+    "Do susreta: {minutes} min hoda; odabrano {limit} min.": "Do susreta: {minutes} min hoda; izabrano {limit} min.",
+    "Od izlaska do cilja: {minutes} min hoda; odabrano {limit} min.": "Od izlaska do cilja: {minutes} min hoda; izabrano {limit} min.",
+    "Ruta je u blizini, ali proračun nije pouzdan. Prije slanja zahtjeva ponovo provjeri susret.": "Ruta je u blizini, ali proračun nije pouzdan. Pre slanja zahteva ponovo proveri susret.",
+    "Prikaži još ponuda": "Prikaži još ponuda",
+    "Sakrij dodatne ponude": "Sakrij dodatne ponude",
+    "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.",
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provereno znači da nedostaje pouzdan proračun; zahtev šalješ tek nakon uspešne provjere."
   }
 }

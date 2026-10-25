@@ -140,6 +140,8 @@ async function run(c) {
       departure + 240000 - (c.delta || 0) * 1000,
       c.limit || 10,
       c.pickup,
+      undefined,
+      {flexible:true},
     );
     return {
       scenario: c.name,
@@ -150,6 +152,7 @@ async function run(c) {
           : "NEMA PONUDE",
       ...(match && !match.unavailable
         ? {
+            category: match.assessment?.category,
             walkToMinutes: match.walkToMinutes,
             walkFromMinutes: match.walkFromMinutes,
             pickupDeltaSeconds:
@@ -166,7 +169,7 @@ async function run(c) {
 const results = await Promise.all(cases.map(run));
 const report = {
   method:
-    "Real proposalMatch + isolated SQLite; deterministic foot service at 1.2m/s unless specified. No live map data.",
+    "Real flexible proposalMatch + isolated SQLite; deterministic foot service at 1.2m/s unless specified. No live map data.",
   results,
 };
 if (process.argv[2])

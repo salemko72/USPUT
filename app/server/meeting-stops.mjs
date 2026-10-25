@@ -1,3 +1,4 @@
+import { assessMatch, categoryOrder } from "./match-assessment.mjs";
 import { normalizeLocation, readRoute } from "./route-provider.mjs";
 import {
   normalizeRouteViaPoints,
@@ -174,6 +175,7 @@ export async function matchMeetingStops(
   wantedAt,
   walkMinutes,
   preferred = {},
+  options = {},
 ) {
   if (
     ![5, 10, 15].includes(walkMinutes) ||
@@ -181,12 +183,14 @@ export async function matchMeetingStops(
     metres(from, to) < 1
   )
     return null;
+  const effectiveWalkingLimit =
+    walkMinutes + (options.flexible === true ? 5 : 0);
   const published = ride.meetingStops?.length
     ? ride.meetingStops
     : [ride.from, ride.to];
   if (
-    !published.some((p) => metres(from, p) <= walkMinutes * 120) ||
-    !published.some((p) => metres(to, p) <= walkMinutes * 120)
+    !published.some((p) => metres(from, p) <= effectiveWalkingLimit * 120) ||
+    !published.some((p) => metres(to, p) <= effectiveWalkingLimit * 120)
   )
     return null;
   const route = ride.route || (await readRoute(env, [ride.from, ride.to]));
@@ -203,14 +207,18 @@ export async function matchMeetingStops(
         },
       ];
   async function reachable(point, exit) {
-    const options = stops
+    const candidates = stops
       .map((p, index) => ({ point: p, index }))
       .filter(
         (c) =>
+          (!options[exit ? "dropoffStopIds" : "pickupStopIds"] ||
+            options[exit ? "dropoffStopIds" : "pickupStopIds"].includes(
+              c.point.stopId,
+            )) &&
           (!preferred[exit ? "dropoffStopId" : "pickupStopId"] ||
             c.point.stopId ===
               preferred[exit ? "dropoffStopId" : "pickupStopId"]) &&
-          metres(point, c.point) <= walkMinutes * 120 &&
+          metres(point, c.point) <= effectiveWalkingLimit * 120 &&
           (exit ||
             Math.abs(
               ride.departure + c.point.travelSeconds * 1000 - wantedAt,
@@ -219,7 +227,7 @@ export async function matchMeetingStops(
       .sort((a, b) => metres(point, a.point) - metres(point, b.point));
     const accepted = [];
     let unavailable = false;
-    for (const c of options) {
+    for (const c of candidates) {
       const foot = await readRoute(
         env,
         exit ? [c.point, point] : [point, c.point],
@@ -229,7 +237,8 @@ export async function matchMeetingStops(
         unavailable = true;
         continue;
       }
-      if (foot.unreachable || foot.duration > walkMinutes * 60) continue;
+      if (foot.unreachable || foot.duration > effectiveWalkingLimit * 60)
+        continue;
       accepted.push({ ...c, foot });
     }
     return { accepted, unavailable };
@@ -239,7 +248,12 @@ export async function matchMeetingStops(
   let best = null;
   for (const start of starts.accepted)
     for (const end of ends.accepted) {
-      if (start.index >= end.index) continue;
+      if (
+        start.index >= end.index ||
+        (options.routeOrdered && start.point.along + 1 >= end.point.along)
+      )
+        continue;
+      if (end.point.travelSeconds <= start.point.travelSeconds) continue;
       const pickupAt = ride.departure + start.point.travelSeconds * 1000;
       if (
         !Number.isFinite(pickupAt) ||
@@ -255,6 +269,8 @@ export async function matchMeetingStops(
         rideMinutes: Math.ceil(
           (end.point.travelSeconds - start.point.travelSeconds) / 60,
         ),
+        walkToSeconds: start.foot.duration,
+        walkFromSeconds: end.foot.duration,
         walkToMinutes: Math.ceil(start.foot.duration / 60),
         walkFromMinutes: Math.ceil(end.foot.duration / 60),
         walkToMeters: Math.ceil(start.foot.distance),
@@ -272,7 +288,19 @@ export async function matchMeetingStops(
           Math.abs(pickupAt - wantedAt) / 60000 +
           (start.foot.duration + end.foot.duration) / 60,
       };
-      if (!best || match.score < best.score) best = match;
+      match.assessment = assessMatch(match, wantedAt, walkMinutes);
+      if (!match.assessment) continue;
+      const rank = categoryOrder[match.assessment?.category] ?? 0,
+        bestRank = categoryOrder[best?.assessment?.category] ?? 0;
+      if (
+        !best ||
+        rank < bestRank ||
+        (rank === bestRank &&
+          (match.score < best.score ||
+            (match.score === best.score &&
+              match.rideMinutes < best.rideMinutes)))
+      )
+        best = match;
     }
   return (
     best ||

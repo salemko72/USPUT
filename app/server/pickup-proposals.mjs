@@ -1,4 +1,4 @@
-import { projectOnRoute } from "./corridor.mjs";
+import { routeProjections } from "./route-projections.mjs";
 import { matchMeetingStops } from "./meeting-stops.mjs";
 import { readRoute } from "./route-provider.mjs";
 // Coordinates are proposals only: the driver still decides where stopping is possible.
@@ -11,6 +11,7 @@ export async function proposalMatch(
   walkMinutes,
   pickup,
   dropoff,
+  options = {},
 ) {
   if (
     !from ||
@@ -22,16 +23,18 @@ export async function proposalMatch(
   const route = ride.route || (await readRoute(env, [ride.from, ride.to]));
   if (!route) return { unavailable: true };
   if (route.unreachable || !route.coordinates?.length) return null;
-  const a = projectOnRoute(pickup || from, route.coordinates),
-    b = projectOnRoute(dropoff || to, route.coordinates);
-  if (
-    !a ||
-    !b ||
-    a.along + 1 >= b.along ||
-    (pickup && a.distance > 50) ||
-    (dropoff && b.distance > 50)
-  )
-    return null;
+  const radius = (walkMinutes + (options.flexible === true ? 5 : 0)) * 120;
+  const starts = routeProjections(
+    pickup || from,
+    route.coordinates,
+    pickup ? 50 : radius,
+  );
+  const ends = routeProjections(
+    dropoff || to,
+    route.coordinates,
+    dropoff ? 50 : radius,
+  );
+  if (!starts.length || !ends.length) return null;
   const total = route.coordinates.slice(1).reduce((sum, point, index) => {
     const previous = route.coordinates[index];
     return (
@@ -39,7 +42,7 @@ export async function proposalMatch(
       Math.hypot(
         (point[0] - previous[0]) *
           111195 *
-          Math.cos((from.lat * Math.PI) / 180),
+          Math.cos((route.coordinates[0][1] * Math.PI) / 180),
         (point[1] - previous[1]) * 111195,
       )
     );
@@ -68,10 +71,28 @@ export async function proposalMatch(
     detail: "Prijedlog uz trasu; vozač potvrđuje gdje može stati.",
     travelSeconds: Math.round(estimateTime(projection.along)),
   });
+  const activeStarts = starts.filter(
+    (a) =>
+      ends.some((b) => a.along + 1 < b.along) &&
+      Math.abs(
+        ride.departure + Math.round(estimateTime(a.along)) * 1000 - wantedAt,
+      ) <= 3600000,
+  );
+  const activeEnds = ends.filter((b) =>
+    activeStarts.some((a) => a.along + 1 < b.along),
+  );
+  if (!activeStarts.length || !activeEnds.length) return null;
+  // Pedestrian routes are calculated once per candidate, not once per pair of visits.
   const stops = [
-    make(pickup, a, "proposed-pickup"),
-    make(dropoff, b, "proposed-dropoff"),
-  ];
+    ...activeStarts.map((a, i) => ({
+      ...make(pickup, a, `proposed-pickup-${i}`),
+      along: a.along,
+    })),
+    ...activeEnds.map((b, i) => ({
+      ...make(dropoff, b, `proposed-dropoff-${i}`),
+      along: b.along,
+    })),
+  ].sort((a, b) => a.along - b.along);
   const result = await matchMeetingStops(
     env,
     { ...ride, route, meetingStops: stops },
@@ -79,15 +100,28 @@ export async function proposalMatch(
     to,
     wantedAt,
     walkMinutes,
+    {},
+    {
+      ...options,
+      routeOrdered: true,
+      pickupStopIds: stops
+        .filter((p) => p.stopId.startsWith("proposed-pickup-"))
+        .map((p) => p.stopId),
+      dropoffStopIds: stops
+        .filter((p) => p.stopId.startsWith("proposed-dropoff-"))
+        .map((p) => p.stopId),
+    },
   );
-  return result && !result.unavailable
-    ? {
-        ...result,
-        fixedMeetingPoints: false,
-        meetingProposal: true,
-        exitOptional: !dropoff,
-      }
-    : result;
+  return result?.unavailable
+    ? { ...result, nearby: true }
+    : result
+      ? {
+          ...result,
+          fixedMeetingPoints: false,
+          meetingProposal: true,
+          exitOptional: !dropoff,
+        }
+      : null;
 }
 export async function proposalFromSearch(env, ride, q) {
   const { normalizeLocation } = await import("./route-provider.mjs");
@@ -110,6 +144,7 @@ export async function proposalFromSearch(env, ride, q) {
     Number(q.walkMinutes),
     pickup,
     dropoff,
+    { flexible: true },
   );
   return result && !result.unavailable && q.meetingPointOnly === "1"
     ? { ...result, pickupWalkUnknown: true }

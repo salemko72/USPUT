@@ -1,0 +1,54 @@
+.match-results-group {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.match-results-group > h3 {
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+}
+.match-results-group > h3 > span {
+  font-size: 12px;
+  background: #e9eddf;
+  border-radius: 50%;
+  min-width: 25px;
+  padding: 5px;
+  text-align: center;
+}
+.match-assessment {
+  display: grid;
+  gap: 5px;
+  padding: 0 0 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #15181522;
+}
+.match-assessment > strong {
+  font-weight: 800;
+  font-size: 13px;
+}
+.match-assessment > span {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.unverified-match-note {
+  border: 1px solid #ddd4bd;
+  background: #f5f0df;
+  color: #151815;
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.extra-match-results > .button {
+  width: 100%;
+}
+.extra-match-results > p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #69735e;
+  margin: 12px 0 20px;
+}

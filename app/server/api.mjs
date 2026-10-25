@@ -1,3 +1,4 @@
+import { assessMatch, categoryOrder } from "./match-assessment.mjs";
 import { handleLocationApi, cleanupLiveLocations } from "./live-location.mjs";
 import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
 import {
@@ -1036,19 +1037,32 @@ export async function handleApi(request, env) {
           if (match?.unavailable) {
             unavailable = true;
             if (
-              start.id === ride.from.id &&
-              end.id === ride.to.id &&
-              Math.abs(ride.departure - wanted) <= 3600000
+              match.nearby ||
+              (start.id === ride.from.id &&
+                end.id === ride.to.id &&
+                Math.abs(ride.departure - wanted) <= 3600000)
             )
-              found.push(rideView(row));
+              found.push({ ...rideView(row), routingUnavailable: true });
             continue;
           }
-          if (match) found.push({ ...rideView(row), match });
+          if (match)
+            found.push({
+              ...rideView(row),
+              match: {
+                ...match,
+                assessment:
+                  match.assessment || assessMatch(match, wanted, minutes),
+              },
+            });
         }
         return json({
           rides: found
             .sort(
-              (a, b) => (a.match?.score ?? 10000) - (b.match?.score ?? 10000),
+              (a, b) =>
+                categoryOrder[a.match?.assessment?.category || "unverified"] -
+                  categoryOrder[
+                    b.match?.assessment?.category || "unverified"
+                  ] || (a.match?.score ?? 10000) - (b.match?.score ?? 10000),
             )
             .slice(0, 60),
           routingUnavailable: unavailable,

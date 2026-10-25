@@ -1,3 +1,5 @@
+import { MatchAssessmentNote, matchCategoryLabel } from "./MatchAssessmentNote";
+import "./match-assessment.css";
 import { LiveLocationCard } from "./LiveLocationCard";
 import type { LiveMapPoint } from "./Map";
 import { CostSharingBadge } from "./CostSharingBadge";
@@ -104,6 +106,7 @@ function MatchSummary({
 }) {
   return (
     <div className="route-match-summary">
+      <MatchAssessmentNote assessment={match.assessment} />
       <strong>
         {t(" Susret: ")}
         <MeetingPointLabel point={match.pickup} demo={demo} />
@@ -173,6 +176,13 @@ export function RideCard({
         {ride.to.name}
       </div>
       {ride.match && <MatchSummary match={ride.match} demo={ride.demo} />}
+      {!ride.match && ride.routingUnavailable && (
+        <p className="unverified-match-note">
+          {t(
+            "Ruta je u blizini, ali proračun nije pouzdan. Prije slanja zahtjeva ponovo provjeri susret.",
+          )}
+        </p>
+      )}
       <p className="cost-sharing-summary">
         <CostSharingBadge shared={ride.costSharing} />
       </p>
@@ -211,10 +221,12 @@ export function Results({
 }) {
   const [rides, setRides] = useState<RideSearchResults | null>(null),
     [error, setError] = useState(""),
-    [retry, setRetry] = useState(0);
+    [retry, setRetry] = useState(0),
+    [showMore, setShowMore] = useState(false);
   useEffect(() => {
     let active = true;
     setRides(null);
+    setShowMore(false);
     setError("");
     service
       .search(query)
@@ -228,6 +240,9 @@ export function Results({
       active = false;
     };
   }, [service, query, retry]);
+  const category = (ride: Ride) =>
+    ride.match?.assessment?.category || (ride.match ? "fits" : "unverified");
+  const extraCount = rides?.filter((r) => category(r) === "more").length || 0;
   return (
     <div className="results-page">
       <header className="page-heading">
@@ -281,7 +296,7 @@ export function Results({
         <section className="results-list">
           <div className="list-heading">
             <h2>{t("Vožnje za tebe")}</h2>
-            <span>{dateLabel(query.date)} · ± 60 min</span>
+            <span>{dateLabel(query.date)}</span>
           </div>
           {rides?.routingUnavailable && (
             <ErrorBox
@@ -300,14 +315,70 @@ export function Results({
           ) : !rides ? (
             <Loading />
           ) : rides.length ? (
-            rides.map((ride, i) => (
-              <RideCard
-                key={ride.id}
-                ride={ride}
-                selected={i === 0}
-                onOpen={() => onRide(ride.id)}
-              />
-            ))
+            <>
+              {(["fits", "maybe", "unverified"] as const).map((group) => {
+                const items = rides.filter((r) => category(r) === group);
+                return (
+                  items.length > 0 && (
+                    <section
+                      className={`match-results-group ${group}`}
+                      key={group}
+                      aria-label={t(matchCategoryLabel[group])}
+                    >
+                      <h3>
+                        {t(matchCategoryLabel[group])}{" "}
+                        <span>{items.length}</span>
+                      </h3>
+                      {items.map((ride) => (
+                        <RideCard
+                          key={ride.id}
+                          ride={ride}
+                          selected={ride.id === rides[0].id}
+                          onOpen={() => onRide(ride.id)}
+                        />
+                      ))}
+                    </section>
+                  )
+                );
+              })}
+              {extraCount > 0 && (
+                <div className="extra-match-results">
+                  <button
+                    type="button"
+                    className="button outline"
+                    onClick={() => setShowMore(!showMore)}
+                    aria-expanded={showMore}
+                  >
+                    {t(
+                      showMore ? "Sakrij dodatne ponude" : "Prikaži još ponuda",
+                    )}{" "}
+                    ({extraCount})
+                  </button>
+                  <p>
+                    {t(
+                      "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.",
+                    )}
+                  </p>
+                  {showMore && (
+                    <section
+                      className="match-results-group more"
+                      aria-label={t("Dodatne ponude")}
+                    >
+                      <h3>{t("Dodatne ponude")}</h3>
+                      {rides
+                        .filter((r) => category(r) === "more")
+                        .map((ride) => (
+                          <RideCard
+                            key={ride.id}
+                            ride={ride}
+                            onOpen={() => onRide(ride.id)}
+                          />
+                        ))}
+                    </section>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <Empty
               title={t(

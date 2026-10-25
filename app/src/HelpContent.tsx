@@ -51,6 +51,11 @@ export function HelpContent() {
             "Odaberi 5, 10 ili 15 minuta hodanja. Predloži ulazak na mapi, pregledaj hodanje i pošalji zahtjev. Izlazak je opcionalan; ako ga ne biraš, ostaje okvirni prijedlog uz odredište. Vozač prihvata predloženi pin ili šalje novi, koji ti ponovo potvrđuješ.",
           )}
         </p>
+        <p>
+          {t(
+            "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.",
+          )}
+        </p>
       </details>
       <details>
         <summary>{t("Vozač: ruta i mjesta susreta")}</summary>

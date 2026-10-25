@@ -4565,3 +4565,9 @@ b {
 .arrival-priority .button {
   width: 100%;
 }
+
+/* An open calendar must stay clickable above the fixed mobile navigation. */
+.home-bottom:has(.calendar-panel) {
+  position: relative;
+  z-index: 1100;
+}

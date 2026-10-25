@@ -843,3 +843,102 @@ test("message cap is atomic and does not delete existing conversation", async ()
     100,
   );
 });
+
+test("flexible walking survives discovery, detail, pin preview, request and driver counterproposal", async () => {
+  const created = await publish();
+  assert.equal(created.status, 201);
+  const ride = created.data.ride;
+  env.ROUTING_FETCH = async (_, options) => {
+    const coordinates = JSON.parse(options.body).coordinates;
+    return Response.json({
+      features: [
+        {
+          geometry: { coordinates },
+          properties: {
+            summary: { duration: 601, distance: 721 },
+            segments: [{ duration: 601, distance: 721 }],
+            way_points: [0, 1],
+          },
+        },
+      ],
+    });
+  };
+  const from = { ...ride.from, lat: ride.from.lat + 0.001 },
+    to = { ...ride.to, lat: ride.to.lat + 0.001 };
+  const q = {
+    fromLocation: JSON.stringify(from),
+    toLocation: JSON.stringify(to),
+    from: from.id,
+    to: to.id,
+    date: ride.date,
+    time: ride.time,
+    walkMinutes: "10",
+    meetingProposal: "1",
+  };
+  const found = await call("/rides/search", "one", q);
+  assert.equal(found.status, 200);
+  assert.equal(found.data.rides[0].match.assessment.category, "maybe");
+  const detail = await call(
+    "/rides/" + ride.id + "?" + new URLSearchParams(q),
+    "one",
+  );
+  assert.equal(detail.data.ride.match.walkingLimit, 10);
+  const preview = await call("/rides/" + ride.id + "/pickup-preview", "one", {
+    search: q,
+  });
+  assert.equal(preview.status, 200);
+  assert.equal(preview.data.match.walkToMinutes, 11);
+  const requested = await call("/rides/" + ride.id + "/request", "one", {
+    search: q,
+  });
+  assert.equal(requested.status, 201, JSON.stringify(requested.data));
+  const id = requested.data.booking.id;
+  const counter = await call(
+    "/bookings/" + id + "/meeting-proposal",
+    "driver",
+    { expectedVersion: 1, pickupLocation: preview.data.match.pickup },
+  );
+  assert.equal(counter.status, 200, JSON.stringify(counter.data));
+  const stored = JSON.parse(
+    sqlite
+      .prepare("SELECT match_json FROM booking_routes WHERE booking_id=?")
+      .get(id).match_json,
+  );
+  assert.equal(stored.walkingLimit, 10);
+  assert.equal(stored.walkToMinutes, 11);
+  assert.equal(stored.assessment.category, "maybe");
+});
+
+test("nearby unverified offers are explicit and cannot bypass routing on request", async () => {
+  const created = await publish();
+  const ride = created.data.ride;
+  const from = { ...ride.from, lat: ride.from.lat + 0.001 },
+    to = { ...ride.to, lat: ride.to.lat + 0.001 };
+  env.ROUTING_FETCH = async () => new Response("", { status: 503 });
+  const q = {
+    fromLocation: JSON.stringify(from),
+    toLocation: JSON.stringify(to),
+    from: from.id,
+    to: to.id,
+    date: ride.date,
+    time: ride.time,
+    walkMinutes: "10",
+    meetingProposal: "1",
+  };
+  const found = await call("/rides/search", "one", q);
+  assert.equal(found.status, 200);
+  assert.equal(found.data.rides.length, 1);
+  assert.equal(found.data.rides[0].routingUnavailable, true);
+  assert.equal(found.data.rides[0].match, undefined);
+  const request = await call("/rides/" + ride.id + "/request", "one", {
+    search: q,
+  });
+  assert.equal(request.status, 503);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM bookings").get().n, 0);
+  const far = {
+    ...q,
+    fromLocation: JSON.stringify({ ...from, lat: from.lat + 0.2 }),
+  };
+  const unrelated = await call("/rides/search", "one", far);
+  assert.deepEqual(unrelated.data.rides, []);
+});

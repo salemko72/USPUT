@@ -35,7 +35,17 @@ export type MeetingStop = Place & {
   side?: string;
 };
 export type RouteViaPoint = { lat: number; lng: number };
+export type MatchAssessment = {
+  category: "fits" | "maybe" | "more";
+  timeOffsetSeconds: number;
+  walkingLimit: number;
+  walkToMinutes: number;
+  walkFromMinutes: number;
+};
 export type RouteMatch = {
+  assessment?: MatchAssessment;
+  walkToSeconds?: number;
+  walkFromSeconds?: number;
   pickupWalkUnknown?: boolean;
   exitOptional?: boolean;
   meetingProposal?: boolean;
