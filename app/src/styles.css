@@ -1909,7 +1909,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 10px;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 25px;
 }
 .status {
@@ -4579,3 +4579,11 @@ b {
 .street-city-editor input {display:block;width:100%;min-width:0;font:inherit;font-size:16px;padding:10px;border:1px solid #d6ddcf;border-radius:10px;margin-top:6px;}
 .street-city-editor button {justify-self:start;background:#182017;color:white;border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;}
 .street-city-editor button:disabled {opacity:.5;}
+
+.trip-card-top > svg {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.trip-card-top > .ride-vehicle-thumb {
+  flex-shrink: 0;
+}

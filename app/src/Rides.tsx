@@ -1235,9 +1235,6 @@ export function Trips({
                   onClick={() => onRide(b.ride.id)}
                 >
                   <div className="trip-card-top">
-                    <span className={"status status-" + b.status}>
-                      {bookingLabel(b, statusText[b.status])}
-                    </span>
                     <RideVehiclePhoto
                       ride={b.ride}
                       viewerId={user.id}
@@ -1245,6 +1242,9 @@ export function Trips({
                       offer
                       compact
                     />
+                    <span className={"status status-" + b.status}>
+                      {bookingLabel(b, statusText[b.status])}
+                    </span>
                     <ArrowUpRight size={20} />
                   </div>
                   <h2>
