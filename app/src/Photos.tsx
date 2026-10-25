@@ -26,11 +26,13 @@ export function OwnPhoto({
   demo,
   vehicleLabel = "",
   vehicleReady = true,
+  embedded = false,
 }: {
   kind: PhotoKind;
   demo: boolean;
   vehicleLabel?: string;
   vehicleReady?: boolean;
+  embedded?: boolean;
 }) {
   const [photo, setPhoto] = useState<PhotoMeta | null>(null),
     [prepared, setPrepared] = useState<Awaited<
@@ -107,14 +109,21 @@ export function OwnPhoto({
   const avatar = kind === "avatar";
   return (
     <section
-      className={"own-photo " + (avatar ? "avatar-photo" : "vehicle-photo")}
+      className={
+        "own-photo " +
+        (avatar ? "avatar-photo" : "vehicle-photo") +
+        (embedded ? " embedded" : "")
+      }
+      aria-label={embedded ? t("Fotografija tvog automobila") : undefined}
     >
-      <header>
-        <span className="eyebrow">
-          {avatar ? t("FOTOGRAFIJA LICA") : t("FOTOGRAFIJA TVOG AUTA")}
-        </span>
-        <Camera size={18} />
-      </header>
+      {!embedded && (
+        <header>
+          <span className="eyebrow">
+            {avatar ? t("FOTOGRAFIJA LICA") : t("FOTOGRAFIJA TVOG AUTA")}
+          </span>
+          <Camera size={18} />
+        </header>
+      )}
       <div className="own-photo-row">
         {photo ? (
           <img

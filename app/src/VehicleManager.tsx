@@ -1,5 +1,13 @@
 import { t } from "./i18n";
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   Car,
@@ -426,10 +434,12 @@ export function VehicleManager({
   service,
   onChange,
   compact = false,
+  children,
 }: {
   service: Service;
   onChange?: (v: Vehicle | null) => void;
   compact?: boolean;
+  children?: ReactNode;
 }) {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null),
     [loading, setLoading] = useState(true),
@@ -521,6 +531,7 @@ export function VehicleManager({
           </Button>
         </>
       )}
+      {children}
       {editing &&
         createPortal(
           <Modal

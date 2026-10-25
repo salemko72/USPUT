@@ -4587,3 +4587,10 @@ b {
 .trip-card-top > .ride-vehicle-thumb {
   flex-shrink: 0;
 }
+
+/* Vehicle data, colour and recognition photo share one profile section. */
+.vehicle-section > .own-photo.embedded {
+  margin-top: 18px;
+  padding-top: 0;
+  border-top: 0;
+}

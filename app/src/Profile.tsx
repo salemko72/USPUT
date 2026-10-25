@@ -147,13 +147,15 @@ export function Profile({
             </Button>
           </form>
           <OwnPhoto kind="avatar" demo={demo} />
-          <VehicleManager service={service} onChange={setVehicle} />
-          <OwnPhoto
-            kind="vehicle"
-            demo={demo}
-            vehicleReady={!!vehicle}
-            vehicleLabel={vehicle ? vehicleDescription(vehicle) : ""}
-          />
+          <VehicleManager service={service} onChange={setVehicle}>
+            <OwnPhoto
+              kind="vehicle"
+              embedded
+              demo={demo}
+              vehicleReady={!!vehicle}
+              vehicleLabel={vehicle ? vehicleDescription(vehicle) : ""}
+            />
+          </VehicleManager>
           <button className="logout-button" onClick={logout} disabled={busy}>
             <LogOut size={18} />
             {t(" Odjavi se ")}
