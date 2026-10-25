@@ -125,7 +125,11 @@ button.ride-vehicle-thumb:focus-visible {
   font-weight: 800;
 }
 
-.trip-card-top .ride-vehicle-thumb,
+.trip-card-top .ride-vehicle-thumb {
+  width: 52px;
+  height: 52px;
+  flex-basis: 52px;
+}
 .car-illustration .ride-vehicle-thumb {
   width: 42px;
   height: 42px;
