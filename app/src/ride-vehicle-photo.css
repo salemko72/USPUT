@@ -21,9 +21,10 @@ button.ride-vehicle-thumb:focus-visible {
 .ride-vehicle-thumb img {
   width: 100%;
   height: 100%;
-  padding: 4px;
+  padding: 0;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
 }
 .ride-vehicle-thumb.is-empty {
   color: #6f7b63;
