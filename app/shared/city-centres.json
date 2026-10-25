@@ -1,0 +1,32 @@
+[
+  { "name": "Sarajevo", "lat": 43.8563, "lng": 18.4131, "countryCode": "BA" },
+  { "name": "Zenica", "lat": 44.2017, "lng": 17.9039, "countryCode": "BA" },
+  { "name": "Visoko", "lat": 43.9889, "lng": 18.1781, "countryCode": "BA" },
+  { "name": "Kakanj", "lat": 44.1278, "lng": 18.1181, "countryCode": "BA" },
+  { "name": "Ilijaš", "lat": 43.9513, "lng": 18.2706, "countryCode": "BA" },
+  { "name": "Ilidža", "lat": 43.8293, "lng": 18.3097, "countryCode": "BA" },
+  { "name": "Mostar", "lat": 43.3438, "lng": 17.8078, "countryCode": "BA" },
+  { "name": "Tuzla", "lat": 44.538, "lng": 18.676, "countryCode": "BA" },
+  { "name": "Banja Luka", "lat": 44.7722, "lng": 17.191, "countryCode": "BA" },
+  { "name": "Bihać", "lat": 44.8167, "lng": 15.8667, "countryCode": "BA" },
+  {
+    "name": "Beograd",
+    "lat": 44.8125,
+    "lng": 20.4612,
+    "countryCode": "RS",
+    "aliases": ["Belgrade"]
+  },
+  { "name": "Novi Sad", "lat": 45.2671, "lng": 19.8335, "countryCode": "RS" },
+  { "name": "Zagreb", "lat": 45.813, "lng": 15.977, "countryCode": "HR" },
+  { "name": "Split", "lat": 43.5081, "lng": 16.4402, "countryCode": "HR" },
+  { "name": "Rijeka", "lat": 45.3271, "lng": 14.4422, "countryCode": "HR" },
+  { "name": "Ljubljana", "lat": 46.0569, "lng": 14.5058, "countryCode": "SI" },
+  { "name": "Podgorica", "lat": 42.4304, "lng": 19.2594, "countryCode": "ME" },
+  {
+    "name": "Skoplje",
+    "lat": 41.9981,
+    "lng": 21.4254,
+    "countryCode": "MK",
+    "aliases": ["Skopje"]
+  }
+]

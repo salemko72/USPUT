@@ -1,3 +1,4 @@
+import cityCentres from "../shared/city-centres.json";
 import type { LocationScope } from "./LocationScope";
 import { addBasemap } from "./map-style";
 import { useEffect, useId, useRef, useState } from "react";
@@ -103,7 +104,7 @@ export function PinMap({
 export function StreetPicker({
   label,
   value,
-  scope,
+  scope: defaultScope,
   onChange,
 }: {
   label: string;
@@ -111,6 +112,14 @@ export function StreetPicker({
   value?: Place;
   onChange: (place: Place | null) => void;
 }) {
+  const [scope, setScope] = useState<LocationScope>(() => ({
+    city: value?.city || defaultScope.city,
+  }));
+  const [inferredScope, setInferredScope] = useState<LocationScope | null>(
+      null,
+    ),
+    [cityOpen, setCityOpen] = useState(false),
+    [cityDraft, setCityDraft] = useState("");
   const [query, setQuery] = useState(value?.name || ""),
     [results, setResults] = useState<Place[] | null>(null),
     [selected, setSelected] = useState<Place | null>(null),
@@ -127,13 +136,13 @@ export function StreetPicker({
     timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const listId = useId();
   useEffect(() => {
-    if (
-      selected ||
-      !query.trim() ||
-      value?.name === query ||
-      scope.city.trim().length < 2
-    )
-      return;
+    if (value?.city) {
+      setScope({ city: value.city });
+      setInferredScope(null);
+    }
+  }, [value?.id, value?.city]);
+  useEffect(() => {
+    if (selected || !query.trim() || value?.name === query) return;
     timer.current = setTimeout(() => search(false), 650);
     return () => clearTimeout(timer.current);
   }, [query, scope.city, scope.lat, scope.lng, value?.name, selected !== null]);
@@ -170,7 +179,9 @@ export function StreetPicker({
     setNotice("");
     setActive(-1);
     setBusy(false);
-    setManual(manuallyPlaced);
+    setManual(
+      manuallyPlaced || place.kind === "city" || place.approximate === true,
+    );
     setMoved(false);
     setReady(false);
     setSelected(place);
@@ -186,13 +197,7 @@ export function StreetPicker({
       selectPin(value);
       return;
     }
-    const city =
-      scope.city.trim() ||
-      (query.includes(",") ? query.split(",").at(-1)!.trim() : "");
-    if (city.length < 2) {
-      setError("Prvo odaberi grad za pretragu ulica.");
-      return;
-    }
+    const city = scope.city.trim();
     const ticket = ++requestId.current;
     setBusy(true);
     setError("");
@@ -200,8 +205,13 @@ export function StreetPicker({
     setActive(-1);
     setResults(null);
     try {
-      const payload = { query, scope: { ...scope, city } };
-      let r: { locations: Place[]; fallback?: boolean; attribution?: string };
+      const payload = { query, scope: { ...scope, city }, explicit };
+      let r: {
+        locations: Place[];
+        fallback?: boolean;
+        attribution?: string;
+        resolvedScope?: LocationScope;
+      };
       try {
         r = await api<typeof r>("/locations/suggest", payload);
       } catch (e) {
@@ -212,6 +222,7 @@ export function StreetPicker({
         r = await api<typeof r>("/locations/search", payload);
       if (ticket !== requestId.current) return;
       setResults(r.locations);
+      setInferredScope(r.resolvedScope || null);
       setAttribution(r.attribution || "© OpenStreetMap contributors");
       if (r.fallback)
         setNotice(
@@ -246,7 +257,7 @@ export function StreetPicker({
               active >= 0 ? listId + "-" + active : undefined
             }
             value={query}
-            placeholder={t("Počni pisati ulicu")}
+            placeholder={t("Ulica, naselje ili grad")}
             onChange={(e) => {
               requestId.current++;
               clearTimeout(timer.current);
@@ -255,6 +266,7 @@ export function StreetPicker({
               setNotice("");
               setActive(-1);
               setQuery(e.target.value);
+              setInferredScope(null);
               editing.current = !!value;
               onChange(null);
               setResults(null);
@@ -300,48 +312,114 @@ export function StreetPicker({
           </button>
         </div>
       </label>
+      <div className="street-city-hint">
+        <span>
+          {t("Pretražujemo {city}", {
+            city: inferredScope?.city || scope.city || t("odabrani grad"),
+          })}
+        </span>
+        <button
+          type="button"
+          aria-label={t("Promijeni grad") + " — " + label}
+          onClick={() => {
+            setCityDraft(inferredScope?.city || scope.city);
+            setCityOpen(!cityOpen);
+          }}
+        >
+          {t("Promijeni")}
+        </button>
+      </div>
+      {cityOpen && (
+        <div className="street-city-editor">
+          <label>
+            {t("Grad za ovu lokaciju")}
+            <input
+              aria-label={t("Grad za ovu lokaciju") + " — " + label}
+              value={cityDraft}
+              maxLength={80}
+              autoComplete="address-level2"
+              onChange={(e) => setCityDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.preventDefault();
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setCityOpen(false);
+                }
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={cityDraft.trim().length < 2}
+            onClick={() => {
+              clearTimeout(timer.current);
+              requestId.current++;
+              setScope({ city: cityDraft.trim() });
+              setInferredScope(null);
+              setResults(null);
+              setSelected(null);
+              setQuery("");
+              editing.current = false;
+              onChange(null);
+              setCityOpen(false);
+            }}
+          >
+            {t("Primijeni grad")}
+          </button>
+        </div>
+      )}
       <button
         type="button"
         className="street-adjust"
-        disabled={scope.city.trim().length < 2}
-        onClick={() => {
-          const centers: Record<string, [number, number]> = {
-            beograd: [44.8125, 20.4612],
-            zagreb: [45.813, 15.977],
-            sarajevo: [43.8598, 18.4256],
-            "novi sad": [45.2671, 19.8335],
-            "banja luka": [44.7722, 17.191],
-            mostar: [43.3438, 17.8078],
-            tuzla: [44.538, 18.676],
-            split: [43.5081, 16.4402],
-            ljubljana: [46.0569, 14.5058],
-            podgorica: [42.4304, 19.2594],
-          };
-          const found = Object.entries(centers).find(([city]) =>
-              query.toLowerCase().includes(city),
-            ),
-            scopedCenter = Object.entries(centers).find(([city]) =>
-              scope.city.toLowerCase().includes(city),
-            )?.[1],
-            center = found?.[1] ||
-              (scope.lat !== undefined && scope.lng !== undefined
-                ? [scope.lat, scope.lng]
-                : scopedCenter) || [
-                value?.lat ?? 43.8598,
-                value?.lng ?? 18.4256,
-              ];
-          const p: Place = {
-            id: `pin_${center[0].toFixed(5)}_${center[1].toFixed(5)}`,
-            name:
-              query.trim().length >= 2
-                ? query.trim()
-                : t("Pin na karti") + ", " + scope.city,
-            detail: "Približna lokacija ručno označena na karti",
-            lat: center[0],
-            lng: center[1],
-            city: found?.[0] || scope.city || value?.city || "",
-          };
-          selectPin(p, true);
+        disabled={!(inferredScope?.city || scope.city).trim()}
+        onClick={async () => {
+          const ticket = ++requestId.current;
+          const cityScope = inferredScope || scope;
+          const normal = (s: string) =>
+            s
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .toLowerCase();
+          let center = cityCentres.find(
+            (c) => normal(c.name) === normal(cityScope.city),
+          );
+          let lat = center?.lat ?? cityScope.lat ?? value?.lat,
+            lng = center?.lng ?? cityScope.lng ?? value?.lng;
+          if (lat === undefined || lng === undefined) {
+            try {
+              const result = await api<{ locations: Place[] }>(
+                "/locations/suggest",
+                { query: cityScope.city, scope: cityScope, explicit: true },
+              );
+              if (ticket !== requestId.current) return;
+              const city = result.locations.find((p) => p.kind === "city");
+              lat = city?.lat;
+              lng = city?.lng;
+            } catch (e) {
+              if (ticket === requestId.current) setError((e as Error).message);
+              return;
+            }
+          }
+          if (lat === undefined || lng === undefined) {
+            setError(
+              "Grad nije prepoznat. Promijeni grad ili pretraži adresu.",
+            );
+            return;
+          }
+          selectPin(
+            {
+              id: `pin_${lat.toFixed(5)}_${lng.toFixed(5)}`,
+              name:
+                query.trim().length >= 2
+                  ? query.trim()
+                  : t("Pin na karti") + ", " + cityScope.city,
+              detail: "Približna lokacija ručno označena na karti",
+              lat,
+              lng,
+              city: cityScope.city,
+            },
+            true,
+          );
         }}
       >
         {t("Postavi pin ručno na karti")}
@@ -387,7 +465,7 @@ export function StreetPicker({
               onClick={() => selectPin(p)}
             >
               <strong>{p.name}</strong>
-              <small>{p.detail}</small>
+              <small>{p.kind === "city" ? t("Grad — odaberi približnu lokaciju na karti.") : p.detail}</small>
             </button>
           ))}
           {!!results.length && <small>{attribution}</small>}
@@ -404,7 +482,15 @@ export function StreetPicker({
             zoom={manual ? 13 : 17}
             onReady={setReady}
             onChange={(p) => {
-              setSelected(p);
+              setSelected(
+                p.kind === "city"
+                  ? {
+                      ...p,
+                      kind: undefined,
+                      name: t("Pin na karti") + ", " + p.city,
+                    }
+                  : { ...p, approximate: undefined },
+              );
               setMoved(true);
             }}
           />

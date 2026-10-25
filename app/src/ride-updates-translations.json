@@ -74,7 +74,18 @@
     "Prikaži još ponuda": "Show more offers",
     "Sakrij dodatne ponude": "Hide additional offers",
     "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Larger time differences, up to 60 minutes earlier or later.",
-    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Fits your plan: pickup is at the requested time or up to 15 minutes later, within your walking limit. May work for you: up to 30 minutes earlier or later and up to 5 extra walking minutes at each end, with an explanation. Larger time differences up to 60 minutes are behind Show more offers. Match not verified means reliable routing is missing; requests require a successful calculation."
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Fits your plan: pickup is at the requested time or up to 15 minutes later, within your walking limit. May work for you: up to 30 minutes earlier or later and up to 5 extra walking minutes at each end, with an explanation. Larger time differences up to 60 minutes are behind Show more offers. Match not verified means reliable routing is missing; requests require a successful calculation.",
+    "Ulica, naselje ili grad": "Street, neighbourhood or city",
+    "Pretražujemo {city}": "Searching in {city}",
+    "odabrani grad": "the selected city",
+    "Promijeni grad": "Change city",
+    "Promijeni": "Change",
+    "Grad za ovu lokaciju": "City for this location",
+    "Primijeni grad": "Apply city",
+    "Grad nije prepoznat. Promijeni grad ili pretraži adresu.": "City not recognised. Change the city or search for an address.",
+    "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.": "Origin and destination can be in different cities. Without a city name, we use your profile city or the previously selected city for that field. Enter Zenica, Crkvice or Crkvice, Zenica; each suggestion shows its city. Change city opens an optional choice for that field only. When selecting just a city or neighbourhood, move and confirm a more precise map pin.",
+    "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.": "On Home, choose Find a ride, origin and destination, date and time. Choose a suggested street and check the map pin. Your start and end pins are used for walking estimates; the pickup or dropoff point is confirmed by the driver.",
+    "Grad — odaberi približnu lokaciju na karti.": "City — choose an approximate location on the map."
   },
   "hr": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -151,7 +162,18 @@
     "Prikaži još ponuda": "Prikaži još ponuda",
     "Sakrij dodatne ponude": "Sakrij dodatne ponude",
     "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.",
-    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan izračun; zahtjev šalješ tek nakon uspješne provjere."
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan izračun; zahtjev šalješ tek nakon uspješne provjere.",
+    "Ulica, naselje ili grad": "Ulica, naselje ili grad",
+    "Pretražujemo {city}": "Pretražujemo {city}",
+    "odabrani grad": "odabrani grad",
+    "Promijeni grad": "Promijeni grad",
+    "Promijeni": "Promijeni",
+    "Grad za ovu lokaciju": "Grad za ovu lokaciju",
+    "Primijeni grad": "Primijeni grad",
+    "Grad nije prepoznat. Promijeni grad ili pretraži adresu.": "Grad nije prepoznat. Promijeni grad ili pretraži adresu.",
+    "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.": "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.",
+    "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.": "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.",
+    "Grad — odaberi približnu lokaciju na karti.": "Grad — odaberi približnu lokaciju na karti."
   },
   "sr-Latn": {
     "Automobil za ovu vožnju": "Automobil za ovu vožnju",
@@ -228,6 +250,17 @@
     "Prikaži još ponuda": "Prikaži još ponuda",
     "Sakrij dodatne ponude": "Sakrij dodatne ponude",
     "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.": "Veća vremenska odstupanja, do 60 minuta ranije ili kasnije.",
-    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provereno znači da nedostaje pouzdan proračun; zahtev šalješ tek nakon uspešne provjere."
+    "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.": "Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provereno znači da nedostaje pouzdan proračun; zahtev šalješ tek nakon uspešne provjere.",
+    "Ulica, naselje ili grad": "Ulica, naselje ili grad",
+    "Pretražujemo {city}": "Pretražujemo {city}",
+    "odabrani grad": "izabrani grad",
+    "Promijeni grad": "Promeni grad",
+    "Promijeni": "Promeni",
+    "Grad za ovu lokaciju": "Grad za ovu lokaciju",
+    "Primijeni grad": "Primeni grad",
+    "Grad nije prepoznat. Promijeni grad ili pretraži adresu.": "Grad nije prepoznat. Promeni grad ili pretraži adresu.",
+    "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.": "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki predlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako izabereš sam grad ili naselje, pomeri i potvrdi precizniji pin na karti.",
+    "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.": "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz predloga i proveri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mesto ulaska ili izlaska je tačka koju je vozač odobrio.",
+    "Grad — odaberi približnu lokaciju na karti.": "Grad — izaberi približnu lokaciju na karti."
   }
 }

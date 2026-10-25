@@ -33,7 +33,7 @@ export function HelpContent() {
         <summary>{t("Putnik: od pretrage do dogovora")}</summary>
         <p>
           {t(
-            "Na Početnoj odaberi da tražiš vožnju, grad, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.",
+            "Na Početnoj odaberi da tražiš vožnju, polazište i odredište, datum i vrijeme. Odaberi ulicu iz prijedloga i provjeri pin na karti. Tvoji početni i završni pinovi služe za računanje hodanja; mjesto ulaska ili izlaska je tačka koju je vozač odobrio.",
           )}
         </p>
         <p>
@@ -57,6 +57,11 @@ export function HelpContent() {
           )}
         </p>
       </details>
+      <p>
+        {t(
+          "Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.",
+        )}
+      </p>
       <details>
         <summary>{t("Vozač: ruta i mjesta susreta")}</summary>
         <p>

@@ -78,3 +78,9 @@ Pri registraciji i na vrhu profila nudimo preporučeni, dobrovoljni GPS. **Uklju
 Odgovara: susret je od traženog vremena do 15 minuta kasnije, uz odabrano hodanje. Možda ti odgovara: do 30 minuta ranije ili kasnije i do 5 dodatnih minuta hodanja na svakom kraju, uz objašnjenje odstupanja. Veća vremenska odstupanja do 60 minuta otvaraš kroz Prikaži još ponuda. Podudaranje nije provjereno znači da nedostaje pouzdan proračun; zahtjev šalješ tek nakon uspješne provjere.
 
 Prvobitni izbor hodanja se pamti. Dodatno hodanje se jasno prikazuje, a ne mijenja tvoju sačuvanu pretragu. Engine prati redoslijed ulaska i izlaska i pri povratku istom cestom; mjesta i vremena i dalje potvrđujete zajedno.
+
+## Polazište i odredište u različitim gradovima
+
+Polazište i odredište mogu biti u različitim gradovima. Bez upisanog grada koristimo grad profila ili prethodno odabrani grad tog polja. Upiši Zenica, Crkvice ili Crkvice, Zenica; svaki prijedlog prikazuje svoj grad. Promijeni grad otvara pomoćni izbor samo za jedno polje. Ako odabereš sam grad ili naselje, pomjeri i potvrdi precizniji pin na karti.
+
+Izbor gradova ne uvodi automatsko skretanje s vozačeve potvrđene trase.

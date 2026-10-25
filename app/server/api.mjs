@@ -1,3 +1,4 @@
+import { resolveAddressInput } from "./address-input.mjs";
 import { assessMatch, categoryOrder } from "./match-assessment.mjs";
 import { handleLocationApi, cleanupLiveLocations } from "./live-location.mjs";
 import { ensureDemoMeetingStops } from "./demo-meeting-stops.mjs";
@@ -24,7 +25,7 @@ import { normalizeLocation } from "./route-provider.mjs";
 import { readDriverRoute } from "./route-shape.mjs";
 import { proposalFromSearch } from "./pickup-proposals.mjs";
 import { corridorMatch } from "./corridor.mjs";
-import { geocode, locateCity } from "./geocoding.mjs";
+import { geocode, locateCity, latin } from "./geocoding.mjs";
 import { meetingAddress } from "./meeting-address.mjs";
 import { suggestStreets } from "./street-suggestions.mjs";
 import { handlePhotoApi } from "./photos.mjs";
@@ -782,9 +783,14 @@ export async function handleApi(request, env) {
     }
     if (path === "/locations/suggest" && method === "POST") {
       await rateLimit(db, "autocomplete:" + user.id, 90);
-      let result;
+      let result, resolved;
       try {
-        result = await suggestStreets(env, body.query, body.scope);
+        resolved = await resolveAddressInput(env, body.query, body.scope, {
+          explicit: body.explicit === true,
+        });
+        result = resolved.cityOnly
+          ? { locations: [resolved.location], fallback: false }
+          : await suggestStreets(env, resolved.query, resolved.scope);
       } catch (e) {
         if (e instanceof TypeError) fail(400, e.message);
         throw e;
@@ -796,14 +802,24 @@ export async function handleApi(request, env) {
         );
       return json({
         ...result,
+        locations: result.locations.map((p) => ({
+          ...p,
+          city: latin(p.city || resolved.scope.city || ""),
+        })),
+        resolvedScope: resolved.scope,
         attribution: "© OpenStreetMap contributors · Photon",
       });
     }
     if (path === "/locations/search" && method === "POST") {
       await rateLimit(db, "geocode:" + user.id, 20);
-      let locations;
+      let locations, resolved;
       try {
-        locations = await geocode(env, body.query, body.scope);
+        resolved = await resolveAddressInput(env, body.query, body.scope, {
+          explicit: true,
+        });
+        locations = resolved.cityOnly
+          ? [resolved.location]
+          : await geocode(env, resolved.query, resolved.scope);
       } catch (e) {
         if (e instanceof TypeError) fail(400, e.message);
         throw e;
@@ -814,7 +830,11 @@ export async function handleApi(request, env) {
           "Pretraga adresa trenutno nije dostupna. Pokušaj ponovo kasnije.",
         );
       return json({
-        locations,
+        locations: locations.map((p) => ({
+          ...p,
+          city: latin(p.city || resolved.scope.city || ""),
+        })),
+        resolvedScope: resolved.scope,
         attribution: "© OpenStreetMap contributors · Nominatim",
       });
     }

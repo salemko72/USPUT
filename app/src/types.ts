@@ -19,7 +19,8 @@ export type User = {
 export type Place = {
   city?: string;
   countryCode?: string;
-  kind?: "area" | "landmark";
+  kind?: "area" | "landmark" | "city";
+  approximate?: boolean;
   id: string;
   name: string;
   detail: string;

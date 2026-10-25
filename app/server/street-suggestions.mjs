@@ -1,3 +1,4 @@
+import cityCentres from "../shared/city-centres.json" with { type: "json" };
 import {
   cachedProvider,
   fetchJson,
@@ -7,18 +8,9 @@ import { canonicalCity, fold, latin, withoutCity } from "./geocoding.mjs";
 
 // Public city centres are a bias, never the location of a selected street.
 // Other towns are resolved from the same provider and cached for a month.
-const centres = {
-  sarajevo: [18.4131, 43.8563],
-  beograd: [20.4612, 44.8125],
-  zagreb: [15.977, 45.813],
-  "novi sad": [19.8335, 45.2671],
-  "banja luka": [17.191, 44.7722],
-  mostar: [17.8078, 43.3438],
-  tuzla: [18.676, 44.538],
-  split: [16.4402, 43.5081],
-  ljubljana: [14.5058, 46.0569],
-  podgorica: [19.2594, 42.4304],
-};
+const centres = Object.fromEntries(
+  cityCentres.map((c) => [canonicalCity(c.name), [c.lng, c.lat]]),
+);
 const countries = new Set(["BA", "HR", "RS", "ME", "SI", "MK", "XK"]);
 const cityMatches = (name, requested) =>
   typeof name === "string" && canonicalCity(name) === requested;
@@ -104,7 +96,8 @@ export async function suggestStreets(env, query, scope = {}) {
 
   async function search(term) {
     const data = await lookup(
-      "street:" + JSON.stringify([fold(term), requested, bbox]),
+      (term.length > 2 ? "places-v2:" : "street:") +
+        JSON.stringify([fold(term), requested, bbox]),
       {
         q: term,
         bbox,
@@ -114,7 +107,7 @@ export async function suggestStreets(env, query, scope = {}) {
         zoom: 12,
         location_bias_scale: 0.1,
         // Photon street layer supports prefix/typo searches, unlike public Nominatim.
-        layer: "street",
+        ...(term.length <= 2 ? { layer: "street" } : {}),
         ...(/\d/.test(term) ? { layer: "house" } : {}),
       },
     );
@@ -137,7 +130,14 @@ export async function suggestStreets(env, query, scope = {}) {
           )
         )
           return [];
-        const street = p.street || (p.osm_key === "highway" ? p.name : "");
+        const area =
+          p.osm_key === "place" &&
+          ["suburb", "neighbourhood", "quarter", "locality"].includes(
+            p.osm_value,
+          );
+        if (area && wanted.length <= 2) return [];
+        const street =
+          p.street || (p.osm_key === "highway" || area ? p.name : "");
         if (typeof street !== "string" || street.trim().length < 2) return [];
         // For short queries only show true prefixes, so A never suggests Obala.
         if (wanted.length <= 2 && !fold(street).startsWith(wanted)) return [];
@@ -164,7 +164,9 @@ export async function suggestStreets(env, query, scope = {}) {
             .filter(Boolean)
             .join(", "),
         });
-        return place ? [place] : [];
+        return place
+          ? [area ? { ...place, kind: "area", approximate: true } : place]
+          : [];
       })
       .sort(
         (a, b) =>

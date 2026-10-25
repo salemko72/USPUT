@@ -40,7 +40,7 @@ class AutoRoutePreview(unittest.TestCase):
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
         cls.base = f'http://127.0.0.1:{port}'
-        cls.server = subprocess.Popen(['node', 'tests/street-fixture-server.mjs'], cwd=APP,
+        cls.server = subprocess.Popen(['node', os.environ.get('USPUT_TEST_FIXTURE_SERVER','tests/street-fixture-server.mjs')], cwd=APP,
             env={**os.environ, 'PORT': str(port), 'USPUT_DATA_DIR': cls.data.name},
             stdout=cls.log, stderr=subprocess.STDOUT)
         for _ in range(100):

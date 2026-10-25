@@ -1719,3 +1719,78 @@ test("third-party Google email requires existing-account proof once and never st
   profile = { ...profile, email_verified: "false", sub: "fake" };
   assert.equal((await google()).status, 403);
 });
+
+test("location endpoints infer either explicit city order without leaking profile-city streets", async () => {
+  env.PHOTON_URL = "https://intercity-photon.test/";
+  env.GEOCODER_URL = "https://intercity-geocoder.test/";
+  env.ROUTING_FETCH = async (input) => {
+    const u = new URL(input);
+    if (u.hostname === "intercity-photon.test")
+      return Response.json({
+        features: [
+          {
+            geometry: { coordinates: [17.908, 44.212] },
+            properties: {
+              street: "Crkvice",
+              city: "Zenica",
+              countrycode: "BA",
+              osm_key: "highway",
+              osm_value: "residential",
+            },
+          },
+          {
+            geometry: { coordinates: [18.4, 43.85] },
+            properties: {
+              street: "Crkvice",
+              city: "Sarajevo",
+              countrycode: "BA",
+              osm_key: "highway",
+              osm_value: "residential",
+            },
+          },
+        ],
+      });
+    return Response.json([
+      {
+        lat: "44.212",
+        lon: "17.908",
+        address: { road: "Crkvice", city: "Zenica", country_code: "ba" },
+      },
+      {
+        lat: "43.85",
+        lon: "18.4",
+        address: { road: "Crkvice", city: "Sarajevo", country_code: "ba" },
+      },
+    ]);
+  };
+  const user = await signup();
+  for (const query of ["Zenica, Crkvice", "Crkvice, Zenica"]) {
+    const r = await call(
+      "/locations/suggest",
+      { query, scope: { city: "Sarajevo", lat: 43.85, lng: 18.4 } },
+      user.cookie,
+    );
+    assert.equal(r.status, 200);
+    assert.equal(r.data.locations.length, 1);
+    assert.equal(r.data.locations[0].city, "Zenica");
+    assert.equal(r.data.resolvedScope.city, "Zenica");
+  }
+  const full = await call(
+    "/locations/search",
+    {
+      query: "Crkvice, Zenica",
+      scope: { city: "Sarajevo", lat: 43.85, lng: 18.4 },
+    },
+    user.cookie,
+  );
+  assert.equal(full.status, 200);
+  assert.equal(full.data.locations.length, 1);
+  assert.equal(full.data.locations[0].city, "Zenica");
+  const city = await call(
+    "/locations/suggest",
+    { query: "Zenica", scope: { city: "Sarajevo" } },
+    user.cookie,
+  );
+  assert.equal(city.data.locations[0].kind, "city");
+  assert.equal(city.data.locations[0].name, "Zenica");
+});

@@ -89,18 +89,18 @@ test("empty exact response is different from unavailable service and repeated pr
 test("an unknown city is resolved once, never silently replaced with Sarajevo", async () => {
   const { env, requests } = fixture((url) => ({
     features:
-      url.searchParams.get("q") === "Zenica"
+      url.searchParams.get("q") === "Travnik"
         ? [
             feature(
-              "Zenica",
-              { city: "Zenica", osm_key: "place", osm_value: "city" },
+              "Travnik",
+              { city: "Travnik", osm_key: "place", osm_value: "city" },
               [17.91, 44.2],
             ),
           ]
-        : [feature("Titova", { city: "Zenica" }, [17.9, 44.2])],
+        : [feature("Titova", { city: "Travnik" }, [17.9, 44.2])],
   }));
-  const result = await suggestStreets(env, "Ti", { city: "Zenica" });
-  assert.equal(result.locations[0].city, "Zenica");
+  const result = await suggestStreets(env, "Ti", { city: "Travnik" });
+  assert.equal(result.locations[0].city, "Travnik");
   assert.equal(requests.length, 2);
   assert.match(requests[1].searchParams.get("bbox"), /^17\./);
 });
@@ -150,4 +150,52 @@ test("Belgrade provider metadata matches Beograd without admitting distant stree
     await suggestStreets(env, "Belgrade, Knez", { city: "Beograd" }),
     result,
   );
+});
+
+test("a neighbourhood is offered as an approximate area in its own city, never a fabricated street", async () => {
+  const { env } = fixture((url) => ({
+    features: url.searchParams.get("layer")
+      ? []
+      : [
+          feature(
+            "Crkvice",
+            { city: "Zenica", osm_key: "place", osm_value: "suburb" },
+            [17.908, 44.212],
+          ),
+        ],
+  }));
+  const result = await suggestStreets(env, "Crkvice", { city: "Zenica" });
+  assert.equal(result.locations.length, 1);
+  assert.equal(result.locations[0].kind, "area");
+  assert.equal(result.locations[0].approximate, true);
+  assert.equal(result.locations[0].city, "Zenica");
+});
+
+test("old cached street-only emptiness cannot hide new neighbourhood suggestions", async () => {
+  const { env, db, requests } = fixture(() => ({
+    features: [
+      feature(
+        "Crkvice",
+        { city: "Zenica", osm_key: "place", osm_value: "suburb" },
+        [17.908, 44.212],
+      ),
+    ],
+  }));
+  const lat = 44.2017,
+    lng = 17.9039,
+    dy = 0.3,
+    dx = dy / Math.cos((lat * Math.PI) / 180),
+    bbox = [lng - dx, lat - dy, lng + dx, lat + dy].join(",");
+  db.prepare("INSERT INTO routing_cache VALUES(?,?,?)").run(
+    "photon-v1:" +
+      env.PHOTON_URL +
+      ":street:" +
+      JSON.stringify(["crkvice", "zenica", bbox]),
+    JSON.stringify({ features: [] }),
+    Date.now() + 86400000,
+  );
+  const r = await suggestStreets(env, "Crkvice", { city: "Zenica" });
+  assert.equal(r.locations.length, 1);
+  assert.equal(r.locations[0].approximate, true);
+  assert.equal(requests[0].searchParams.get("q"), "Crkvice");
 });

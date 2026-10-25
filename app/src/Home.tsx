@@ -1,7 +1,6 @@
 import { MeetingStopsEditor } from "./MeetingStopsEditor";
 import { SavedSearches } from "./SavedSearches";
 import { savePassengerSearch } from "./saved-searches";
-import { LocationScopeControl, type LocationScope } from "./LocationScope";
 import { api, HttpError } from "./api";
 import { RoutePlanner } from "./RoutePlanner";
 import { StreetPicker } from "./StreetPicker";
@@ -63,15 +62,13 @@ export function SearchFields({
   onChange: (s: Search) => void;
   places: Place[];
 }) {
-  const [scope, setScope] = useState<LocationScope>({ city: defaultCity });
   const set = (k: string, v: string) => onChange({ ...value, [k]: v });
   return (
     <>
-      <LocationScopeControl scope={scope} onChange={setScope} />
       <div className="street-fields">
         <StreetPicker
           label={t("Polazište")}
-          scope={scope}
+          scope={{ city: defaultCity }}
           value={searchPlace(value, "from", places)}
           onChange={(p) =>
             onChange({
@@ -99,7 +96,7 @@ export function SearchFields({
         </button>
         <StreetPicker
           label={t("Odredište")}
-          scope={scope}
+          scope={{ city: defaultCity }}
           value={searchPlace(value, "to", places)}
           onChange={(p) =>
             onChange({
