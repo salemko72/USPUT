@@ -1,3 +1,4 @@
+import { DemoGate } from "./DemoGate";
 import { t } from "./i18n";
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -33,6 +34,8 @@ class ErrorBoundary extends React.Component<
 }
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
-    <App />
+    <DemoGate>
+      <App />
+    </DemoGate>
   </ErrorBoundary>,
 );

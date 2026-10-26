@@ -75,6 +75,7 @@ if (
     "ALTER TABLE push_subscriptions ADD COLUMN display_language TEXT NOT NULL DEFAULT '' CHECK(display_language IN ('','bhs','en','hr','sr-Latn'))",
   );
 export const env = {
+  DEMO_EXPIRES_AT: process.env.DEMO_EXPIRES_AT,
   DB: adaptSqlite(sqlite),
   PHOTOS: localPhotoStorage(resolve(data, "photos")),
   OSRM_URL: process.env.OSRM_URL,

@@ -4,6 +4,8 @@
   "workers_dev": true,
   "keep_vars": true,
   "vars": {
+    // BETA ONLY: remove this variable before the real launch.
+    "DEMO_EXPIRES_AT": "2026-12-26T00:00:00+01:00",
     "VAPID_PUBLIC_KEY": "BGpVK7mg9ofGymyo6I3W1CqSo-Q--_ehZEzwIuOnVSNP6vXHk_mPfPiZshuGqQ4gQuXkb0lWm3nuVL0qqp1BICI",
     "OSRM_URL": "https://routing.openstreetmap.de/routed-car/",
     "OSRM_FOOT_URL": "https://routing.openstreetmap.de/routed-foot/",
@@ -26,7 +28,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": true,
   },
   "d1_databases": [
     {

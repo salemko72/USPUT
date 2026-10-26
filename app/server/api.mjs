@@ -1,3 +1,4 @@
+import { demoStatus, demoExpiredResponse } from "./demo-expiry.mjs";
 import { resolveAddressInput } from "./address-input.mjs";
 import { assessMatch, categoryOrder } from "./match-assessment.mjs";
 import { handleLocationApi, cleanupLiveLocations } from "./live-location.mjs";
@@ -206,6 +207,10 @@ async function readBooking(db, id) {
 export async function handleApi(request, env) {
   const url = new URL(request.url),
     path = url.pathname.replace(/^\/api/, "");
+  const demo = demoStatus(env);
+  if (path === "/demo-status" && request.method === "GET")
+    return Response.json(demo, { headers: { "Cache-Control": "no-store" } });
+  if (demo.expired) return demoExpiredResponse(true);
   const db = env.DB;
   try {
     if (path.startsWith("/photos/")) {

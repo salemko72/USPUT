@@ -31,6 +31,8 @@ export async function api<T>(
       t("Server trenutno nije dostupan. Pokušaj ponovo."),
     );
   }
+  if (data.code === "DEMO_EXPIRED")
+    window.dispatchEvent(new Event("usput:demo-expired"));
   if (!response.ok)
     throw new HttpError(
       response.status,

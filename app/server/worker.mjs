@@ -1,3 +1,4 @@
+import { demoStatus, demoExpiredResponse } from "./demo-expiry.mjs";
 import { cleanupLiveLocations } from "./live-location.mjs";
 import { cleanupPhotos } from "./photos.mjs";
 import { handleApi } from "./api.mjs";
@@ -7,7 +8,7 @@ import {
 } from "./notifications.mjs";
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(deliverPushNotifications(env));
+    if (!demoStatus(env).expired) ctx.waitUntil(deliverPushNotifications(env));
     ctx.waitUntil(cleanupLiveLocations(env));
     if (event.cron === "0 3 * * *") {
       ctx.waitUntil(cleanupPhotos(env));
@@ -18,7 +19,9 @@ export default {
     const url = new URL(request.url);
     const response = url.pathname.startsWith("/api/")
       ? await handleApi(request, { ...env, waitUntil: ctx.waitUntil.bind(ctx) })
-      : await env.ASSETS.fetch(request);
+      : demoStatus(env).expired
+        ? demoExpiredResponse()
+        : await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
     headers.set("X-Robots-Tag", "noindex, nofollow");
     headers.set("X-Content-Type-Options", "nosniff");
