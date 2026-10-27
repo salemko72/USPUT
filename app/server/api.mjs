@@ -1,3 +1,4 @@
+import { handleReviewApi, completionWindowStatement } from "./reviews.mjs";
 import { demoStatus, demoExpiredResponse } from "./demo-expiry.mjs";
 import { resolveAddressInput } from "./address-input.mjs";
 import { assessMatch, categoryOrder } from "./match-assessment.mjs";
@@ -563,6 +564,8 @@ export async function handleApi(request, env) {
     }
     const user = await session(request, env);
     if (!user) fail(401, "Prijavi se da nastaviš.");
+    const reviewResponse = await handleReviewApi(path, method, body, user, env);
+    if (reviewResponse) return reviewResponse;
     if (path === "/auth/me" && method === "GET")
       return json({
         user: { ...selfUser(user, env), admin: isMeetingAdmin(user, env) },
@@ -1681,6 +1684,7 @@ export async function handleApi(request, env) {
               "UPDATE bookings SET status='declined' WHERE ride_id=? AND status='pending' AND EXISTS(SELECT 1 FROM bookings WHERE id=? AND status='completed') AND EXISTS(SELECT 1 FROM rides WHERE id=? AND status IN ('matched','completed'))",
             )
             .bind(b.ride_id, b.id, b.ride_id),
+          completionWindowStatement(db, b.id, Date.now()),
         ]);
         if (!results[0].meta.changes) fail(409, "Vožnja više nije aktivna.");
       } else {

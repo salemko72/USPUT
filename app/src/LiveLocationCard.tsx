@@ -1,3 +1,4 @@
+import { UserRating } from "./UserRating";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Radio } from "lucide-react";
 import { api } from "./api";
@@ -159,6 +160,12 @@ export function LiveLocationCard({
           name: peerName,
         })}
       </p>
+      <UserRating
+        userId={
+          viewerId === b.ride.driver.id ? b.passenger.id : b.ride.driver.id
+        }
+        role={viewerId === b.ride.driver.id ? "passenger" : "driver"}
+      />
       {sharing.automatic && (
         <p>
           {t(

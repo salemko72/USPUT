@@ -1,3 +1,4 @@
+import { UserRating } from "./UserRating";
 import { DemoImage, hasDemoImage } from "./DemoImage";
 import { t } from "./i18n";
 import { useEffect, useState } from "react";
@@ -281,6 +282,7 @@ export function OwnPhoto({
 }
 export function ConnectionPhotos({
   rideId,
+  driverId,
   demoDriverId,
   demo,
   ownDriver,
@@ -289,6 +291,7 @@ export function ConnectionPhotos({
   showVehicle = true,
 }: {
   rideId: string;
+  driverId?: string;
   demoDriverId?: string;
   demo: boolean;
   ownDriver: boolean;
@@ -349,6 +352,7 @@ export function ConnectionPhotos({
         )}
         <div>
           <strong>{ownDriver ? t("Tvoj saputnik") : t("Tvoj vozač")}</strong>
+          {!ownDriver && driverId && <UserRating userId={driverId} />}
           <p>
             {face
               ? t("Fotografija dostupna samo za potvrđen dogovor.")

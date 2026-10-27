@@ -1,3 +1,4 @@
+import { UserRating } from "./UserRating";
 import { GPSPreference } from "./GPSPreference";
 import { t } from "./i18n";
 import { OwnPhoto } from "./Photos";
@@ -88,6 +89,16 @@ export function Profile({
               <span className="small-pill">
                 {demo ? t("Demo profil") : t("Prvi krug · beta")}
               </span>
+            </div>
+          </div>
+          <div className="profile-reputation">
+            <div>
+              <strong>{t("Kao vozač")}</strong>
+              <UserRating userId={user.id} />
+            </div>
+            <div>
+              <strong>{t("Kao putnik")}</strong>
+              <UserRating userId={user.id} role="passenger" />
             </div>
           </div>
           <GPSPreference

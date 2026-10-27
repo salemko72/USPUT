@@ -6,6 +6,11 @@ export function HelpContent() {
     <div className="information-content">
       <p>
         {t(
+          "Vožnje ocjenjuju samo njihovi učesnici, nakon završetka, jednom po dogovoru i u roku od 14 dana. Ocjene od 1 do 5 zvjezdica postaju javne kada oboje ocijene ili po isteku roka. Prikazujemo prosjek i broj ocjena, odvojeno za vozača i putnika, bez javnih komentara. Demo vožnje ne ulaze u stvarne ocjene.",
+        )}
+      </p>
+      <p>
+        {t(
           "USPUT je razvojna beta za punoljetne osobe. Ove upute opisuju trenutnu probnu verziju; stvarna proba vožnji još nije otvorena.",
         )}
       </p>

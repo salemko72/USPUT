@@ -1,3 +1,4 @@
+import { UserRating } from "./UserRating";
 import { useEffect, useId, useState } from "react";
 import { Check, CheckCheck, MapPin } from "lucide-react";
 import { t } from "./i18n";
@@ -122,6 +123,7 @@ export function UpcomingRide({
             <span>
               {t("Vozač: {name}", { name: upcoming.ride.driver.name })}
             </span>
+            <UserRating userId={upcoming.ride.driver.id} />
             <strong>{displayVehicleLabel(upcoming.ride.car)}</strong>
           </div>
         </div>

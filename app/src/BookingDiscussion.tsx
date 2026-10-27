@@ -1,3 +1,4 @@
+import { UserRating } from "./UserRating";
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { RouteMap } from "./Map";
@@ -139,6 +140,19 @@ export function BookingDiscussion({
         </div>
       )}
       <h3>{t("Dogovor o susretu")}</h3>
+      <p className="discussion-peer-rating">
+        <strong>
+          {viewerId === b.ride.driver.id
+            ? b.passenger.name
+            : b.ride.driver.name}
+        </strong>{" "}
+        <UserRating
+          userId={
+            viewerId === b.ride.driver.id ? b.passenger.id : b.ride.driver.id
+          }
+          role={viewerId === b.ride.driver.id ? "passenger" : "driver"}
+        />
+      </p>
       <p className="fine-print">
         {t("Poruka ne mijenja dogovoreni pin i nije potvrda vožnje.")}
       </p>

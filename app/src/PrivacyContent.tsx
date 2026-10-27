@@ -6,6 +6,11 @@ export function PrivacyContent() {
     <div className="information-content">
       <p>
         {t(
+          "Ocjene saputnika čuvamo uz dogovor: autora, ocijenjenu osobu, ulogu, zvjezdice, vrijeme predaje i rok objave. Prije objave svoju ocjenu vidi samo autor; prosjeci i broj objavljenih ocjena dostupni su prijavljenim korisnicima. Ocjene nisu provjera identiteta niti garancija sigurnosti.",
+        )}
+      </p>
+      <p>
+        {t(
           "USPUT je razvojna beta za punoljetne osobe, namijenjena testiranju. Stvarna proba vožnji još nije otvorena. Koristi testne podatke i lokacije.",
         )}
       </p>

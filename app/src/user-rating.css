@@ -1,0 +1,107 @@
+.user-rating {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: #657156;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 600;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.user-rating .rating-stars {
+  display: inline-flex;
+  gap: 1px;
+  align-items: center;
+  color: #596a23;
+  flex: none;
+}
+.user-rating b {
+  font-weight: 800;
+}
+.user-rating > span {
+  white-space: normal;
+}
+.ride-card.selected .user-rating {
+  color: #e2e9d4;
+}
+.ride-card.selected .rating-stars {
+  color: #d5fa62;
+}
+.ride-person > .user-rating,
+.trip-driver > span > .user-rating {
+  display: flex;
+  margin: 3px 0;
+}
+.trip-review {
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid #e1e5d9;
+  border-radius: 20px;
+  background: #f3f5ec;
+}
+.trip-review h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.trip-review p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.review-star-picker {
+  display: flex;
+  gap: 4px;
+}
+.review-star-picker button {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  min-height: 44px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  color: #5b7025;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.review-star-picker button:focus-visible {
+  outline: 2px solid #151a15;
+  outline-offset: 1px;
+}
+.review-star-picker button[aria-pressed="true"] {
+  background: #d5fa62;
+}
+.profile-reputation {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 22px;
+}
+.profile-reputation > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.trip-card > .trip-review {
+  margin: 0 16px 16px;
+  padding: 14px;
+}
+
+.offered-trip .trip-person {
+  flex-wrap: wrap;
+}
+.offered-trip .trip-person > .user-rating {
+  flex-basis: 100%;
+  margin-left: 29px;
+}
+.discussion-peer-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}

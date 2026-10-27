@@ -1,3 +1,5 @@
+import { UserRating } from "./UserRating";
+import { TripReview } from "./TripReview";
 import { MatchAssessmentNote, matchCategoryLabel } from "./MatchAssessmentNote";
 import "./match-assessment.css";
 import { LiveLocationCard } from "./LiveLocationCard";
@@ -161,6 +163,7 @@ export function RideCard({
         <Avatar userId={ride.driver.id} name={ride.driver.name} />
         <div className="ride-person">
           <strong>{ride.driver.name}</strong>
+          <UserRating userId={ride.driver.id} />
           <span className="ride-time">
             {ride.match ? pickupTime(ride.match.pickupAt) : ride.time}
           </span>
@@ -752,6 +755,7 @@ export function RideDetails({
               </span>
               <div>
                 <h2>{own ? t("Ti voziš") : ride.driver.name}</h2>
+                <UserRating userId={ride.driver.id} />
                 {(!confirmed || own || inactive || finished) && (
                   <p>{displayVehicleLabel(ride.car)}</p>
                 )}
@@ -853,12 +857,20 @@ export function RideDetails({
             {ride.note && <p className="driver-note">“{ride.note}”</p>}
           </section>
           {booking?.status === "completed" && (
-            <MeetingFeedback key={booking.id} booking={booking} />
+            <>
+              <TripReview bookingId={booking.id} />
+              <MeetingFeedback booking={booking} />
+            </>
           )}
           {own &&
             requests
               .filter((b) => b.status === "completed")
-              .map((b) => <MeetingFeedback key={b.id} booking={b} />)}
+              .map((b) => (
+                <div key={b.id}>
+                  <TripReview bookingId={b.id} />
+                  <MeetingFeedback booking={b} />
+                </div>
+              ))}
           {(confirmed ||
             (own &&
               requests.some((b) =>
@@ -866,6 +878,7 @@ export function RideDetails({
               ))) && (
             <ConnectionPhotos
               rideId={ride.id}
+              driverId={ride.driver.id}
               demoDriverId={ride.demo ? ride.driver.id : undefined}
               demo={demo}
               ownDriver={own}
@@ -906,6 +919,7 @@ export function RideDetails({
                     />
                     <span>
                       <strong>{b.passenger.name}</strong>
+                      <UserRating userId={b.passenger.id} role="passenger" />
                       <small>{bookingLabel(b, statusText[b.status])}</small>
                     </span>
                   </div>
@@ -1265,10 +1279,12 @@ export function Trips({
                     />
                     <span>
                       <strong>{b.ride.driver.name}</strong>
+                      <UserRating userId={b.ride.driver.id} />
                       <small>{displayVehicleLabel(b.ride.car)}</small>
                     </span>
                   </button>
                 </div>
+                {b.status === "completed" && <TripReview bookingId={b.id} />}
               </article>
             ))}
           </div>
@@ -1324,8 +1340,14 @@ export function Trips({
                     <Car size={21} />
                     <span>{r.car}</span>
                     <span className="small-pill">{t("Ti voziš")}</span>
+                    <UserRating userId={user.id} />
                   </div>
                 </button>
+                {data?.bookings
+                  .filter((b) => b.ride.id === r.id && b.status === "completed")
+                  .map((b) => (
+                    <TripReview key={b.id} bookingId={b.id} />
+                  ))}
                 {onRepeat && ["completed", "cancelled"].includes(r.status) && (
                   <button
                     className="repeat-ride-button"
