@@ -40,5 +40,5 @@ SQL-computed publication, shared React rating badge and completed-booking form.
 
 ## Task 3: verify and release
 - [x] Review diff and security boundaries; request independent review of major feature.
-- [ ] Confirm tests/build, apply migration to beta database, commit/push feat/pulse-app
+- [x] Confirm tests/build, apply migration to beta database, commit/push feat/pulse-app
   and deploy beta. Record actual test outcomes and limitations in QA doc.

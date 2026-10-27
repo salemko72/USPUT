@@ -30,3 +30,6 @@ Za stare završene dogovore rok se računa od polaska; za nove od zabilježenog
 završetka, ne prije polaska. Povratak u prozor osvježava ocjene; prikaz se
 periodično osvježava, nije real-time websocket. Nema SMS/identitet verifikacije
 u ovom koraku. Zvjezdice nisu provjera identiteta niti garancija sigurnosti.
+
+Objavljeno: beta Worker `38ac30c7-1655-4624-a097-f69c05b3f575`; migracija0019
+uspješno primijenjena na udaljenu beta bazu. Implementacija commit `0d6f248`.
